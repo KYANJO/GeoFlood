@@ -30,13 +30,8 @@ else()
     ForestClawExternalProject(TAG develop COMPONENTS clawpack mpi)
 endif()
  
-add_subdirectory(src/fc2d_geoclaw)
+add_subdirectory(src)
 add_subdirectory(examples)
-
-# target_include_directories(bowl_radial PUBLIC ${FORESSTCLAW_INCLUDE_DIR})
-# target_link_libraries(bowl_radial PUBLIC src ${FORESSTCLAW_LIBRARIES} ${FORESTCLAW_DEPENDENCIES})
-
-# include(examples/smoke3d.cmake)
 
 # -- set environment string used for regression tests
 #  
