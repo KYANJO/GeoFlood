@@ -1,5 +1,5 @@
 # -- fortran library
-add_library(geoclaw_f OBJECT
+add_library(geoflood_f OBJECT
     amrlib_source/amr_module.f90 
     geolib_source/utility_module.f90 
     geolib_source/geoclaw_module.f90 
@@ -51,18 +51,18 @@ add_library(geoclaw_f OBJECT
     fclaw2d_source/fc2d_geoclaw_timeinterp_fort.f
 )
 
-target_link_Libraries(geoclaw_f PRIVATE 
+target_link_Libraries(geoflood_f PRIVATE 
     FORESTCLAW::CLAWPATCH
 )
 
-set_target_properties(geoclaw_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
+set_target_properties(geoflood_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # -- add library
-add_library(geoclaw)
-set_target_properties(geoclaw PROPERTIES EXPORT_NAME GEOCLAW)
+add_library(geoflood)
+set_target_properties(geoflood PROPERTIES EXPORT_NAME GEOFLOOD)
 
-target_sources(geoclaw PRIVATE 
-    $<TARGET_OBJECTS:geoclaw_f>
+target_sources(geoflood PRIVATE 
+    $<TARGET_OBJECTS:geoflood_f>
     fc2d_geoclaw.cpp 
     fc2d_geoclaw_options.c 
     fc2d_geoclaw_gauges_default.c 
@@ -70,9 +70,9 @@ target_sources(geoclaw PRIVATE
     fc2d_geoclaw_output_ascii.c
 )
 
-target_link_libraries(geoclaw PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH)
+target_link_libraries(geoflood PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH)
 
-target_include_directories(geoclaw PUBLIC 
+target_include_directories(geoflood PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 )
@@ -91,7 +91,7 @@ install(FILES
   DESTINATION include
 )
 
-install(TARGETS geoclaw
+install(TARGETS geoflood
   EXPORT ${PROJECT_NAME}Targets
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib)
@@ -99,4 +99,4 @@ install(TARGETS geoclaw
 
 # imported target, for use from FetchContent
 add_library(FORESTCLAW::GEOFLOOD INTERFACE IMPORTED GLOBAL)
-target_link_libraries(FORESTCLAW::GEOFLOOD INTERFACE geoclaw)
+target_link_libraries(FORESTCLAW::GEOFLOOD INTERFACE geoflood)
