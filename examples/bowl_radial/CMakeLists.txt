@@ -18,9 +18,8 @@ target_link_libraries(bowl_radial PUBLIC
   FORESTCLAW::CLAWPACK4.6 
 )
 
-
 target_include_directories(bowl_radial PUBLIC ${FORESSTCLAW_INCLUDE_DIR})
 target_link_libraries(bowl_radial PUBLIC ${FORESSTCLAW_LIBRARIES} ${FORESTCLAW_DEPENDENCIES})
 
-add_test(NAME geoclaw_bowl_radial COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/regressions.sh WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-set_tests_properties(geoclaw_bowl_radial PROPERTIES ENVIRONMENT "${FCLAW_TEST_ENVIRONMENT}")
+add_test(NAME geoflood_bowl_radial COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/regressions.sh WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_tests_properties(geoflood_bowl_radial PROPERTIES ENVIRONMENT "${FCLAW_TEST_ENVIRONMENT}")

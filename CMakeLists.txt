@@ -30,15 +30,14 @@ else()
     ForestClawExternalProject(TAG develop COMPONENTS clawpack mpi)
 endif()
  
-add_subdirectory(src/fc2d_geoclaw)
+add_subdirectory(src)
 add_subdirectory(examples)
 
-# target_include_directories(bowl_radial PUBLIC ${FORESSTCLAW_INCLUDE_DIR})
-# target_link_libraries(bowl_radial PUBLIC src ${FORESSTCLAW_LIBRARIES} ${FORESTCLAW_DEPENDENCIES})
-
-# include(examples/smoke3d.cmake)
-
 # -- set environment string used for regression tests
-#  
+set(FCLAW_TEST_ENVIRONMENT "FCLAW_APPLICATIONS_BUILD_DIR=${PROJECT_BINARY_DIR};FCLAW_APPLICATIONS_SRC_DIR=${PROJECT_SOURCE_DIR}")
+if(TARGET MPI::MPI_C)
+    list(APPEND FCLAW_TEST_ENVIRONMENT "FCLAW_MPIRUN=${MPIEXEC_EXECUTABLE}")
+    list(APPEND FCLAW_TEST_ENVIRONMENT "FCLAW_MPI_TEST_FLAGS=${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS}")
+endif()  
 
 
