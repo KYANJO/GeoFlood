@@ -14,7 +14,7 @@ target_include_directories(bowl_radial PUBLIC
 )
 
 target_link_libraries(bowl_radial PUBLIC
-  FORESTCLAW::GEOFLOOD
+  GEOFLOOD::GEOCLAW
   FORESTCLAW::CLAWPACK4.6 
 )
 
