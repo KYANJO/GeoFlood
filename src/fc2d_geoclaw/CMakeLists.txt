@@ -59,7 +59,7 @@ set_target_properties(geoflood_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CUR
 
 # -- add library
 add_library(geoflood)
-set_target_properties(geoflood PROPERTIES EXPORT_NAME GEOFLOOD)
+set_target_properties(geoflood PROPERTIES EXPORT_NAME GEOCLAW)
 
 target_sources(geoflood PRIVATE 
     $<TARGET_OBJECTS:geoflood_f>
@@ -98,5 +98,5 @@ install(TARGETS geoflood
 
 
 # imported target, for use from FetchContent
-add_library(FORESTCLAW::GEOFLOOD INTERFACE IMPORTED GLOBAL)
-target_link_libraries(FORESTCLAW::GEOFLOOD INTERFACE geoflood)
+add_library(GEOFLOOD::GEOCLAW INTERFACE IMPORTED GLOBAL)
+target_link_libraries(GEOFLOOD::GEOCLAW INTERFACE geoflood)
