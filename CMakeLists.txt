@@ -9,9 +9,22 @@
 
 cmake_minimum_required(VERSION 3.13...3.20)
 
-project(GEOFLOOD LANGUAGES C CXX Fortran)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+  set(CMAKE_CUDA_ARCHITECTURES 70)
+endif()
+
+project(GEOFLOOD 
+    DESCRIPTION "Flood inundation model"
+    HOMEPAGE_URL https://github.com/KYANJO/GeoFlood
+    LANGUAGES C CXX Fortran
+    VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
+
+# --- user options
+
+include(cmake/options.cmake)
+message(STATUS "${PROJECT_NAME} ${PROJECT_VERSION}  install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 # -- check if this being included as a subdirectory
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/ForestClawExternalProject)
@@ -30,7 +43,23 @@ else()
     ForestClawExternalProject(TAG develop COMPONENTS clawpack mpi)
 endif()
  
+if(cudaclaw)
+  enable_language(CUDA)
+  set(CMAKE_CUDA_STANDARD 14)
+  find_package(CUDAToolkit REQUIRED)
+endif()
+
+# --- src directory
 add_subdirectory(src)
+
+# --- cudaclaw
+if(cudaclaw)
+
+  add_subdirectory(src/fc2d_cudaclaw)
+
+endif(cudaclaw)
+
+# --- examples
 add_subdirectory(examples)
 
 # -- set environment string used for regression tests
