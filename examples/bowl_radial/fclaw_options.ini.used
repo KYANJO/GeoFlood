@@ -17,6 +17,7 @@
         advance-one-step = false
         outstyle-uses-maxlevel = true
         subcycle = false
+        ghost-fill-uses-time-interp = true
         weighted_partition = true
         time-sync = false
         flux-correction = true
@@ -47,9 +48,9 @@
         conservation-check = false
         report-timing = true
         report-timing-verbosity = exclusive
-        ghost_patch_pack_area = true
-        ghost_patch_pack_extra = false
-        ghost_patch_pack_numextrafields = 0
+        ghost-patch-pack-area = false
+        ghost-patch-pack-extra = false
+        ghost-patch-pack-numextrafields = 0
         trapfpe = false
         mpi_debug = false
         ax = -100
