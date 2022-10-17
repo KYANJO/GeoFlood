@@ -1,0 +1,7 @@
+# ------examples/geoflood.apps ----------------
+
+## ----------------------------------
+## GeoFlood examples
+## ----------------------------------
+
+include examples/bowl_radial/Makefile.am

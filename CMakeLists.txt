@@ -19,6 +19,11 @@ project(GEOFLOOD
     LANGUAGES C CXX Fortran
     VERSION 1.0.0)
 
+# --- ctest
+include(CTest)
+
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/Modules)
+
 set(CMAKE_CXX_STANDARD 17)
 
 # --- user options
@@ -49,6 +54,9 @@ if(cudaclaw)
   find_package(CUDAToolkit REQUIRED)
 endif()
 
+# --- configure files
+include(cmake/config.cmake)
+
 # --- src directory
 add_subdirectory(src)
 
@@ -61,6 +69,9 @@ endif(cudaclaw)
 
 # --- examples
 add_subdirectory(examples)
+
+# --- tests
+# add_subdirectory(test)
 
 # -- set environment string used for regression tests
 set(FCLAW_TEST_ENVIRONMENT "FCLAW_APPLICATIONS_BUILD_DIR=${PROJECT_BINARY_DIR};FCLAW_APPLICATIONS_SRC_DIR=${PROJECT_SOURCE_DIR}")
