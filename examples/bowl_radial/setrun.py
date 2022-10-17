@@ -6,12 +6,23 @@ that will be read in by the Fortran code.
 
 """
 
+
+#===============================================================================
+# Importing libraries
+#===============================================================================
 from __future__ import absolute_import
 from __future__ import print_function
-import os
 import numpy as np
+import os
+import sys
 
+#===============================================================================
+# Importing scripts dictionary
+#===============================================================================
+sys.path.append('../../scripts')
+import geoflood # -- importing geoflood.py
 
+    
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
 #------------------------------
@@ -252,18 +263,52 @@ def setrun(claw_pkg='geoclaw'):
         # and at the final time.
         clawdata.checkpt_interval = 5
 
+    # --------------------------------------------------------
+    # GeoFlood parameters. 
+    # These will overwrite any similar parameters listed above
+    # --------------------------------------------------------
+
+    geoflooddata = geoflood.GeoFlooddata()
+
+    geoflooddata.minlevel = 2
+    geoflooddata.maxlevel = 5
+
+    geoflooddata.regrid_interval = 1
+    geoflooddata.refine_threshold = 0.01
+    geoflooddata.coarsen_threshold = 0.005
+
+    geoflooddata.subcycle = False
+    geoflooddata.output = True
+
+    # geoflood verbosity choices : 
+    # 0 or 'silent'      : No output to the terminal
+    # 1 or 'essential'   : Only essential output, including errors.
+    # 2 or 'production'  : Production level output
+    # 3 or 'info'        : More detailed output
+    # 4 or 'debug'       : Includes detailed output from each processor
+    geoflooddata.verbosity = 'production'
+
+
+    # Block dimensions for non-square domains
+    geoflooddata.mi = 1
+    geoflooddata.mj = 1
+
+    geoflooddata.user = {'example'     : 0, 
+                           'pi-value' : 3.14159}
+
     # ---------------
     # AMR parameters:
     # ---------------
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 4
+    maxlevel = 4
+    amrdata.amr_levels_max = maxlevel
 
     # List of refinement ratios at each level (length at least mxnest-1)
-    amrdata.refinement_ratios_x = [2,4,4]
-    amrdata.refinement_ratios_y = [2,4,4]
-    amrdata.refinement_ratios_t = [2,4,4]
+    amrdata.refinement_ratios_x = [2]*(maxlevel-1)
+    amrdata.refinement_ratios_y = [2]*(maxlevel-1)
+    amrdata.refinement_ratios_t = [2]*(maxlevel-1)
 
 
     # Specify type of each aux variable in amrdata.auxtype.
@@ -338,6 +383,10 @@ def setrun(claw_pkg='geoclaw'):
         y = (r + .001) / np.sqrt(2.)
         rundata.gaugedata.gauges.append([gaugeno, x, y, 0., 1e10])
     
+    # rundata.gaugedata.min_time_increment = 0.025
+    
+
+    return rundata, geoflooddata
 
     return rundata
     # end of function setrun
@@ -412,6 +461,7 @@ def setgeo(rundata):
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     import sys
-    rundata = setrun(*sys.argv[1:])
+    rundata,geoflooddata = setrun(*sys.argv[1:])
     rundata.write()
 
+    geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
