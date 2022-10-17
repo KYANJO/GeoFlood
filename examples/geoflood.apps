@@ -5,3 +5,4 @@
 ## ----------------------------------
 
 include examples/bowl_radial/Makefile.am
+include examples/teton/Makefile.am
