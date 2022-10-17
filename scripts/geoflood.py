@@ -9,7 +9,7 @@
 # Importing required libraries
 from configparser import ConfigParser
  
-class GeoFloodata(object):
+class GeoFlooddata(object):
     # Several geoflood attributes (ignore for now)
 
     def __init__(self):
