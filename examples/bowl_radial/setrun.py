@@ -387,8 +387,6 @@ def setrun(claw_pkg='geoclaw'):
     
 
     return rundata, geoflooddata
-
-    return rundata
     # end of function setrun
     # ----------------------
 
