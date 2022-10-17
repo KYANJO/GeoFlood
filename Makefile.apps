@@ -1,0 +1,27 @@
+# --------------------------------------------
+# List of available applications and examples
+#
+# Note : Any files below which are uncommented
+# need to be available at compile time, even 
+# the configuration flag is not set.  
+# --------------------------------------------
+
+
+# ----------------------------------
+# GeoClaw library and examples
+# ----------------------------------
+
+if FCLAW_ENABLE_GEOCLAW
+
+## Patches needed for GeoClaw solvers
+#include src/patches/clawpatch/Makefile.am
+
+## Solver library
+include src/fc2d_geoclaw/Makefile.am
+
+## Examples
+include example/geoflood.apps
+
+endif
+
+

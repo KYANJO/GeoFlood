@@ -1,5 +1,14 @@
 # --------------------------------------------
-# List of available applications and examples
+# List of available examples
 # --------------------------------------------
 
-add_subdirectory(bowl_radial)
+#----------------------------------
+# GeoClaw library and examples
+# ----------------------------------
+
+if(TARGET GEOFLOOD::GEOCLAW)
+
+    include(geoflood.cmake)
+
+endif()
+
