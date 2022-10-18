@@ -6,3 +6,4 @@
 
 include examples/bowl_radial/Makefile.am
 include examples/teton/Makefile.am
+include examples/malpasset/Makefile.am

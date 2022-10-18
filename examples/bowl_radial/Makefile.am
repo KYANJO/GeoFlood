@@ -11,8 +11,8 @@ examples_bowl_radial_bowl_radial_SOURCES = \
 
 EXTRA_DIST += \
 	examples/bowl_radial/fclaw_options.ini \
-	examples/bowl_radial/make_data.py \
-	examples/bowl_radial/make_plots.py \
+	examples/bowl_radial/setrun.py \
+	examples/bowl_radial/setplot.py \
 	examples/bowl_radial/make_topo.py \
 	examples/bowl_radial/afterframe.m \
 	examples/bowl_radial/setplot2.m \
