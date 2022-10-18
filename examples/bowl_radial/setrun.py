@@ -21,7 +21,6 @@ import sys
 #===============================================================================
 sys.path.append('../../scripts')
 import geoflood # -- importing geoflood.py
-
     
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -302,13 +301,12 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    maxlevel = 4
-    amrdata.amr_levels_max = maxlevel
+    amrdata.amr_levels_max = 4
 
     # List of refinement ratios at each level (length at least mxnest-1)
-    amrdata.refinement_ratios_x = [2]*(maxlevel-1)
-    amrdata.refinement_ratios_y = [2]*(maxlevel-1)
-    amrdata.refinement_ratios_t = [2]*(maxlevel-1)
+    amrdata.refinement_ratios_x = [2,4,4]
+    amrdata.refinement_ratios_y = [2,4,4]
+    amrdata.refinement_ratios_t = [2,4,4]
 
 
     # Specify type of each aux variable in amrdata.auxtype.
@@ -445,7 +443,9 @@ def setgeo(rundata):
     rundata.qinit_data.qinitfiles.append(['hump.xyz'])
 
     # == setfixedgrids.data values ==
-    fixedgrids = rundata.fixed_grid_data.fixedgrids
+    # fixedgrids = rundata.fixed_grid_data.fixedgrids #deprecated
+    # fgmax_grids = rundata.fgmax_data.fgmax_grids
+ 
     # for fixed grids append lines of the form
     # [t1,t2,noutput,x1,x2,y1,y2,xpoints,ypoints,\
     #  ioutarrivaltimes,ioutsurfacemax]
@@ -461,5 +461,6 @@ if __name__ == '__main__':
     import sys
     rundata,geoflooddata = setrun(*sys.argv[1:])
     rundata.write()
-
-    geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
+    
+    # writes a geoflood geoflood.ini file
+    geoflooddata.write(rundata)  
