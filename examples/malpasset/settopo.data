@@ -1,0 +1,58 @@
+ 6                                    mtopofiles
+
+ 2 1 1 0. 1.d10 '../topo/grids/malpasset_domaingrid_20m_nolc.topotype2'
+ 2 2 2 0. 1.d10 '../topo/grids/malpasset_resevoir_5m_nolc.topotype2'
+ 2 1 3 0. 1.d10 '../topo/grids/malpasset_grid4_2m_nolc.topotype2'
+ 2 1 3 0. 1.d10 '../topo/grids/malpasset_grid3_2m_nolc.topotype2'
+ 2 1 3 0. 1.d10 '../topo/grids/malpasset_grid2_1m_nolc.topotype2'
+ 2 1 3 0. 1.d10 '../topo/grids/malpasset_damapproach_1m_nolc.topotype2'
+
+
+
+---------------------------------------------------------------------------
+
+Only the first mtopofiles+1 nonempty lines of this file are read by settopo
+
+Each line has the form
+  itopotype minlevel maxlevel t1 t2 fname
+
+itopotype tells what format the data is in:
+  itopotype = 1:  standard GIS format: 3 columns: lon,lat, z (meters)
+                                            or      x, y,  z
+  itopotype = 2:  Header as in DEM file, one z value per line
+  itopotype = 3:  Header as in DEM file, one row of z values per line
+
+Header format is:
+xxxx      ncols
+xxxx      nrows
+xxxx     xllcorner
+xxxx     yllcorner
+xxxx     cellsize
+xxxx     NODATA_value
+
+
+z values are positive for topography, negative for bathymetry.
+
+Values are ordered from upper left corner, moving east across each row 
+(y fixed, x increasing) and then south (y decreasing).
+
+The region covered by this file should be refined to at least minlevel
+   and at most maxlevel over the time interval specified.
+
+If a point is covered by several regions, the largest values of minlevel and
+maxlevel from all such regions are used.
+
+Refinement may also be forced or allowed by the minlevel and maxlevel
+parameters for the regions specified in setregions.data or setmovetopo.data.
+
+At points that lie far from shore (where h is greater than depthdeep),
+refinement is only allowed to level maxleveldeep.  These parameters are set
+in setgeo.data.
+
+In setting topography in a computation, the finest topography available
+will be used for each grid cell.  If a grid cells lies partially but
+not entirely in a topo file then a coarser topo file will be used for
+the remainder of the cell (with area-weighted averaging).
+
+The order of topo files in the list above should not matter.
+
