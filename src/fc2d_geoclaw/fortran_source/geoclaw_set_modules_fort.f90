@@ -56,7 +56,7 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
     CALL read_dtopo_settings()        !# specifies file with dtopo from earthquake
     CALL read_topo_settings(.false.)           !# specifies topography (bathymetry) files
     CALL set_qinit()                  !# specifies file with dh if this used instead
-    CALL set_fixed_grids()            !# Fixed grid settings
+!   CALL set_fixed_grids()            !# Fixed grid settings (deprecated form clawpack v9)
     CALL set_storm()                  ! Set storm parameters
     CALL setup_variable_friction()    ! Set variable friction parameters
 
