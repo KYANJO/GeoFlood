@@ -377,18 +377,8 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.verbosity_regrid = 0
 
     # -----------------------------------------------
-    # INL Regions
-    #   Regions to be refined :
-    #    (1) Refine initial reservoir to level 4
-    #        (otherwise, we won't resolve valley, and
-    #        won't fill the reservoir properly)
-    #    (2) Refine around nuclear power plant (indicated by gauge
-    #        100, 101, ..., 115, below)
-    #    (3) Computational domain, with maxlevel=4
-    #
     # To specify regions of refinement append lines of the form
     #    regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
-
     # -----------------------------------------------
     regions = rundata.regiondata.regions
 
@@ -397,82 +387,23 @@ def setrun(claw_pkg='geoclaw'):
     y1 = 6.75; y2 = 6.80
     regions.append([maxlevel,maxlevel, 0, 1.e10,x1,x2,y1, y2])
 
-    # Box containing gauge location locations
-
-#    xll = [-111.64, 43.913661]  # From email
-#    xur = [-111.60, 43.92]  # from email
-#    region_lower, region_upper,_ = tools.region_coords(xll,xur,
-#                                                     clawdata.num_cells,
-#                                                     clawdata.lower,
-#                                                     clawdata.upper)
-#
-#    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-#                    region_lower[1],region_upper[1]])
-
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
                     clawdata.lower[1],clawdata.upper[1]])
 
-    # -------------------------------------------------------
-    # INL Gauges
-    #     -- Set gauges at Teton City and Wilford
-    #     -- Remaining gauges build border around power plant
-    #
-    # For gauges append lines of the form  [gaugeno, x, y, t1, t2]
-    # -------------------------------------------------------
-
-    # # Wilford
-    # xc,yc = [-111.672222,43.914444]
-    # rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
-
-    # # Teton City
-    # xc,yc = [-111.669167,43.887778]
-    # rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton City
-
+   
     # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gno = [6,7,8,9,10,11,12,13,14] # gauge numbers
     xc = [4947.46,5717.30,6775.14,7128.20,8585.30,9674.97,10939.15,11724.37,12723.70] # x-coordinates
     yc = [4289.71,4407.61,3869.23,3162.00,3443.08,3085.89,3044.78,2810.41,2485.08] # y-coordinates
+
     print('\nLocation of Gauges:')
-    for i in range(len(xc)):
+
+    for i in range(len(gno)):
         print('\tGauge %s at (%s, %s)' % (gno[i], xc[i], yc[i]))
         rundata.gaugedata.gauges.append([gno[i],xc[i],yc[i],0.,clawdata.tfinal])
 
-    # Power plant, with border constructed of 4*m gauges
-    # Start at SW corner; build gauges in counter-clockwise order in a
-    # square around the region [xll,xur].
-
-#    m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
-#    gauge_counter = 100
-#
-#    # South West corner of power plant
-#    xll = [-111.623926, 43.913661]  # From email
-#
-#    # North East corner of power plant
-#    xur = [-111.620150, 43.916382]  # from email
-#
-#    s = np.linspace(0,1.,m+1)
-#    for i in range(0,m):
-#        x = xll[0] + (xur[0] - xll[0])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-#
-#    for i in range(0,m):
-#        y = xll[1] + (xur[1] - xll[1])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-#
-#    for i in range(0,m):
-#        x = xur[0] + (xll[0] - xur[0])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-#
-#    for i in range(0,m):
-#        y = xur[1] + (xll[1] - xur[1])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-
-
+   
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -556,13 +487,6 @@ def setgeo(rundata):
 
     rundata.qinit_data.qinitfiles.append(['scratch/Malpasset/init_eta_5m_cadam.xyz'])
     rundata.qinit_data.qinitfiles.append(['scratch/Malpasset/init_h_5m_cadam.xyz'])
-
-    # == setfixedgrids.data values ==
-    # fixedgrids = rundata.fixed_grid_data
-    # fixedgrids = rundata.fixed_grid_data.fixedgrids
-    # for fixed grids append lines of the form
-    # [t1,t2,noutput,x1,x2,y1,y2,xpoints,ypoints,\
-    #  ioutarrivaltimes,ioutsurfacemax]
 
     return rundata
     # end of function setgeo
