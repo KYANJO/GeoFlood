@@ -1,5 +1,3 @@
-set(src ${PROJECT_SOURCE_DIR}/src)
-
 add_executable(bowl_radial 
 	bowl_user.cpp
 	bowl.cpp
@@ -10,7 +8,6 @@ add_executable(bowl_radial
 # ---------------------------------------------------------
 target_include_directories(bowl_radial PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${src} 
 )
 
 target_link_libraries(bowl_radial PUBLIC
