@@ -1,7 +1,6 @@
 #!/bin/sh
 # absolute path to example we are testing
 examples=$FCLAW_EXAMPLES_BUILD_DIR/examples/malpasset/malpasset
-
 # change to source dir for working directory
 cd $FCLAW_EXAMPLES_SRC_DIR/examples/malpasset/regression
 

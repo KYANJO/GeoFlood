@@ -1,22 +1,16 @@
 
-# ----------------------------------------------
-# @author:  Brian Kyanjo
-# @contact: briankyanjo@u.boisestate.edu
-# @date:    2022-10-16
-# @version: 1.0
-# @desc:    
-# ------------------------------------------------
-
-add_executable(malpasset
-    malpasset.cpp
+add_executable(malpasset 
+	malpasset_user.cpp
+	malpasset_user.h
+	malpasset.cpp
 )
 
-target_include_directories(malpasset PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(malpasset PRIVATE 
+  ${CMAKE_CURRENT_SOURCE_DIR} 
 )
 
-target_link_directories(malpasset PRIVATE
-    GEOFLOOD::GEOCLAW
+target_link_libraries(malpasset PRIVATE 
+  GEOFLOOD::GEOCLAW
 )
 
 # -- set environment string used for regression tests

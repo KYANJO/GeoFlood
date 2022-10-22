@@ -14,7 +14,6 @@
 if FCLAW_ENABLE_GEOCLAW
 
 ## Patches needed for GeoClaw solvers
-#include src/patches/clawpatch/Makefile.am
 
 ## Solver library
 include src/fc2d_geoclaw/Makefile.am
