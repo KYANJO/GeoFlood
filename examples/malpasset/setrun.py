@@ -93,8 +93,8 @@ def setrun(claw_pkg='geoclaw'):
     dims_topo = ur_topo - ll_topo
 
     # Try to match aspect ratio of topo map
-    clawdata.num_cells[0] = 54
-    clawdata.num_cells[1] =  54
+    clawdata.num_cells[0] = 32
+    clawdata.num_cells[1] =  32
 
     dim_topo = ur_topo - ll_topo
     mdpt_topo = ll_topo + 0.5*dim_topo
@@ -319,8 +319,8 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata = geoflood.GeoFlooddata()
 
-    geoflooddata.minlevel = 0
-    geoflooddata.maxlevel = 7
+    geoflooddata.minlevel = 1
+    geoflooddata.maxlevel = 3
 
     geoflooddata.regrid_interval = 1
     geoflooddata.refine_threshold = 0.01
