@@ -36,6 +36,4 @@ void malpasset_link_solvers(fclaw2d_global_t *glob)
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
     fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
-
-    // geoclaw_vt->qinit = &TETON_QINIT;
 }
