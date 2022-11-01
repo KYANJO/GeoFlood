@@ -172,19 +172,15 @@ def setrun(claw_pkg='geoclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 3
+    clawdata.output_style = 1
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        # n_hours = 2.0
-        # frames_per_minute = 60.0/5.0 # Frames every 5 seconds
-        # clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
-        # clawdata.tfinal = 60*60*n_hours
-        # clawdata.output_t0 = True  # output at initial (or restart) time?
-        clawdata.num_output_times = 15
-        clawdata.tfinal = 10*3600
+        n_hours = 0.25
+        frames_per_minute = 60.0/5.0 # Frames every 5 seconds
+        clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
+        clawdata.tfinal = 60*60*n_hours
         clawdata.output_t0 = True  # output at initial (or restart) time?
-
 
     elif clawdata.output_style == 2:
         # Specify a list of output times.
@@ -238,9 +234,6 @@ def setrun(claw_pkg='geoclaw'):
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
-
-
-
 
     # ------------------
     # Method to be used:
@@ -329,7 +322,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata = geoflood.GeoFlooddata()
 
     geoflooddata.minlevel = 0
-    geoflooddata.maxlevel = 7
+    geoflooddata.maxlevel = 4
 
     geoflooddata.regrid_interval = 1
     geoflooddata.refine_threshold = 0.01
@@ -361,12 +354,12 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     amrdata = rundata.amrdata
 
-    maxlevel = 7
+    maxlevel = 4
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = [2]*7
-    amrdata.refinement_ratios_y = [2]*7
-    amrdata.refinement_ratios_t = [2]*7
+    amrdata.refinement_ratios_x = [2]*maxlevel 
+    amrdata.refinement_ratios_y = [2]*maxlevel 
+    amrdata.refinement_ratios_t = [2]*maxlevel 
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -429,12 +422,12 @@ def setrun(claw_pkg='geoclaw'):
     # -------------------------------------------------------
     #----comment
     # Wilford
-    # xc,yc = [-111.672222,43.914444]
-    # rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
+    xc,yc = [-111.672222,43.914444]
+    rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
 
     # Teton City
-    # xc,yc = [-111.669167,43.887778]
-    # rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton City
+    xc,yc = [-111.669167,43.887778]
+    rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton City
 
     # Power plant, with border constructed of 4*m gauges
     # Start at SW corner; build gauges in counter-clockwise order in a
