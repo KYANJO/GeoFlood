@@ -5,15 +5,15 @@
         print-options = false
         verbosity = production
         lib-verbosity = essential
-        initial_dt = 1
+        initial_dt = 0.0001
         max_cfl = 1
-        desired_cfl = 0.7
+        desired_cfl = 0.75
         reduce-cfl = true
         use_fixed_dt = false
-        outstyle = 3
-        tfinal = 28800
-        nout = 800
-        nstep = 20
+        outstyle = 1
+        tfinal = 7200
+        nout = 1440
+        nstep = 1
         advance-one-step = false
         outstyle-uses-maxlevel = false
         subcycle = false
@@ -53,10 +53,10 @@
         ghost-patch-pack-numextrafields = 0
         trapfpe = false
         mpi_debug = false
-        ax = -112.34626736
-        bx = -111.26428819
-        ay = 43.18013542
-        by = 43.95986458
+        ax = -112.3462673611021
+        bx = -111.2642881935699
+        ay = 43.18051041667508
+        by = 43.98948958398893
         az = 0
         bz = 1
         manifold = false
@@ -69,8 +69,8 @@
         phi = 0
         theta = 0
 [clawpatch]
-        mx = 16
-        my = 16
+        mx = 54
+        my = 54
         maux = 3
         mbc = 2
         meqn = 3
