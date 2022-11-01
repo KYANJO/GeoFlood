@@ -80,8 +80,9 @@ void geoclaw_header_ascii(fclaw2d_global_t* glob,int iframe)
     const fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
     int meqn = clawpatch_opt->meqn;
     int maux = clawpatch_opt->maux;
+    int mbc = clawpatch_opt->mbc;
 
-    FC2D_GEOCLAW_FORT_WRITE_HEADER(&iframe,&time,&meqn,&maux,&ngrids);
+    FC2D_GEOCLAW_FORT_WRITE_HEADER(&iframe,&time,&meqn,&maux,&ngrids,&mbc);
 }
 
 /* --------------------------------------------------------------
