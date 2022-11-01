@@ -66,47 +66,43 @@ def setrun(claw_pkg='geoclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
 
-    m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
+    def get_topo(topofile):
+        m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
 
+        # Derived info from the topo map
+        mx_topo = m_topo - 1
+        my_topo = n_topo - 1
+        xurcorner = xllcorner + cellsize*mx_topo
+        yurcorner = yllcorner + cellsize*my_topo
+        ll_topo = np.array([xllcorner, yllcorner])
+        ur_topo = np.array([xurcorner, yurcorner])
 
-    # Topo info (TetonDamLatLong.topo)
-    # m_topo = 4180
-    # n_topo = 1464
-    # xllcorner = -112.390734400000
-    # yllcorner = 43.581746970335
-    # cellsize = 0.000277729665
+        print("")
+        print("Topo domain")
+        print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
+        print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
+        print("")
 
-    # Derived info from the topo map
-    mx_topo = m_topo - 1
-    my_topo = n_topo - 1
-    xurcorner = xllcorner + cellsize*mx_topo
-    yurcorner = yllcorner + cellsize*my_topo
-    ll_topo = np.array([xllcorner, yllcorner])
-    ur_topo = np.array([xurcorner, yurcorner])
+        dims_topo = ur_topo - ll_topo
 
-    print("")
-    print("Topo domain")
-    print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
-    print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
-    print("")
+        dim_topo = ur_topo - ll_topo
+        mdpt_topo = ll_topo + 0.5*dim_topo
 
-    dims_topo = ur_topo - ll_topo
+        dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+
+        clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
+        clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+
+        clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+        clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+
+        return dims_topo, clawdata.lower,clawdata.upper
+    
+    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile)
 
     # Try to match aspect ratio of topo map
-    clawdata.num_cells[0] = 32
-    clawdata.num_cells[1] =  32
-
-    dim_topo = ur_topo - ll_topo
-    mdpt_topo = ll_topo + 0.5*dim_topo
-
-    dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
-
-    clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
-    clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
-
-    clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
-    clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
-
+    clawdata.num_cells[0] = 16
+    clawdata.num_cells[1] =  16
     print("")
     print("Computational domain")
     print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
@@ -171,11 +167,15 @@ def setrun(claw_pkg='geoclaw'):
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        n_hours = 2.0
-        frames_per_minute = 60.0/5.0 # Frames every 5 seconds
-        clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
-        clawdata.tfinal = 60*60*n_hours
+        # n_hours = 2
+        # frames_per_minute = 60.0/5.0 # Frames every 5 seconds
+        # clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
+        # clawdata.tfinal = 60*60*n_hours
+        # clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.num_output_times = 15
+        clawdata.tfinal = 10*3600
         clawdata.output_t0 = True  # output at initial (or restart) time?
+
 
     elif clawdata.output_style == 2:
         # Specify a list of output times.
@@ -224,7 +224,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.75
+    clawdata.cfl_desired = 0.8
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
@@ -383,9 +383,11 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    x1 = 43.50; x2 = 43.55
-    y1 = 6.75; y2 = 6.80
-    regions.append([maxlevel,maxlevel, 0, 1.e10,x1,x2,y1, y2])
+    reservoirfile = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
+    dims_topo, x, y = get_topo(reservoirfile)
+    x1 = x[0]; x2 = y[0]
+    y1 = x[1]; y2 = y[1]
+    regions.append([0,maxlevel, 0, 1.e10,x1,x2,y1, y2])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
@@ -450,7 +452,7 @@ def setgeo(rundata):
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
-    geo_data.manning_coefficient = 0.025
+    geo_data.manning_coefficient = 0.033         # according to the CADAM participants manual
     geo_data.friction_depth = 1.e6
 
     # Refinement data
@@ -485,8 +487,8 @@ def setgeo(rundata):
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
 
-    rundata.qinit_data.qinitfiles.append(['scratch/Malpasset/init_eta_5m_cadam.xyz'])
-    rundata.qinit_data.qinitfiles.append(['scratch/Malpasset/init_h_5m_cadam.xyz'])
+    rundata.qinit_data.qinitfiles.append([1,1,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
+    # rundata.qinit_data.qinitfiles.append([0,3,'scratch/Malpasset/init_h_5m_cadam.xyz'])
 
     return rundata
     # end of function setgeo
