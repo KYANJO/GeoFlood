@@ -39,8 +39,6 @@ def setplot(plotdata):
     #to plot gauge locations on pcolor or contour, use this as
     #after axis function:
 
-
-import numpy
 #a = 1.
 #sigma = 0.5
 #h0 = 150
@@ -185,7 +183,7 @@ def setplot(plotdata):
     # Parameters used only when creating html and/or latex hardcopy
     # e.g., via pyclaw.plotters.frametools.printframes:
 
-    plotdata.parallel = True
+    plotdata.parallel = False
     plotdata.printfigs = True                # print figures
     plotdata.print_format = 'png'            # file format
     plotdata.print_framenos = range(0,36)          # list of frames to print

@@ -443,7 +443,7 @@ void FC2D_GEOCLAW_FORT_INTERPOLATE_CORNER(const int* mx,
 #define FC2D_GEOCLAW_FORT_WRITE_HEADER FCLAW_F77_FUNC(fc2d_geoclaw_fort_write_header,\
                                                       FC2D_GEOCLAW_FORT_WRITE_HEADER)
 void FC2D_GEOCLAW_FORT_WRITE_HEADER(int* iframe, double* time, int* meqn, 
-                                    int* maux, int* ngrids);
+                                    int* maux, int* ngrids, int* mbc);
 
 #define FC2D_GEOCLAW_FORT_WRITE_FILE FCLAW_F77_FUNC(fc2d_geoclaw_fort_write_file, \
                                                     FC2D_GEOCLAW_FORT_WRITE_FILE)

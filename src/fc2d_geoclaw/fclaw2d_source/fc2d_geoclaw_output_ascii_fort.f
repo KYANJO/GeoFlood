@@ -1,8 +1,8 @@
       subroutine fc2d_geoclaw_fort_write_header(iframe,time,
-     &      meqn,maux,ngrids)
+     &      meqn,maux,ngrids,mbc)
       implicit none
 
-      integer iframe,meqn,maux,ngrids
+      integer iframe,meqn,maux,ngrids,mbc
 
       character*10 matname1
       character*10 matname2
@@ -22,12 +22,13 @@
       enddo
 
       open(unit=matunit2,file=matname2)
-      write(matunit2,1000) time,meqn + 1,ngrids,maux,2
+      write(matunit2,1000) time,meqn + 1,ngrids,maux,2,mbc
  1000 format(e30.20,'    time', /,
      &      i5,'                 meqn'/,
      &      i5,'                 ngrids'/,
      &      i5,'                 num_aux'/,
-     &      i5,'                 num_dim')
+     &      i5,'                 num_dim'/,
+     &      i5,'                 num_ghost')
 
       close(matunit2)
 
