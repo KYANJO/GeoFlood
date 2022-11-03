@@ -325,7 +325,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata = geoflood.GeoFlooddata()
 
     geoflooddata.minlevel = 0
-    geoflooddata.maxlevel = 7
+    geoflooddata.maxlevel = 4
 
     geoflooddata.regrid_interval = 1
     geoflooddata.refine_threshold = 0.01
@@ -357,12 +357,12 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     amrdata = rundata.amrdata
 
-    maxlevel = 7
+    maxlevel = 4
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = [2]*7
-    amrdata.refinement_ratios_y = [2]*7
-    amrdata.refinement_ratios_t = [2]*7
+    amrdata.refinement_ratios_x = [2]*maxlevel
+    amrdata.refinement_ratios_y = [2]*maxlevel
+    amrdata.refinement_ratios_t = [2]*maxlevel
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
