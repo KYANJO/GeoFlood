@@ -7,12 +7,12 @@
         lib-verbosity = essential
         initial_dt = 0.0001
         max_cfl = 1
-        desired_cfl = 0.75
+        desired_cfl = 0.8
         reduce-cfl = true
         use_fixed_dt = false
         outstyle = 1
-        tfinal = 7200
-        nout = 1440
+        tfinal = 36000
+        nout = 15
         nstep = 1
         advance-one-step = false
         outstyle-uses-maxlevel = false
@@ -53,10 +53,10 @@
         ghost-patch-pack-numextrafields = 0
         trapfpe = false
         mpi_debug = false
-        ax = 953236
-        bx = 959554
-        ay = 1832407.25
-        by = 1848572.75
+        ax = 956044.9375
+        bx = 959550.0625
+        ay = 1844652.4375
+        by = 1848742.5625
         az = 0
         bz = 1
         manifold = false
@@ -69,8 +69,8 @@
         phi = 0
         theta = 0
 [clawpatch]
-        mx = 32
-        my = 32
+        mx = 16
+        my = 16
         maux = 3
         mbc = 2
         meqn = 3
