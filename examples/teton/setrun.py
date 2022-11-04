@@ -320,9 +320,10 @@ def setrun(claw_pkg='geoclaw'):
     # --------------------------------------------------------
 
     geoflooddata = geoflood.GeoFlooddata()
-
-    geoflooddata.minlevel = 0
-    geoflooddata.maxlevel = 7
+    minlevel = 0
+    maxlevel = 6
+    geoflooddata.minlevel = minlevel
+    geoflooddata.maxlevel = maxlevel
 
     geoflooddata.regrid_interval = 1
     geoflooddata.refine_threshold = 0.01
@@ -353,8 +354,6 @@ def setrun(claw_pkg='geoclaw'):
     # AMR parameters:
     # -----------------------------------------------
     amrdata = rundata.amrdata
-
-    maxlevel = 7
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
     amrdata.refinement_ratios_x = [2]*maxlevel 
@@ -433,35 +432,35 @@ def setrun(claw_pkg='geoclaw'):
     # Start at SW corner; build gauges in counter-clockwise order in a
     # square around the region [xll,xur].
     #-------------------------------------------------------
-    m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
-    gauge_counter = 100
+    # m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
+    # gauge_counter = 100
 
-    # South West corner of power plant
-    xll = [-111.623926, 43.913661]  # From email
+    # # South West corner of power plant
+    # xll = [-111.623926, 43.913661]  # From email
 
-    # North East corner of power plant
-    xur = [-111.620150, 43.916382]  # from email
+    # # North East corner of power plant
+    # xur = [-111.620150, 43.916382]  # from email
 
-    s = np.linspace(0,1.,m+1)
-    for i in range(0,m):
-        x = xll[0] + (xur[0] - xll[0])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # s = np.linspace(0,1.,m+1)
+    # for i in range(0,m):
+    #     x = xll[0] + (xur[0] - xll[0])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
-    for i in range(0,m):
-        y = xll[1] + (xur[1] - xll[1])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # for i in range(0,m):
+    #     y = xll[1] + (xur[1] - xll[1])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
-    for i in range(0,m):
-        x = xur[0] + (xll[0] - xur[0])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # for i in range(0,m):
+    #     x = xur[0] + (xll[0] - xur[0])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
-    for i in range(0,m):
-        y = xur[1] + (xll[1] - xur[1])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # for i in range(0,m):
+    #     y = xur[1] + (xll[1] - xur[1])*s[i]
+        # rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
+        # gauge_counter = gauge_counter + 1
 
 
     # -------------------------------------------------------
