@@ -176,8 +176,8 @@ def setrun(claw_pkg='geoclaw'):
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        n_hours = 2
-        frames_per_minute = 60.0/5.0 # Frames every 5 seconds
+        n_hours = 2.0
+        frames_per_minute = 60.0/30.0 # Frames every 5 seconds
         clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
         clawdata.tfinal = 60*60*n_hours
         clawdata.output_t0 = True  # output at initial (or restart) time?
@@ -321,7 +321,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata = geoflood.GeoFlooddata()
     minlevel = 0
-    maxlevel = 6
+    maxlevel = 4
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
@@ -345,8 +345,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.mi = 1
     geoflooddata.mj = 1
 
-    geoflooddata.user = {'example'     : 1, 
-                           'pi-value' : 3.14159}
+    geoflooddata.user = {'example'     : 1}
 
 
 
@@ -512,7 +511,7 @@ def setgeo(rundata):
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
-    geo_data.manning_coefficient = 0.025
+    geo_data.manning_coefficient = 0.06
     geo_data.friction_depth = 1.e6
 
     # Refinement data
