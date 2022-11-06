@@ -355,9 +355,9 @@ def setrun(claw_pkg='geoclaw'):
     maxlevel = 3
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = [2]*maxlevel
-    amrdata.refinement_ratios_y = [2]*maxlevel
-    amrdata.refinement_ratios_t = [2]*maxlevel
+    amrdata.refinement_ratios_x = [4]*maxlevel
+    amrdata.refinement_ratios_y = [4]*maxlevel
+    amrdata.refinement_ratios_t = [4]*maxlevel
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -387,6 +387,7 @@ def setrun(claw_pkg='geoclaw'):
     dims_topo, x, y = get_topo(reservoirfile)
     x1 = x[0]; x2 = y[0]
     y1 = x[1]; y2 = y[1]
+    print('Reservoir dimensions: ', x1, x2, y1, y2)
     regions.append([0,maxlevel, 0, 1.e10,x1,x2,y1, y2])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
