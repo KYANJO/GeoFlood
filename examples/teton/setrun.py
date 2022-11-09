@@ -23,6 +23,47 @@ import geoflood # -- importing geoflood.py
 #===============================================================================
 scratch_dir = os.path.join('../scratch')
 
+#===============================================================================
+# User specified parameters
+#===============================================================================
+#------------------ Time stepping------------------------------------------------
+initial_dt = 1  # Initial time step
+fixed_dt = False   # Take constant time step
+
+# -------------------- Output files -------------------------------------------------
+output_style = 1 #changed 10.21   
+
+if output_style == 1:
+    # Total number of frames will be frames_per_minute*60*n_hours
+
+    n_hours = 20.0              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    
+
+    frames_per_minute = 1/30   # Frames every 1/2 hour
+
+if output_style == 2:
+    output_times = [1,2,3]    # Specify exact times to output files
+
+if output_style == 3:
+    step_interval = 10   # Create output file every 10 steps
+    total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
+
+#-------------------  Computational coarse grid ---------------------------------------
+mx = 54
+my = 54
+
+minlevel = 0
+maxlevel = 4 #resolution based on levels
+ratios_x = [2,4,4,4]
+ratios_y = [2,4,4,4]
+ratios_t = [2,4,4,4] #should this be 0,0,0,0?
+
+#-------------------manning coefficient -----------------------------------------------
+manning_coefficient = 0.06
+
+# --------------------- Topography file -----------------------------------------------
+topofile = 'topos/TetonLarge.topo'
+
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
 #------------------------------
@@ -45,8 +86,6 @@ def setrun(claw_pkg='geoclaw'):
     num_dim = 2
 
     rundata = data.ClawRunData(claw_pkg, num_dim)
-
-    topofile = 'topos/TetonLarge.topo'
 
     #------------------------------------------------------------------
     # GeoClaw specific parameters:
@@ -98,8 +137,8 @@ def setrun(claw_pkg='geoclaw'):
     dims_topo = ur_topo - ll_topo
 
     # Try to match aspect ratio of topo map
-    clawdata.num_cells[0] = 54
-    clawdata.num_cells[1] =  54
+    clawdata.num_cells[0] = mx
+    clawdata.num_cells[1] = my
 
     dim_topo = ur_topo - ll_topo
     mdpt_topo = ll_topo + 0.5*dim_topo
@@ -133,7 +172,7 @@ def setrun(claw_pkg='geoclaw'):
     lon = np.array([clawdata.lower[0],clawdata.upper[0]])
     lat = np.array([clawdata.lower[1],clawdata.upper[1]])
     d = tools.compute_distances(lon,lat)
-    
+   
     # ---------------
     # Size of system:
     # ---------------
@@ -172,12 +211,12 @@ def setrun(claw_pkg='geoclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = output_style
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        n_hours = 7.0
-        frames_per_minute = 60.0/30.0 # Frames every 5 seconds
+        # n_hours = 20.0
+        # frames_per_minute = 1/30.0 # Frames every 5 seconds
         clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
         clawdata.tfinal = 60*60*n_hours
         clawdata.output_t0 = True  # output at initial (or restart) time?
@@ -188,10 +227,10 @@ def setrun(claw_pkg='geoclaw'):
 
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
-        clawdata.output_step_interval = 100
-        clawdata.total_steps = 1000
+        clawdata.output_step_interval = step_interval
+        clawdata.total_steps = total_steps
         clawdata.output_t0 = True
-
+        clawdata.tfinal = total_steps*fixed_dt
 
     clawdata.output_format = 'ascii'      # 'ascii' or 'netcdf'
 
@@ -218,11 +257,11 @@ def setrun(claw_pkg='geoclaw'):
 
     # if dt_variable==1: variable time steps used based on cfl_desired,
     # if dt_variable==0: fixed time steps dt = dt_initial will always be used.
-    clawdata.dt_variable = True
+    clawdata.dt_variable = not fixed_dt
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 0.0001
+    clawdata.dt_initial = initial_dt
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 1e+99
@@ -320,8 +359,6 @@ def setrun(claw_pkg='geoclaw'):
     # --------------------------------------------------------
 
     geoflooddata = geoflood.GeoFlooddata()
-    minlevel = 0
-    maxlevel = 4
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
@@ -331,6 +368,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.subcycle = False
     geoflooddata.output = True
+    geoflooddata.output_gauges = True
 
     # geoflood verbosity choices : 
     # 0 or 'silent'      : No output to the terminal
@@ -347,17 +385,15 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.user = {'example'     : 1}
 
-
-
     # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
     amrdata = rundata.amrdata
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = [2]*maxlevel 
-    amrdata.refinement_ratios_y = [2]*maxlevel 
-    amrdata.refinement_ratios_t = [2]*maxlevel 
+    amrdata.refinement_ratios_x = ratios_x 
+    amrdata.refinement_ratios_y = ratios_y
+    amrdata.refinement_ratios_t = ratios_t
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -365,7 +401,7 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center','capacity','yleft']
+    amrdata.aux_type = ['center','capacity','yleft','center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -396,16 +432,15 @@ def setrun(claw_pkg='geoclaw'):
     regions.append([maxlevel,maxlevel, 0, 1.e10,-111.543,-111.24,43.88, 43.965])
 
     # Box containing gauge location locations
+    xll = [-111.64, 43.913661]  # From email
+    xur = [-111.60, 43.92]  # from email
+    region_lower, region_upper,_ = tools.region_coords(xll,xur,
+                                                    clawdata.num_cells,
+                                                    clawdata.lower,
+                                                    clawdata.upper)
 
-#    xll = [-111.64, 43.913661]  # From email
-#    xur = [-111.60, 43.92]  # from email
-#    region_lower, region_upper,_ = tools.region_coords(xll,xur,
-#                                                     clawdata.num_cells,
-#                                                     clawdata.lower,
-#                                                     clawdata.upper)
-#
-#    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-#                    region_lower[1],region_upper[1]])
+    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
+                    region_lower[1],region_upper[1]])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
@@ -418,48 +453,101 @@ def setrun(claw_pkg='geoclaw'):
     #
     # For gauges append lines of the form  [gaugeno, x, y, t1, t2]
     # -------------------------------------------------------
-    #----comment
-    # Wilford
-    xc,yc = [-111.672222,43.914444]
-    rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
+    rundata.gaugedata.gtype = {}
+   
+    #Stationary Gauges
 
-    # Teton City
-    xc,yc = [-111.669167,43.887778]
-    rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton City
+    #Teton_Canyon_
+    xc,yc = [-111.593965, 43.934059] 
+    rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Mid Teton Canyon 
+    rundata.gaugedata.gtype[1] = 'stationary'
+
+    #Teton_Canyon_Mouth_
+    xc,yc = [-111.66637, 43.933847] 
+    rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton Canyon Mouth 
+    rundata.gaugedata.gtype[2] = 'stationary'
+
+    #Wilford_Gauge_
+    xc,yc = [-111.672, 43.9144]
+    rundata.gaugedata.gauges.append([3,xc,yc,0.,clawdata.tfinal])  # Wilford Gauge 
+    rundata.gaugedata.gtype[3] = 'stationary'
+
+    #Sugar_City_Gauge_
+    xc,yc = [-111.743358, 43.873840]
+    rundata.gaugedata.gauges.append([4,xc,yc,0.,clawdata.tfinal])  # Sugar City Gauge 2 
+    rundata.gaugedata.gtype[4] = 'stationary'
+
+    #Roberts Gauge 
+    xc,yc = [-112.126403, 43.7202] 
+    rundata.gaugedata.gauges.append([5,xc,yc,0.,clawdata.tfinal])  # Roberts Gauge    
+    rundata.gaugedata.gtype[5] = 'stationary'
+
+    #Rexburg_Gauge_
+    xc,yc = [-111.792295, 43.823048] 
+    rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])  # Rexburg Gauge 
+    rundata.gaugedata.gtype[6] = 'stationary'
+
+    # or to have some of each type, use a dictionary:
+    rundata.gaugedata.gtype = {}
+    
+    # lagrangian gauges Northeastern
+    for iyg in range(0,3): #ten is the grid
+        for ixg in range(0,3):
+            gaugeno = 10*iyg + ixg + 100
+            yg = 43.91335 + 0.01*iyg #testing
+            xg = -111.6211080 + 0.012*ixg #test
+            rundata.gaugedata.gauges.append([gaugeno, xg, yg, 0., 1e10])
+            rundata.gaugedata.gtype[gaugeno] = 'lagrangian'
+    
+    # lagrangian gauges Southwestern - Menan Butte
+    for iyg in range(0,3): #ten is the grid
+        for ixg in range(0,3):
+            gaugeno = 10*iyg + ixg + 200
+            yg = 43.800575 + 0.01*iyg #testing
+            xg = -111.9419740 + 0.012*ixg #test
+            rundata.gaugedata.gauges.append([gaugeno, xg, yg, 0., 1e10])
+            rundata.gaugedata.gtype[gaugeno] = 'lagrangian'
+    # # Wilford
+    # xc,yc = [-111.672222,43.914444]
+    # rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
+
+    # # Teton City
+    # xc,yc = [-111.669167,43.887778]
+    # rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton City
 
     # Power plant, with border constructed of 4*m gauges
     # Start at SW corner; build gauges in counter-clockwise order in a
     # square around the region [xll,xur].
     #-------------------------------------------------------
-    m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
-    gauge_counter = 100
+    # m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
+    # gauge_counter = 100
 
-    # South West corner of power plant
-    xll = [-111.623926, 43.913661]  # From email
+    # # South West corner of power plant
+    # xll = [-111.623926, 43.913661]  # From email
 
-    # North East corner of power plant
-    xur = [-111.620150, 43.916382]  # from email
+    # # North East corner of power plant
+    # xur = [-111.620150, 43.916382]  # from email
 
-    s = np.linspace(0,1.,m+1)
-    for i in range(0,m):
-        x = xll[0] + (xur[0] - xll[0])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # s = np.linspace(0,1.,m+1)
+    # for i in range(0,m):
+    #     x = xll[0] + (xur[0] - xll[0])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
-    for i in range(0,m):
-        y = xll[1] + (xur[1] - xll[1])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # for i in range(0,m):
+    #     y = xll[1] + (xur[1] - xll[1])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
-    for i in range(0,m):
-        x = xur[0] + (xll[0] - xur[0])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # for i in range(0,m):
+    #     x = xur[0] + (xll[0] - xur[0])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
-    for i in range(0,m):
-        y = xur[1] + (xll[1] - xur[1])*s[i]
-        rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
-        gauge_counter = gauge_counter + 1
+    # for i in range(0,m):
+    #     y = xur[1] + (xll[1] - xur[1])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
 
 
     # -------------------------------------------------------
@@ -496,22 +584,19 @@ def setgeo(rundata):
         print("*** Error, this rundata has no geo_data attribute")
         raise AttributeError("Missing geo_data attribute")
 
-
-    topofile = 'topos/TetonLarge.topo'
-
     # == Physics ==
     geo_data.gravity = 9.81
     geo_data.coordinate_system = 2   # LatLong coordinates
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
-    geo_data.coriolis_forcing = False
+    geo_data.coriolis_forcing = True
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
-    geo_data.manning_coefficient = 0.06
+    geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 1.e6
 
     # Refinement data
