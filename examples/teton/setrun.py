@@ -61,6 +61,9 @@ ratios_t = [2,4,4,4] #should this be 0,0,0,0?
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.06
 
+#-------------------  Number of dimensions ---------------------------------------
+num_dim = 2
+
 # --------------------- Topography file -----------------------------------------------
 topofile = 'topos/TetonLarge.topo'
 
@@ -83,7 +86,7 @@ def setrun(claw_pkg='geoclaw'):
 
     assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
 
-    num_dim = 2
+   
 
     rundata = data.ClawRunData(claw_pkg, num_dim)
 

@@ -5,14 +5,14 @@
         print-options = false
         verbosity = production
         lib-verbosity = essential
-        initial_dt = 0.0001
+        initial_dt = 0.001
         max_cfl = 1
         desired_cfl = 0.8
         reduce-cfl = true
         use_fixed_dt = false
         outstyle = 1
-        tfinal = 36000
-        nout = 15
+        tfinal = 7200
+        nout = 240
         nstep = 1
         advance-one-step = false
         outstyle-uses-maxlevel = false
@@ -23,7 +23,7 @@
         flux-correction = true
         fluctuation-correction = true
         output = true
-        output-gauges = false
+        output-gauges = true
         gauge-buffer-length = 1
         tikz-out = false
         tikz-figsize = 8 6
@@ -69,8 +69,8 @@
         phi = 0
         theta = 0
 [clawpatch]
-        mx = 16
-        my = 16
+        mx = 54
+        my = 54
         maux = 3
         mbc = 2
         meqn = 3
