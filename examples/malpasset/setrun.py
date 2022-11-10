@@ -22,7 +22,7 @@ import geoflood # -- importing geoflood.py script
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 0.001  # Initial time step
+initial_dt = 0.0001  # Initial time step
 fixed_dt = False   # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -31,10 +31,10 @@ output_style = 1 #changed 10.21
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 2.0              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    n_hours = 1.0              # Total number of hours in simulation, changed 10.14.2020  should be 5      
     
 
-    frames_per_minute = 60/30   # Frames every 1/2 hour
+    frames_per_minute = 1/5   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -44,14 +44,14 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 54
-my = 54
+mx = 32
+my = 32
 
-minlevel = 0
+minlevel = 1
 maxlevel = 4 #resolution based on levels
-ratios_x = [2,4,4,4]
-ratios_y = [2,4,4,4]
-ratios_t = [2,4,4,4] #should this be 0,0,0,0?
+ratios_x =  [4]*maxlevel
+ratios_y =  [4]*maxlevel
+ratios_t =  [4]*maxlevel#should this be 0,0,0,0?
 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.033
@@ -112,8 +112,12 @@ def setrun(claw_pkg='geoclaw'):
         my_topo = n_topo - 1
         xurcorner = xllcorner + cellsize*mx_topo
         yurcorner = yllcorner + cellsize*my_topo
+
         ll_topo = np.array([xllcorner, yllcorner])
         ur_topo = np.array([xurcorner, yurcorner])
+
+        # ll_topo = np.array([957738.41,  1844520.8])
+        # ur_topo = np.array([957987.1, 1844566.5])
 
         print("")
         print("Topo domain")
@@ -135,8 +139,12 @@ def setrun(claw_pkg='geoclaw'):
         clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
 
         return dims_topo, clawdata.lower,clawdata.upper
+
     
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile)
+
+    clawdata.lower = np.array([957738.41,  1844520.82])
+    clawdata.upper = np.array([957987.1, 1844566.5])
 
     # Try to match aspect ratio of topo map
     clawdata.num_cells[0] = mx
@@ -358,8 +366,8 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata = geoflood.GeoFlooddata()
 
-    geoflooddata.minlevel = 1
-    geoflooddata.maxlevel = 3
+    geoflooddata.minlevel = minlevel
+    geoflooddata.maxlevel = maxlevel
 
     geoflooddata.regrid_interval = 1
     geoflooddata.refine_threshold = 0.01
@@ -425,7 +433,7 @@ def setrun(claw_pkg='geoclaw'):
     x1 = x[0]; x2 = y[0]
     y1 = x[1]; y2 = y[1]
     print('Reservoir dimensions: ', x1, x2, y1, y2)
-    regions.append([0,maxlevel, 0, 1.e10,x1,x2,y1, y2])
+    # regions.append([0,maxlevel, 0, 1.e10,x1,x2,y1, y2])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
@@ -493,6 +501,8 @@ def setgeo(rundata):
     geo_data.manning_coefficient = manning_coefficient  # according to the CADAM participants manual
     geo_data.friction_depth = 1.e6
 
+     # GeoClaw data
+    # geo_data.g
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
@@ -500,11 +510,12 @@ def setgeo(rundata):
     refinement_data.max_level_deep = 3
     refinement_data.variable_dt_refinement_ratios = False
 
+   
     # == settopo.data values ==
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-   
+    # topo_data.topofiles.append([1,1, 1, 0, 1e10,'scratch/cadam/topo/scattereddata/malpasset_mycoords.xyz'])
     topo_data.topofiles.append([2, 1, 1, 0, 1e10, 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'])
     topo_data.topofiles.append([2, 2, 2, 0, 1e10, 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'])
     topo_data.topofiles.append([2, 1, 3, 0, 1e10, 'scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2'])
@@ -527,7 +538,7 @@ def setgeo(rundata):
     #   [minlev, maxlev, fname]
 
     rundata.qinit_data.qinitfiles.append([1,1,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
-    # rundata.qinit_data.qinitfiles.append([0,2,'scratch/Malpasset/init_h_5m_cadam.xyz'])
+    # rundata.qinit_data.qinitfiles.append([1,4,'scratch/Malpasset/init_h_5m_cadam.xyz'])
 
     return rundata
     # end of function setgeo
