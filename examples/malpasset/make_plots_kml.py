@@ -36,40 +36,32 @@ def setplot(plotdata):
     #-----------------------------------------
     # Some global kml flags
     #-----------------------------------------
-    plotdata.kml_name = "Teton Dam"
-    plotdata.kml_starttime = [1976,6,5,17,55,0]  # Date/time of event in UTC [None]
-    plotdata.kml_tz_offset = 6    # Time zone offset (in hours) of event. [None]
+    plotdata.kml_name = "Malpasset Dam"
+    plotdata.kml_starttime = [1959,12,2,21,14,0]  # Date/time of event in UTC [None]
+    plotdata.kml_tz_offset = 1    # Time zone offset (in hours) of event. [None]
 
-    plotdata.kml_index_fname = "TetonDam"  # name for .kmz and .kml files ["_GoogleEarth"]
+    plotdata.kml_index_fname = "MalpassetDam"  # name for .kmz and .kml files ["_GoogleEarth"]
 
     # Set to a URL where KMZ file will be published.
     # plotdata.kml_publish = 'http://math.boisestate.edu/~calhoun/visclaw/GoogleEarth/kmz'
 
     # Add [file_name,visibility]
-    plotdata.kml_user_files.append(['teton_dam_validate.kml',True])
+    # ----commented out
+    # plotdata.kml_user_files.append(['malpasset_dam_validate.kml',True])
 
     # Cells used in setrun.py (original)
     num_cells = [54,19]
-    lower = [-112.36171859324912, 43.591904932832371]
-    upper = [-111.25911793671588, 43.977907507732617]
-    #xll = [-111.64, 43.913661]
-    #xur = [-111.60, 43.92]
+    lower = [4701.18,       4143.41]
+    upper = [4655.5,    4392.10]
 
-    # Lower left   ( -112.34626736,  43.18013542)
-    # Upper right  ( -111.26428819,  43.95986458)
-
-    num_cells = [54,54]
-    lower = [-112.34626736,  43.18013542]
-    upper = [-111.26428819,  43.95986458]
-
-    #xll = [-111.64, 43.913661]
-    #xur = [-111.60, 43.92]
+    lower = [957738.41,  1844520.8]
+    957987.1, 1844566.5
 
     #-----------------------------------------------------------
     # Figure for KML files (large view)
     # This under-resolves the finest level.
     #----------------------------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Teton Dam',figno=1)
+    plotfigure = plotdata.new_plotfigure(name='Malpasset Dam',figno=1)
     plotfigure.show = True
 
     plotfigure.use_for_kml = True
@@ -98,7 +90,7 @@ def setplot(plotdata):
     mi = 1
     mj = 1
     minlevel = 0
-    maxlevel = 7
+    maxlevel = 4
     p = 1
     plotfigure.kml_figsize = [32,32]  #[mx*2**p*mi,mx*2**p*mj]
     plotfigure.kml_dpi = 64
@@ -127,7 +119,7 @@ def setplot(plotdata):
     #-----------------------------------------------------------
     # Figure for KML files (zoomed view on region)
     #----------------------------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Power Plant (zoom)',figno=2)
+    plotfigure = plotdata.new_plotfigure(name='Transformers (zoom)',figno=2)
     plotfigure.show = True
 
     plotfigure.use_for_kml = True
@@ -215,10 +207,24 @@ def setplot(plotdata):
         from pylab import plot, legend, xticks, floor, axis, xlabel,title
         t = current_data.t
         gaugeno = current_data.gaugeno
-        if gaugeno == 1:
-            title('Wilford')
-        elif gaugeno == 2:
-            title('Teton City')
+        if gaugeno == 6:
+            title('P6')
+        elif gaugeno == 7:
+            title('P7')
+        elif gaugeno == 8:
+            title('P8')
+        elif gaugeno == 9:
+            title('P9')
+        elif gaugeno == 10:
+            title('P10')
+        elif gaugeno == 11:
+            title('P11')
+        elif gaugeno == 12:
+            title('P12')
+        elif gaugeno == 13:
+            title('P13')
+        elif gaugeno == 14:
+            title('P14')
 
         # plot(t, 0*t, 'k')
         n = int(floor(t.max()/3600.) + 2)
@@ -235,7 +241,7 @@ def setplot(plotdata):
 
     plotdata.parallel = False
     plotdata.print_format = 'png'           # file format
-    plotdata.print_framenos = 'all'         # list of frames to print
+    plotdata.print_framenos = range(0,300,10)         # list of frames to print
     plotdata.print_gaugenos = 'all'         # list of gauges to print
     plotdata.print_fignos = [1,300]         # list of figures to print
 
