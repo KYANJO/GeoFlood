@@ -50,12 +50,12 @@ def setplot(plotdata):
     # plotdata.kml_user_files.append(['malpasset_dam_validate.kml',True])
 
     # Cells used in setrun.py (original)
-    num_cells = [54,19]
-    lower = [4701.18,       4143.41]
-    upper = [4655.5,    4392.10]
+    # num_cells = [54,19]
+    # lower = [4701.18,       4143.41]
+    # upper = [4655.5,    4392.10]
 
     lower = [957738.41,  1844520.8]
-    957987.1, 1844566.5
+    upper = [957987.1, 1844566.5]
 
     #-----------------------------------------------------------
     # Figure for KML files (large view)

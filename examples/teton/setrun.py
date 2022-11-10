@@ -176,8 +176,8 @@ def setrun(claw_pkg='geoclaw'):
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        n_hours = 2.0
-        frames_per_minute = 60.0/5.0 # Frames every 5 seconds
+        n_hours = 7.0
+        frames_per_minute = 60.0/30.0 # Frames every 5 seconds
         clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
         clawdata.tfinal = 60*60*n_hours
         clawdata.output_t0 = True  # output at initial (or restart) time?
@@ -188,8 +188,8 @@ def setrun(claw_pkg='geoclaw'):
 
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
+        clawdata.output_step_interval = 100
+        clawdata.total_steps = 1000
         clawdata.output_t0 = True
 
 
@@ -234,9 +234,6 @@ def setrun(claw_pkg='geoclaw'):
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
-
-
-
 
     # ------------------
     # Method to be used:
@@ -323,9 +320,10 @@ def setrun(claw_pkg='geoclaw'):
     # --------------------------------------------------------
 
     geoflooddata = geoflood.GeoFlooddata()
-
-    geoflooddata.minlevel = 0
-    geoflooddata.maxlevel = 7
+    minlevel = 0
+    maxlevel = 4
+    geoflooddata.minlevel = minlevel
+    geoflooddata.maxlevel = maxlevel
 
     geoflooddata.regrid_interval = 1
     geoflooddata.refine_threshold = 0.01
@@ -347,8 +345,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.mi = 1
     geoflooddata.mj = 1
 
-    geoflooddata.user = {'example'     : 1, 
-                           'pi-value' : 3.14159}
+    geoflooddata.user = {'example'     : 1}
 
 
 
@@ -357,12 +354,10 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     amrdata = rundata.amrdata
 
-    maxlevel = 7
-
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = [2]*7
-    amrdata.refinement_ratios_y = [2]*7
-    amrdata.refinement_ratios_t = [2]*7
+    amrdata.refinement_ratios_x = [2]*maxlevel 
+    amrdata.refinement_ratios_y = [2]*maxlevel 
+    amrdata.refinement_ratios_t = [2]*maxlevel 
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -423,7 +418,7 @@ def setrun(claw_pkg='geoclaw'):
     #
     # For gauges append lines of the form  [gaugeno, x, y, t1, t2]
     # -------------------------------------------------------
-
+    #----comment
     # Wilford
     xc,yc = [-111.672222,43.914444]
     rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
@@ -435,36 +430,36 @@ def setrun(claw_pkg='geoclaw'):
     # Power plant, with border constructed of 4*m gauges
     # Start at SW corner; build gauges in counter-clockwise order in a
     # square around the region [xll,xur].
+    #-------------------------------------------------------
+    m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
+    gauge_counter = 100
 
-#    m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
-#    gauge_counter = 100
-#
-#    # South West corner of power plant
-#    xll = [-111.623926, 43.913661]  # From email
-#
-#    # North East corner of power plant
-#    xur = [-111.620150, 43.916382]  # from email
-#
-#    s = np.linspace(0,1.,m+1)
-#    for i in range(0,m):
-#        x = xll[0] + (xur[0] - xll[0])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-#
-#    for i in range(0,m):
-#        y = xll[1] + (xur[1] - xll[1])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-#
-#    for i in range(0,m):
-#        x = xur[0] + (xll[0] - xur[0])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
-#
-#    for i in range(0,m):
-#        y = xur[1] + (xll[1] - xur[1])*s[i]
-#        rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
-#        gauge_counter = gauge_counter + 1
+    # South West corner of power plant
+    xll = [-111.623926, 43.913661]  # From email
+
+    # North East corner of power plant
+    xur = [-111.620150, 43.916382]  # from email
+
+    s = np.linspace(0,1.,m+1)
+    for i in range(0,m):
+        x = xll[0] + (xur[0] - xll[0])*s[i]
+        rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
+        gauge_counter = gauge_counter + 1
+
+    for i in range(0,m):
+        y = xll[1] + (xur[1] - xll[1])*s[i]
+        rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
+        gauge_counter = gauge_counter + 1
+
+    for i in range(0,m):
+        x = xur[0] + (xll[0] - xur[0])*s[i]
+        rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
+        gauge_counter = gauge_counter + 1
+
+    for i in range(0,m):
+        y = xur[1] + (xll[1] - xur[1])*s[i]
+        rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
+        gauge_counter = gauge_counter + 1
 
 
     # -------------------------------------------------------
@@ -516,7 +511,7 @@ def setgeo(rundata):
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
-    geo_data.manning_coefficient = 0.025
+    geo_data.manning_coefficient = 0.06
     geo_data.friction_depth = 1.e6
 
     # Refinement data
