@@ -23,6 +23,7 @@ class GeoFlooddata(object):
         self.coarsen_threshold = 0.5
         self.subcycle = False
         self.output = True
+        self.output_gauges = True
         self.verbosity = 'essential'
 
         self.mi = 1
@@ -118,6 +119,7 @@ class GeoFlooddata(object):
 
         '# File and console IO' : None,
         '   output' : self.output,
+        '   output-gauges' : self.output_gauges,
         '   verbosity' : self.verbosity,"\n"
 
 
