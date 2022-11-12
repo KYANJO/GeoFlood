@@ -77,7 +77,7 @@ def setplot(plotdata):
     #-----------------------------------------
     # Figure for pcolor plot
     #-----------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Malpasset Dam', figno=0)
+    plotfigure = plotdata.new_plotfigure(name='Teton Dam', figno=0)
 
     # Set up for axes in this figure:
     plotaxes = plotfigure.new_plotaxes('pcolor')
@@ -167,24 +167,10 @@ def setplot(plotdata):
         from pylab import plot, legend, xticks, floor, axis, xlabel,title
         t = current_data.t
         gaugeno = current_data.gaugeno
-        if gaugeno == 6:
-            title('P6')
-        elif gaugeno == 7:
-            title('P7')
-        elif gaugeno == 8:
-            title('P8')
-        elif gaugeno == 9:
-            title('P9')
-        elif gaugeno == 10:
-            title('P10')
-        elif gaugeno == 11:
-            title('P11')
-        elif gaugeno == 12:
-            title('P12')
-        elif gaugeno == 13:
-            title('P13')
-        elif gaugeno == 14:
-            title('P14')
+        if gaugeno == 1:
+            title('Wilford')
+        elif gaugeno == 2:
+            title('Teton City')
 
         # plot(t, 0*t, 'k')
         n = int(floor(t.max()/3600.) + 2)
@@ -199,7 +185,7 @@ def setplot(plotdata):
     # Parameters used only when creating html and/or latex hardcopy
     # e.g., via pyclaw.plotters.frametools.printframes:
 
-    plotdata.parallel = False
+    plotdata.parallel = True
     plotdata.printfigs = True                # print figures
     plotdata.print_format = 'png'            # file format
     plotdata.print_framenos = range(0,36)          # list of frames to print

@@ -50,12 +50,9 @@ def setplot(plotdata):
     # plotdata.kml_user_files.append(['malpasset_dam_validate.kml',True])
 
     # Cells used in setrun.py (original)
-    # num_cells = [54,19]
-    # lower = [4701.18,       4143.41]
-    # upper = [4655.5,    4392.10]
-
-    lower = [957738.41,  1844520.8]
-    upper = [957987.1, 1844566.5]
+    num_cells = [54,19]
+    lower = [953236.00000000, 1832407.25000000]
+    upper = [959554.00000000, 1848572.75000000]
 
     #-----------------------------------------------------------
     # Figure for KML files (large view)
@@ -241,7 +238,7 @@ def setplot(plotdata):
 
     plotdata.parallel = False
     plotdata.print_format = 'png'           # file format
-    plotdata.print_framenos = range(0,300,10)         # list of frames to print
+    plotdata.print_framenos = 'all'         # list of frames to print
     plotdata.print_gaugenos = 'all'         # list of gauges to print
     plotdata.print_fignos = [1,300]         # list of figures to print
 

@@ -16,13 +16,18 @@ import tools
 # Importing scripts dictionary
 #===============================================================================
 sys.path.append('../../scripts')
-import geoflood # -- importing geoflood.py script
+import geoflood # -- importing geoflood.py
+
+#===============================================================================
+# scratch directory
+#===============================================================================
+scratch_dir = os.path.join('../scratch')
 
 #===============================================================================
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 0.0001  # Initial time step
+initial_dt = 1  # Initial time step
 fixed_dt = False   # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -31,10 +36,10 @@ output_style = 1 #changed 10.21
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 1.0              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    n_hours = 0.5              # Total number of hours in simulation, changed 10.14.2020  should be 5      
     
 
-    frames_per_minute = 1/5   # Frames every 1/2 hour
+    frames_per_minute = 1/30   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -44,17 +49,23 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 32
-my = 32
+mx = 54
+my = 54
 
-minlevel = 1
+minlevel = 0
 maxlevel = 4 #resolution based on levels
-ratios_x =  [4]*maxlevel
-ratios_y =  [4]*maxlevel
-ratios_t =  [4]*maxlevel#should this be 0,0,0,0?
+ratios_x = [2,4,4,4]
+ratios_y = [2,4,4,4]
+ratios_t = [2,4,4,4] #should this be 0,0,0,0?
 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.033
+
+#-------------------  Number of dimensions ---------------------------------------
+num_dim = 2
+
+# --------------------- Topography file -----------------------------------------------
+topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -75,11 +86,9 @@ def setrun(claw_pkg='geoclaw'):
 
     assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
 
-    num_dim = 2
+   
 
     rundata = data.ClawRunData(claw_pkg, num_dim)
-
-    topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
 
     #------------------------------------------------------------------
     # GeoClaw specific parameters:
@@ -143,12 +152,6 @@ def setrun(claw_pkg='geoclaw'):
     
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile)
 
-    clawdata.lower = np.array([957738.41,  1844520.82])
-    clawdata.upper = np.array([957987.1, 1844566.5])
-
-    # Try to match aspect ratio of topo map
-    clawdata.num_cells[0] = mx
-    clawdata.num_cells[1] =  my
     print("")
     print("Computational domain")
     print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
@@ -170,7 +173,7 @@ def setrun(claw_pkg='geoclaw'):
     lon = np.array([clawdata.lower[0],clawdata.upper[0]])
     lat = np.array([clawdata.lower[1],clawdata.upper[1]])
     d = tools.compute_distances(lon,lat)
-    
+   
     # ---------------
     # Size of system:
     # ---------------
@@ -209,19 +212,15 @@ def setrun(claw_pkg='geoclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = output_style
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        # n_hours = 1
-        # frames_per_minute = 60.0/30.0 # Frames every 5 seconds
+        # n_hours = 20.0
+        # frames_per_minute = 1/30.0 # Frames every 5 seconds
         clawdata.num_output_times = int(frames_per_minute*60*n_hours)  # Plot every 10 seconds
         clawdata.tfinal = 60*60*n_hours
         clawdata.output_t0 = True  # output at initial (or restart) time?
-        # clawdata.num_output_times = 15
-        # clawdata.tfinal = 10*3600
-        # clawdata.output_t0 = True  # output at initial (or restart) time?
-
 
     elif clawdata.output_style == 2:
         # Specify a list of output times.
@@ -229,11 +228,10 @@ def setrun(claw_pkg='geoclaw'):
 
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
+        clawdata.output_step_interval = step_interval
+        clawdata.total_steps = total_steps
         clawdata.output_t0 = True
         clawdata.tfinal = total_steps*fixed_dt
-
 
     clawdata.output_format = 'ascii'      # 'ascii' or 'netcdf'
 
@@ -271,14 +269,11 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.8
+    clawdata.cfl_desired = 0.75
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
-
-
-
 
     # ------------------
     # Method to be used:
@@ -365,7 +360,6 @@ def setrun(claw_pkg='geoclaw'):
     # --------------------------------------------------------
 
     geoflooddata = geoflood.GeoFlooddata()
-
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
@@ -375,7 +369,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.subcycle = False
     geoflooddata.output = True
-    geoflooddata.output_gauges = True  # output gauge data to file
+    geoflooddata.output_gauges = True
 
     # geoflood verbosity choices : 
     # 0 or 'silent'      : No output to the terminal
@@ -391,8 +385,6 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.mj = 1
 
     geoflooddata.user = {'example'     : 1}
-
-
 
     # -----------------------------------------------
     # AMR parameters:
@@ -410,7 +402,7 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center','capacity','yleft']
+    amrdata.aux_type = ['center','capacity','yleft','center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -422,25 +414,40 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.verbosity_regrid = 0
 
     # -----------------------------------------------
+    # INL Regions
+    #   Regions to be refined :
+    #    (1) Refine initial reservoir to level 4
+    #        (otherwise, we won't resolve valley, and
+    #        won't fill the reservoir properly)
+    #    (2) Refine around nuclear power plant (indicated by gauge
+    #        100, 101, ..., 115, below)
+    #    (3) Computational domain, with maxlevel=4
+    #
     # To specify regions of refinement append lines of the form
     #    regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
+
     # -----------------------------------------------
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    reservoirfile = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
-    dims_topo, x, y = get_topo(reservoirfile)
-    x1 = x[0]; x2 = y[0]
-    y1 = x[1]; y2 = y[1]
-    print('Reservoir dimensions: ', x1, x2, y1, y2)
-    # regions.append([0,maxlevel, 0, 1.e10,x1,x2,y1, y2])
+    regions.append([maxlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
+
+    # Box containing gauge location locations
+    xll = [957738.41,  1844520.82]
+    xur = [957987.1, 1844566.5]  # from email
+    region_lower, region_upper,_ = tools.region_coords(xll,xur,
+                                                    clawdata.num_cells,
+                                                    clawdata.lower,
+                                                    clawdata.upper)
+
+    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
+                    region_lower[1],region_upper[1]])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
                     clawdata.lower[1],clawdata.upper[1]])
 
-   
-    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
+   # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gno = [6,7,8,9,10,11,12,13,14] # gauge numbers
     xc = [4947.46,5717.30,6775.14,7128.20,8585.30,9674.97,10939.15,11724.37,12723.70] # x-coordinates
     yc = [4289.71,4407.61,3869.23,3162.00,3443.08,3085.89,3044.78,2810.41,2485.08] # y-coordinates
@@ -449,9 +456,8 @@ def setrun(claw_pkg='geoclaw'):
 
     for i in range(len(gno)):
         print('\tGauge %s at (%s, %s)' % (gno[i], xc[i], yc[i]))
-        rundata.gaugedata.gauges.append([gno[i],xc[i],yc[i],0.,clawdata.tfinal])
+        # rundata.gaugedata.gauges.append([gno[i],xc[i],yc[i],0.,clawdata.tfinal])
 
-   
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -492,17 +498,15 @@ def setgeo(rundata):
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
-    geo_data.coriolis_forcing = False
+    geo_data.coriolis_forcing = True
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
-    geo_data.manning_coefficient = manning_coefficient  # according to the CADAM participants manual
+    geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 1.e6
 
-     # GeoClaw data
-    # geo_data.g
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
@@ -510,12 +514,11 @@ def setgeo(rundata):
     refinement_data.max_level_deep = 3
     refinement_data.variable_dt_refinement_ratios = False
 
-   
     # == settopo.data values ==
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    # topo_data.topofiles.append([1,1, 1, 0, 1e10,'scratch/cadam/topo/scattereddata/malpasset_mycoords.xyz'])
+
     topo_data.topofiles.append([2, 1, 1, 0, 1e10, 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'])
     topo_data.topofiles.append([2, 2, 2, 0, 1e10, 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'])
     topo_data.topofiles.append([2, 1, 3, 0, 1e10, 'scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2'])
@@ -526,19 +529,19 @@ def setgeo(rundata):
 
 
     # == setdtopo.data values ==
-    # topo_data = rundata.topo_data
+    topo_data = rundata.topo_data
     # for moving topography, append lines of the form :   (<= 1 allowed for now!)
     #   [topotype, minlevel,maxlevel,fname]
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4 #  surface elevation eta is defined by the file and results in depth h=max(eta-b,0)
-
+    rundata.qinit_data.qinit_type = 4
     rundata.qinit_data.qinitfiles = []
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
-
+    
     rundata.qinit_data.qinitfiles.append([1,1,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
     # rundata.qinit_data.qinitfiles.append([1,4,'scratch/Malpasset/init_h_5m_cadam.xyz'])
+
 
     return rundata
     # end of function setgeo
