@@ -32,10 +32,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void teton_link_solvers(fclaw2d_global_t *glob)
 {
+    const user_options_t* user = teton_get_options(glob);
+     if(user->cuda != 0)
+     {
+        //const user_options_t* user = radial_get_options(glob);
+        fc2d_cudaclaw_vtable_t *cudaclaw_vt = fc2d_cudaclaw_vt(glob);        
+        cudaclaw_vt->fort_qinit     = &TETON_QINIT;
+        
+        radial_assign_rpn2(&cudaclaw_vt->cuda_rpn2);
+        FCLAW_ASSERT(cudaclaw_vt->cuda_rpn2 != NULL);
 
-    /* These are set by GeoClaw for convenience, but the user
-       can set these with customized functions, if desired. */
-    fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+        radial_assign_rpt2(&cudaclaw_vt->cuda_rpt2);
+        FCLAW_ASSERT(cudaclaw_vt->cuda_rpt2 != NULL);
+     }
+     else
+     {
 
-    geoclaw_vt->qinit = &TETON_QINIT;
+        /* These are set by GeoClaw for convenience, but the user
+        can set these with customized functions, if desired. */
+        fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+
+        geoclaw_vt->qinit = &TETON_QINIT;
+     }
 }

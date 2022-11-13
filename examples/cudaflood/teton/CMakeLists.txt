@@ -15,6 +15,7 @@ add_executable(teton_cuda
 	teton_user.cpp
 	teton_user.h
 	teton.cpp
+  teton_options.c
 	$<TARGET_OBJECTS:teton_cuda_f>
     $<TARGET_OBJECTS:teton_cpu_f>
 )

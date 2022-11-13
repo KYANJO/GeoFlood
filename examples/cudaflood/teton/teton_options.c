@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "radial_user.h"
+#include "teton_user.h"
 
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
@@ -32,20 +32,11 @@ static int s_user_options_package_id = -1;
 
 
 static void *
-radial_register (user_options_t *user, sc_options_t * opt)
+teton_register (user_options_t *user, sc_options_t * opt)
 {
     /* [user] User options */
     sc_options_add_int    (opt, 0, "example", &user->example, 0, 
                            "[user] Example [0]");
-
-    sc_options_add_double (opt, 0, "rho",     &user->rho, 1, 
-                           "[user] rho [1]");
-
-    sc_options_add_double (opt, 0, "bulk",    &user->bulk, 4, 
-                           "[user] bulk modulus [4]");
-
-    sc_options_add_int (opt, 0, "claw-version", &user->claw_version, 4,
-                        "[user] Clawpack version (4 or 5) [5]");
     sc_options_add_bool (opt, 0, "cuda", &user->cuda, 0,
                            "Use cudaclaw [F]");
 
@@ -54,13 +45,13 @@ radial_register (user_options_t *user, sc_options_t * opt)
 }
 
 static fclaw_exit_type_t
-radial_postprocess (user_options_t *user)
+teton_postprocess (user_options_t *user)
 {
     return FCLAW_NOEXIT;
 }
 
 static fclaw_exit_type_t
-radial_check (user_options_t *user)
+teton_check (user_options_t *user)
 {
     if (user->example  != 0) {
         fclaw_global_essentialf ("Option --user:example must be 0\n");
@@ -70,7 +61,7 @@ radial_check (user_options_t *user)
 }
 
 static fclaw_exit_type_t
-radial_check_cpu (user_options_t *user,
+teton_check_cpu (user_options_t *user,
              fclaw_options_t *fclaw_opt,
              fclaw2d_clawpatch_options_t *clawpatch_opt)
 {
@@ -89,7 +80,7 @@ radial_check_cpu (user_options_t *user,
 
 
 static void
-radial_destroy(user_options_t *user)
+teton_destroy(user_options_t *user)
 {
     /* Nothing to destroy */
 }
@@ -107,7 +98,7 @@ options_register (fclaw_app_t * app, void *package, sc_options_t * opt)
 
     user = (user_options_t*) package;
 
-    return radial_register(user,opt);
+    return teton_register(user,opt);
 }
 
 static fclaw_exit_type_t
@@ -124,7 +115,7 @@ options_postprocess (fclaw_app_t * a, void *package, void *registered)
     FCLAW_ASSERT(user->is_registered);
 
     /* Convert strings to arrays */
-    return radial_postprocess (user);
+    return teton_postprocess (user);
 }
 
 
@@ -146,11 +137,11 @@ options_check(fclaw_app_t *app, void *package,void *registered)
         fclaw2d_clawpatch_options_t *clawpatch_opt = 
                     (fclaw2d_clawpatch_options_t*)  fclaw_app_get_attribute(app,"clawpatch",NULL);
 
-        return radial_check_cpu(user,fclaw_opt, clawpatch_opt);
+        return teton_check_cpu(user,fclaw_opt, clawpatch_opt);
     }
     else
     {
-        return radial_check(user);
+        return teton_check(user);
     }
 }
         
@@ -167,7 +158,7 @@ options_destroy (fclaw_app_t * app, void *package, void *registered)
     user = (user_options_t*) package;
     FCLAW_ASSERT (user->is_registered);
 
-    radial_destroy (user);
+    teton_destroy (user);
 
     FCLAW_FREE (user);
 }
@@ -183,7 +174,7 @@ static const fclaw_app_options_vtable_t options_vtable_user =
 
 /* ------------------------- ... and here ---------------------------- */
 
-user_options_t* radial_options_register (fclaw_app_t * app,
+user_options_t* teton_options_register (fclaw_app_t * app,
                             const char *configfile)
 {
     user_options_t *user;
@@ -197,13 +188,13 @@ user_options_t* radial_options_register (fclaw_app_t * app,
     return user;
 }
 
-void radial_options_store (fclaw2d_global_t* glob, user_options_t* user)
+void teton_options_store (fclaw2d_global_t* glob, user_options_t* user)
 {
     FCLAW_ASSERT(fclaw_pointer_map_get(glob->options,"user") == NULL);
     fclaw_pointer_map_insert(glob->options, "user", user, NULL);
 }
 
-user_options_t* radial_get_options(fclaw2d_global_t* glob)
+user_options_t* teton_get_options(fclaw2d_global_t* glob)
 {
     user_options_t* user = (user_options_t*) 
                               fclaw_pointer_map_get(glob->options, "user");

@@ -25,9 +25,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef TETON_USER_H
 #define TETON_USER_H
+#include <fc2d_cudaclaw.h>
 
 #include <fclaw2d_include_all.h>
-
+#include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
+#include <fc2d_cudaclaw.h>
+#include <fc2d_cudaclaw_options.h>
+#include <cudaclaw_user_fort.h>
+#include <fclaw2d_clawpatch_fort.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -36,8 +42,27 @@ extern "C"
 #endif
 #endif
 
+typedef struct user_options
+{
+    int example;
+    int cuda;
+} user_options_t;
+
 
 void teton_link_solvers(fclaw2d_global_t *glob);
+
+/* --------------------------------------- Options ----------------------------------------*/
+      
+user_options_t* teton_options_register (fclaw_app_t * app, const char *configfile);
+
+void teton_options_store (fclaw2d_global_t* glob, user_options_t* user);
+
+user_options_t* teton_get_options(fclaw2d_global_t* glob);
+
+/* --------------------------------------- Cuda ----------------------------------------*/
+
+void teton_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
+void teton_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
 
 #define TETON_QINIT   FCLAW_F77_FUNC(teton_qinit,TETON_QINIT)
 void TETON_QINIT(const int* meqn,const int* mbc,
