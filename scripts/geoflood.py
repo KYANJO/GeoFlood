@@ -210,7 +210,7 @@ class GeoFlooddata(object):
         #print(ascii_out)
 
 
-        geoflood['geoflood'] = {
+        geoflood['geoclaw'] = {
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
             '   #   1 => Godunov,': None,  
