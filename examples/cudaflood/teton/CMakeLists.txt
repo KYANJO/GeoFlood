@@ -7,6 +7,10 @@ target_link_libraries(teton_cpu_f PRIVATE
   GEOFLOOD::GEOCLAW
 )
 
+add_library(teton_cuda_f OBJECT
+  user_cuda/qinit.f90
+)
+
 target_link_libraries(teton_cuda_f PRIVATE 
   GEOFLOOD::CUDACLAW
 )
@@ -17,7 +21,7 @@ add_executable(teton_cuda
 	teton.cpp
   teton_options.c
 	$<TARGET_OBJECTS:teton_cuda_f>
-    $<TARGET_OBJECTS:teton_cpu_f>
+  $<TARGET_OBJECTS:teton_cpu_f>
 )
 
 target_include_directories(teton_cuda PRIVATE 
@@ -26,7 +30,7 @@ target_include_directories(teton_cuda PRIVATE
 
 target_link_libraries(teton_cuda PRIVATE 
   teton_cpu_f
-  teton_cuda_f
+  # teton_cuda_f
   GEOFLOOD::GEOCLAW
   GEOFLOOD::CUDACLAW
 )
