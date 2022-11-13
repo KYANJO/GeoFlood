@@ -1,4 +1,9 @@
 # --------------------------------------------
+# @author:  Brian Kyanjo
+# @contact: briankyanjo@u.boisestate.edu
+# @date:    2022-10-16
+# @version: 1.0
+# 
 # List of available applications and examples
 #
 # Note : Any files below which are uncommented
@@ -58,7 +63,9 @@ endif()
 include(cmake/config.cmake)
 
 # --- src directory
-add_subdirectory(src)
+if (cpuflood)
+  add_subdirectory(src/fc2d_geoclaw)
+endif(cpuflood)
 
 # --- cudaclaw
 if(cudaclaw)
