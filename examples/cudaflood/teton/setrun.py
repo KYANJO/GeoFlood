@@ -67,6 +67,9 @@ num_dim = 2
 # --------------------- Topography file -----------------------------------------------
 topofile = 'topos/TetonLarge.topo'
 
+# --------------------- CPU/CUDA options -------------------------------------------
+cuda = True
+
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
 #------------------------------
@@ -387,6 +390,8 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.mj = 1
 
     # geoflooddata.user = {'example'     : 1}
+    geoflooddata.user = {'cuda'     : cuda}
+
 
     # -----------------------------------------------
     # AMR parameters:
