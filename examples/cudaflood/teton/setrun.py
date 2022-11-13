@@ -386,7 +386,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.mi = 1
     geoflooddata.mj = 1
 
-    geoflooddata.user = {'example'     : 1}
+    # geoflooddata.user = {'example'     : 1}
 
     # -----------------------------------------------
     # AMR parameters:
