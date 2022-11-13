@@ -1,0 +1,31 @@
+------------------------------
+scattereddata/
+              malpasset.geo.txt: original scattered data topo file from Nicole Goutal
+	      malpasset_cadam.xyz : same as above with header removed, and first column removed.
+	                      ie: 3 columns: x,y,z.
+              malpasset_mycoords.xyz : data above transformed to the coords I've been using
+
+
+---------------------------------------
+transformcadam.py
+
+
+          The data given by the CADAM description (Goutal) is rotated and translated from the
+	  topo data that I have tediously compiled. transformcadam.py transforms the CADAM (X,Y) data to the
+	  set of axes I have been using.
+
+          The transformation is as follows:
+	  if the CADAM coordinates are denoted (X,Y,Z) and my coordinates are denoted (x,y,z) the 
+	  transformation is as follows:
+
+            |  0  1  0  |  |X| + Tx  = x
+	    | -1  0  0  |  |Y| + Ty  = y
+	    |  0  0  1  |  |Z| + Tz  = z
+
+           or x = R*X + T, where
+
+            Tx= 953595.0
+            Ty= 1849222.0
+	    Tz=0.
+
+   

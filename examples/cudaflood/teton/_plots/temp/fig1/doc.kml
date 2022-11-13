@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <name>Teton Dam</name>
+    <open>0</open>
+    <Folder>
+      <name>Frames</name>
+      <NetworkLink>
+        <name>Frame 0</name>
+        <Snippet maxLines="2"><![CDATA[<b><pre>Time : t = 0
+UTC  : 1976-06-05T17:55:00+06:00
+File : frame0000fig1.png</pre></b>]]></Snippet>
+        <description><![CDATA[<b><pre><font style="font-size:10pt">Time : t = 0
+UTC  : 1976-06-05T17:55:00+06:00
+File : frame0000fig1.png</font></pre></b>]]></description>
+        <TimeSpan>
+          <begin>1976-06-05T17:55:00+06:00</begin>
+          <end>1976-06-05T22:55:00+06:00</end>
+        </TimeSpan>
+        <Link>
+          <href>frame0000fig1/doc.kml</href>
+        </Link>
+      </NetworkLink>
+      <NetworkLink>
+        <name>Frame 10</name>
+        <Snippet maxLines="2"><![CDATA[<b><pre>Time : t = 18000
+UTC  : 1976-06-05T22:55:00+06:00
+File : frame0010fig1.png</pre></b>]]></Snippet>
+        <description><![CDATA[<b><pre><font style="font-size:10pt">Time : t = 18000
+UTC  : 1976-06-05T22:55:00+06:00
+File : frame0010fig1.png</font></pre></b>]]></description>
+        <TimeSpan>
+          <begin>1976-06-05T22:55:00+06:00</begin>
+          <end>1976-06-06T03:55:00+06:00</end>
+        </TimeSpan>
+        <Link>
+          <href>frame0010fig1/doc.kml</href>
+        </Link>
+      </NetworkLink>
+      <NetworkLink>
+        <name>Frame 20</name>
+        <Snippet maxLines="2"><![CDATA[<b><pre>Time : t = 36000
+UTC  : 1976-06-06T03:55:00+06:00
+File : frame0020fig1.png</pre></b>]]></Snippet>
+        <description><![CDATA[<b><pre><font style="font-size:10pt">Time : t = 36000
+UTC  : 1976-06-06T03:55:00+06:00
+File : frame0020fig1.png</font></pre></b>]]></description>
+        <TimeSpan>
+          <begin>1976-06-06T03:55:00+06:00</begin>
+          <end>1976-06-06T08:55:00+06:00</end>
+        </TimeSpan>
+        <Link>
+          <href>frame0020fig1/doc.kml</href>
+        </Link>
+      </NetworkLink>
+      <NetworkLink>
+        <name>Frame 30</name>
+        <Snippet maxLines="2"><![CDATA[<b><pre>Time : t = 54000
+UTC  : 1976-06-06T08:55:00+06:00
+File : frame0030fig1.png</pre></b>]]></Snippet>
+        <description><![CDATA[<b><pre><font style="font-size:10pt">Time : t = 54000
+UTC  : 1976-06-06T08:55:00+06:00
+File : frame0030fig1.png</font></pre></b>]]></description>
+        <TimeSpan>
+          <begin>1976-06-06T08:55:00+06:00</begin>
+          <end>1976-06-06T13:55:00+06:00</end>
+        </TimeSpan>
+        <Link>
+          <href>frame0030fig1/doc.kml</href>
+        </Link>
+      </NetworkLink>
+      <NetworkLink>
+        <name>Frame 40</name>
+        <Snippet maxLines="2"><![CDATA[<b><pre>Time : t = 72000
+UTC  : 1976-06-06T13:55:00+06:00
+File : frame0040fig1.png</pre></b>]]></Snippet>
+        <description><![CDATA[<b><pre><font style="font-size:10pt">Time : t = 72000
+UTC  : 1976-06-06T13:55:00+06:00
+File : frame0040fig1.png</font></pre></b>]]></description>
+        <TimeSpan>
+          <begin>1976-06-06T13:55:00+06:00</begin>
+          <end>1976-06-06T17:55:00+06:00</end>
+        </TimeSpan>
+        <Link>
+          <href>frame0040fig1/doc.kml</href>
+        </Link>
+      </NetworkLink>
+    </Folder>
+    <ScreenOverlay>
+      <name>Colorbar</name>
+      <Icon>
+        <href>images/colorbarfig1.png</href>
+      </Icon>
+      <overlayXY x="0.025" y="0.05" xunits="fraction" yunits="fraction"/>
+      <screenXY x="0.025" y="0.05" xunits="fraction" yunits="fraction"/>
+    </ScreenOverlay>
+  </Document>
+</kml>

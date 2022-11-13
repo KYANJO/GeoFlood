@@ -1,0 +1,49 @@
+
+=====================location of gauges and points of data================
+
+locations of info from goutal (see envoi.doc):
+
+    info/goutal.gaugelocs
+    info/goutal.police
+    info/goutal.transformers
+
+these locations are transformed via transformcadam.py to my coordinates and put in
+    info/mycoords.gaugelocs
+    info/mycoords.police
+    info/mycoords.transformers
+
+all the locations of the above are put into a file for gauge locations for geoclaw, "geoclaw.gaugelocs"
+
+gauge #    explanation
+1-17       police survey pts
+18-20      transformer locations
+20-28      model gauge locations
+
+     info/geoclaw.gaugelocswz: is a copy of geoclaw.gaugelocs, with the z value (height of topography of each gauge)
+     info/geoclaw.gaugelocs.asc:  has just numeric data of geoclaw.gaugelocs.
+
+     info/z4gauges_XXX: files containing z-values from topofile XXX.
+
+     info/gaugemaxima.field: the maximum water level seen by field data at the gauges
+     info/gaugemaxima.valiani: the maximum water level seen in the valiani paper, for 10696 mesh
+
+=====================================================================================
+
+
+=====================description of dam in goutal (X,Y) and my coordinates (x,y) ==
+
+ "The dam may be considered as a straight line between the points of (X,Y)
+ coordinates being (4701.18 m , 4143.41 m) and (4655.5 m, 4392.10 m )"(see envoi.doc)
+
+  (X3cad,Y3cad) = (4701.18,       4143.41) 
+  (x3cad,y3cad) = (957738.41,  1844520.82)
+
+  (X4cad,Y4cad)= (4655.5,    4392.10 )
+  (x4cad,y4cad)= (957987.1, 1844566.5)
+
+
+   see init_cadam.py in Malpasset/topo/init for function that creates the initialization file
+
+===========================================================================================
+
+

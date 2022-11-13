@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document>
+    <Style id="comp_domain">
+      <PolyStyle>
+        <color>FF98644E</color>
+        <fill>1</fill>
+        <outline>0</outline>
+      </PolyStyle>
+      <BalloonStyle>
+        <text><![CDATA[<style media="screen" type="text/css">pre {font-weight:bold;font-style:12pt}span.title {font-weight:bold;font-size:12pt} </style><center><span class="title">Computational Domain</span></center><pre>Location : x1 = $[x1], x2 = $[x2]
+           y1 = $[y1], y2 = $[y2]
+</pre>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="Path_region_00">
+      <LineStyle>
+        <color>FFFFFFFF</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>000000</color>
+      </PolyStyle>
+      <BalloonStyle>
+        <text><![CDATA[<style media="screen" type="text/css">pre {font-weight:bold;font-style:12pt}span.title {font-weight:bold;font-size:12pt} </style><center><span class="title">$[name]</span></center><pre>Levels   : minlevel = $[minlevel], maxlevel = $[maxlevel]
+Time     : t1 = $[t1], t2 = $[t2]
+Location : x1 = $[x1], x2 = $[x2]
+           y1 = $[y1], y2 = $[y2]
+
+From (UTC) : $[tsbegin]
+To   (UTC) : $[tsend]</pre>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="Path_region_01">
+      <LineStyle>
+        <color>FFFFFFFF</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>000000</color>
+      </PolyStyle>
+      <BalloonStyle>
+        <text><![CDATA[<style media="screen" type="text/css">pre {font-weight:bold;font-style:12pt}span.title {font-weight:bold;font-size:12pt} </style><center><span class="title">$[name]</span></center><pre>Levels   : minlevel = $[minlevel], maxlevel = $[maxlevel]
+Time     : t1 = $[t1], t2 = $[t2]
+Location : x1 = $[x1], x2 = $[x2]
+           y1 = $[y1], y2 = $[y2]
+
+From (UTC) : $[tsbegin]
+To   (UTC) : $[tsend]</pre>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Style id="Path_region_02">
+      <LineStyle>
+        <color>FFFFFFFF</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>000000</color>
+      </PolyStyle>
+      <BalloonStyle>
+        <text><![CDATA[<style media="screen" type="text/css">pre {font-weight:bold;font-style:12pt}span.title {font-weight:bold;font-size:12pt} </style><center><span class="title">$[name]</span></center><pre>Levels   : minlevel = $[minlevel], maxlevel = $[maxlevel]
+Time     : t1 = $[t1], t2 = $[t2]
+Location : x1 = $[x1], x2 = $[x2]
+           y1 = $[y1], y2 = $[y2]
+
+From (UTC) : $[tsbegin]
+To   (UTC) : $[tsend]</pre>]]></text>
+      </BalloonStyle>
+    </Style>
+    <Placemark>
+      <name>Computational Domain</name>
+      <visibility>0</visibility>
+      <Snippet maxLines="2"><![CDATA[<b><pre>x1 = -112.346, x2 = -111.264
+y1 = 43.1805, y2 = 43.9895
+</pre></b>]]></Snippet>
+      <styleUrl>#comp_domain</styleUrl>
+      <ExtendedData>
+        <Data name="x1">
+          <value>-112.346</value>
+        </Data>
+        <Data name="y1">
+          <value>43.1805</value>
+        </Data>
+        <Data name="x2">
+          <value>-111.264</value>
+        </Data>
+        <Data name="y2">
+          <value>43.9895</value>
+        </Data>
+      </ExtendedData>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>-112.3463,43.1805,0.0000
+-111.2643,43.1805,0.0000
+-111.2643,43.9895,0.0000
+-112.3463,43.9895,0.0000
+-112.3463,43.1805,0.0000
+</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark>
+      <name>Region 0</name>
+      <visibility>0</visibility>
+      <Snippet maxLines="2"><![CDATA[<b><pre>minlevel = 4, maxlevel = 4
+t1 = 0, t2 = 1e+10
+
+From (UTC) : 1976-06-05T17:55:00+06:00
+To   (UTC) : 1976-06-06T13:55:00+06:00
+</pre></b>]]></Snippet>
+      <TimeSpan>
+        <begin>1976-06-05T17:55:00+06:00</begin>
+        <end>1976-06-06T13:55:00+06:00</end>
+      </TimeSpan>
+      <styleUrl>#Path_region_00</styleUrl>
+      <ExtendedData>
+        <Data name="minlevel">
+          <value>4</value>
+        </Data>
+        <Data name="maxlevel">
+          <value>4</value>
+        </Data>
+        <Data name="t1">
+          <value>0</value>
+        </Data>
+        <Data name="t2">
+          <value>1e+10</value>
+        </Data>
+        <Data name="x1">
+          <value>-111.543</value>
+        </Data>
+        <Data name="y1">
+          <value>43.88</value>
+        </Data>
+        <Data name="x2">
+          <value>-111.24</value>
+        </Data>
+        <Data name="y2">
+          <value>43.965</value>
+        </Data>
+        <Data name="tsbegin">
+          <value>1976-06-05T17:55:00+06:00</value>
+        </Data>
+        <Data name="tsend">
+          <value>1976-06-06T13:55:00+06:00</value>
+        </Data>
+      </ExtendedData>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>-111.5430,43.8800,0.0000
+-111.2400,43.8800,0.0000
+-111.2400,43.9650,0.0000
+-111.5430,43.9650,0.0000
+-111.5430,43.8800,0.0000
+</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark>
+      <name>Region 1</name>
+      <visibility>0</visibility>
+      <Snippet maxLines="2"><![CDATA[<b><pre>minlevel = 4, maxlevel = 4
+t1 = 0, t2 = 1e+10
+
+From (UTC) : 1976-06-05T17:55:00+06:00
+To   (UTC) : 1976-06-06T13:55:00+06:00
+</pre></b>]]></Snippet>
+      <TimeSpan>
+        <begin>1976-06-05T17:55:00+06:00</begin>
+        <end>1976-06-06T13:55:00+06:00</end>
+      </TimeSpan>
+      <styleUrl>#Path_region_01</styleUrl>
+      <ExtendedData>
+        <Data name="minlevel">
+          <value>4</value>
+        </Data>
+        <Data name="maxlevel">
+          <value>4</value>
+        </Data>
+        <Data name="t1">
+          <value>0</value>
+        </Data>
+        <Data name="t2">
+          <value>1e+10</value>
+        </Data>
+        <Data name="x1">
+          <value>-111.645</value>
+        </Data>
+        <Data name="y1">
+          <value>43.8996</value>
+        </Data>
+        <Data name="x2">
+          <value>-111.585</value>
+        </Data>
+        <Data name="y2">
+          <value>43.9296</value>
+        </Data>
+        <Data name="tsbegin">
+          <value>1976-06-05T17:55:00+06:00</value>
+        </Data>
+        <Data name="tsend">
+          <value>1976-06-06T13:55:00+06:00</value>
+        </Data>
+      </ExtendedData>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>-111.6450,43.8996,0.0000
+-111.5849,43.8996,0.0000
+-111.5849,43.9296,0.0000
+-111.6450,43.9296,0.0000
+-111.6450,43.8996,0.0000
+</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+    <Placemark>
+      <name>Region 2</name>
+      <visibility>0</visibility>
+      <Snippet maxLines="2"><![CDATA[<b><pre>minlevel = 0, maxlevel = 3
+t1 = 0, t2 = 1e+10
+
+From (UTC) : 1976-06-05T17:55:00+06:00
+To   (UTC) : 1976-06-06T13:55:00+06:00
+</pre></b>]]></Snippet>
+      <TimeSpan>
+        <begin>1976-06-05T17:55:00+06:00</begin>
+        <end>1976-06-06T13:55:00+06:00</end>
+      </TimeSpan>
+      <styleUrl>#Path_region_02</styleUrl>
+      <ExtendedData>
+        <Data name="minlevel">
+          <value>0</value>
+        </Data>
+        <Data name="maxlevel">
+          <value>3</value>
+        </Data>
+        <Data name="t1">
+          <value>0</value>
+        </Data>
+        <Data name="t2">
+          <value>1e+10</value>
+        </Data>
+        <Data name="x1">
+          <value>-112.346</value>
+        </Data>
+        <Data name="y1">
+          <value>43.1805</value>
+        </Data>
+        <Data name="x2">
+          <value>-111.264</value>
+        </Data>
+        <Data name="y2">
+          <value>43.9895</value>
+        </Data>
+        <Data name="tsbegin">
+          <value>1976-06-05T17:55:00+06:00</value>
+        </Data>
+        <Data name="tsend">
+          <value>1976-06-06T13:55:00+06:00</value>
+        </Data>
+      </ExtendedData>
+      <Polygon>
+        <tessellate>1</tessellate>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>-112.3463,43.1805,0.0000
+-111.2643,43.1805,0.0000
+-111.2643,43.9895,0.0000
+-112.3463,43.9895,0.0000
+-112.3463,43.1805,0.0000
+</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>
