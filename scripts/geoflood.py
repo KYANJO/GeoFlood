@@ -24,6 +24,7 @@ class GeoFlooddata(object):
         self.subcycle = False
         self.output = True
         self.output_gauges = True
+        self.cuda = False
         self.verbosity = 'essential'
 
         self.mi = 1
@@ -43,7 +44,9 @@ class GeoFlooddata(object):
         amrdata = rundata.amrdata
 
         user = {
-        '   # User defined parameters' : None}
+        '   # User defined parameters' : None,
+        '   cuda' : self.cuda,
+        }
         for k in self.user.keys():
             user[f'   {k:}'] = self.user[k]
 
@@ -210,7 +213,7 @@ class GeoFlooddata(object):
         #print(ascii_out)
 
 
-        geoflood['geoflood'] = {
+        geoflood['geoclaw'] = {
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
             '   #   1 => Godunov,': None,  
