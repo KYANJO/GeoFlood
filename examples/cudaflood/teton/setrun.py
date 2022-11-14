@@ -68,7 +68,7 @@ num_dim = 2
 topofile = 'topos/TetonLarge.topo'
 
 # --------------------- CPU/CUDA options -------------------------------------------
-cuda = True
+cuda = 0
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):

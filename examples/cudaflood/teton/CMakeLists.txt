@@ -29,8 +29,6 @@ target_include_directories(teton_cuda PRIVATE
 )
 
 target_link_libraries(teton_cuda PRIVATE 
-  teton_cpu_f
-  # teton_cuda_f
   GEOFLOOD::GEOCLAW
   GEOFLOOD::CUDACLAW
 )
