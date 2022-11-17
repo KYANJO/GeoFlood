@@ -5,4 +5,4 @@
 ## ----------------------------------
 
 add_subdirectory(cpuflood)
-# add_subdirectory(cudaflood)
+add_subdirectory(cudaflood)

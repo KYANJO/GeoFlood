@@ -68,14 +68,24 @@ if (cpuflood)
 endif(cpuflood)
 
 # --- cudaclaw
-if(cudaclaw)
+if(cudaflood)
+  enable_language(CUDA)
+  set(CMAKE_CUDA_STANDARD 14)
+  find_package(CUDAToolkit REQUIRED)
+endif()
+ 
 
-  add_subdirectory(src/fc2d_cudaclaw)
-
-endif(cudaclaw)
+  if(cudaflood)
+    add_subdirectory(src/fc2d_cudaclaw)
+  endif(cudaflood)
 
 # --- examples
 add_subdirectory(examples)
+
+# --- test
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif(BUILD_TESTING)
 
 
 # -- set environment string used for regression tests

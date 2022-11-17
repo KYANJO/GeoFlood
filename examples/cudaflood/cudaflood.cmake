@@ -4,7 +4,6 @@
 ## GeoFlood examples
 ## ----------------------------------
 
-add_subdirectory(bowl_radial)
 add_subdirectory(teton)
-add_subdirectory(malpasset)
-add_subdirectory(triton)
+# add_subdirectory(malpasset)
+# add_subdirectory(triton)

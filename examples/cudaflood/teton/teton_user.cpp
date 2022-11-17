@@ -37,13 +37,13 @@ void teton_link_solvers(fclaw2d_global_t *glob)
      {
         //const user_options_t* user = radial_get_options(glob);
         fc2d_cudaclaw_vtable_t *cudaclaw_vt = fc2d_cudaclaw_vt(glob);        
-        cudaclaw_vt->fort_qinit     = &TETON_QINIT;
+        cudaclaw_vt->fort_qinit     = &CUDACLAW_QINIT;
         
-        radial_assign_rpn2(&cudaclaw_vt->cuda_rpn2);
-        FCLAW_ASSERT(cudaclaw_vt->cuda_rpn2 != NULL);
+      //   radial_assign_rpn2(&cudaclaw_vt->cuda_rpn2);
+      //   FCLAW_ASSERT(cudaclaw_vt->cuda_rpn2 != NULL);
 
-        radial_assign_rpt2(&cudaclaw_vt->cuda_rpt2);
-        FCLAW_ASSERT(cudaclaw_vt->cuda_rpt2 != NULL);
+      //   radial_assign_rpt2(&cudaclaw_vt->cuda_rpt2);
+      //   FCLAW_ASSERT(cudaclaw_vt->cuda_rpt2 != NULL);
      }
      else
      {

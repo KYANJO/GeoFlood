@@ -61,8 +61,8 @@ user_options_t* teton_get_options(fclaw2d_global_t* glob);
 
 /* --------------------------------------- Cuda ----------------------------------------*/
 
-void teton_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
-void teton_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
+// void teton_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
+// void teton_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
 
 #define TETON_QINIT   FCLAW_F77_FUNC(teton_qinit,TETON_QINIT)
 void TETON_QINIT(const int* meqn,const int* mbc,
@@ -70,6 +70,7 @@ void TETON_QINIT(const int* meqn,const int* mbc,
                  const double* xlower, const double* ylower,
                  const double* dx, const double* dy,
                  double q[], const int* maux, double aux[]);
+
 
 
 /* Mappings */

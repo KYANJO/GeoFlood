@@ -40,7 +40,7 @@ teton_register (user_options_t *user, sc_options_t * opt)
     sc_options_add_bool (opt, 0, "cuda", &user->cuda, 0,
                            "Use cudaclaw [F]");
 
-    user->is_registered = 1;
+    // user->is_registered = 1;
     return NULL;
 }
 
@@ -112,7 +112,7 @@ options_postprocess (fclaw_app_t * a, void *package, void *registered)
     user_options_t *user = (user_options_t *) package;
 
     /* post-process this package */
-    FCLAW_ASSERT(user->is_registered);
+    // FCLAW_ASSERT(user->is_registered);
 
     /* Convert strings to arrays */
     return teton_postprocess (user);
@@ -156,7 +156,7 @@ options_destroy (fclaw_app_t * app, void *package, void *registered)
     FCLAW_ASSERT (registered == NULL);
 
     user = (user_options_t*) package;
-    FCLAW_ASSERT (user->is_registered);
+    // FCLAW_ASSERT (user->is_registered);
 
     teton_destroy (user);
 
