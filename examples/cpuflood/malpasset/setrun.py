@@ -28,18 +28,18 @@ scratch_dir = os.path.join('../scratch')
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
 initial_dt = 1  # Initial time step
-fixed_dt = False   # Take constant time step
+fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 3  
+output_style = 1
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 0.5              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    n_hours = 1.5              # Total number of hours in simulation     
     
 
-    frames_per_minute = 1/30   # Frames every 1/2 hour
+    frames_per_minute = 10/30   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -49,14 +49,14 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 54
-my = 54
+mx = 16
+my = 32
 
 minlevel = 0
-maxlevel = 4 #resolution based on levels
+maxlevel = 3 #resolution based on levels
 ratios_x = [2,4,4,4]
 ratios_y = [2,4,4,4]
-ratios_t = [2,4,4,4] #should this be 0,0,0,0?
+ratios_t = [2,4,4,4]
 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.033
@@ -66,6 +66,8 @@ num_dim = 2
 
 # --------------------- Topography file -----------------------------------------------
 topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
+# topofile = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
+# topofile = 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -151,6 +153,9 @@ def setrun(claw_pkg='geoclaw'):
 
     
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile)
+     # Try to match aspect ratio of topo map
+    clawdata.num_cells[0] = mx
+    clawdata.num_cells[1] = my
 
     print("")
     print("Computational domain")
@@ -433,19 +438,19 @@ def setrun(claw_pkg='geoclaw'):
     regions.append([maxlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
 
     # Box containing gauge location locations
-    xll = [957738.41,  1844520.82]
-    xur = [957987.1, 1844566.5]  # from email
-    region_lower, region_upper,_ = tools.region_coords(xll,xur,
-                                                    clawdata.num_cells,
-                                                    clawdata.lower,
-                                                    clawdata.upper)
+    # xll = [957738.41,  1844520.82]
+    # xur = [957987.1, 1844566.5]  # from email
+    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
+    #                                                 clawdata.num_cells,
+    #                                                 clawdata.lower,
+    #                                                 clawdata.upper)
 
-    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-                    region_lower[1],region_upper[1]])
+    # regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
+    #                 region_lower[1],region_upper[1]])
 
-    # Computational domain.  With exception of region above, don't go beyond level 4
-    regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
-                    clawdata.lower[1],clawdata.upper[1]])
+    # # Computational domain.  With exception of region above, don't go beyond level 4
+    # regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
+    #                 clawdata.lower[1],clawdata.upper[1]])
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gno = [6,7,8,9,10,11,12,13,14] # gauge numbers
@@ -456,7 +461,7 @@ def setrun(claw_pkg='geoclaw'):
 
     for i in range(len(gno)):
         print('\tGauge %s at (%s, %s)' % (gno[i], xc[i], yc[i]))
-        # rundata.gaugedata.gauges.append([gno[i],xc[i],yc[i],0.,clawdata.tfinal])
+        # rundata.gaugedata.gauges.append([gno[i],xc[i],yc[i],0,clawdata.tfinal])
 
     # -------------------------------------------------------
     # For developers
@@ -529,13 +534,14 @@ def setgeo(rundata):
 
 
     # == setdtopo.data values ==
-    topo_data = rundata.topo_data
+    # topo_data = rundata.topo_data
     # for moving topography, append lines of the form :   (<= 1 allowed for now!)
     #   [topotype, minlevel,maxlevel,fname]
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 4
     rundata.qinit_data.qinitfiles = []
+    rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
     
