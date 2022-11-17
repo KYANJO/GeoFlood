@@ -394,9 +394,11 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
+
     amrdata.refinement_ratios_x = ratios_x 
     amrdata.refinement_ratios_y = ratios_y
     amrdata.refinement_ratios_t = ratios_t
+
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
