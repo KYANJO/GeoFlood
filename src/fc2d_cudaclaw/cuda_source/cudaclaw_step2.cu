@@ -106,7 +106,7 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
             fluxes = &(array_fluxes_struct[i]);    
 
             I_q = i*fluxes->num;
-            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold ,fluxes->num_bytes);
+            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold ,fluxes->num_bytes); //replace with a fortran routine that takes swaps m,i,j to i,j,m and then copy it to membuffer_cpu
             fluxes->qold_dev = &membuffer_dev[I_q];
 
             if (fluxes->num_aux > 0)
@@ -260,7 +260,7 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
             fluxes = &(array_fluxes_struct[i]);
             I_q = i*fluxes->num;
 
-            memcpy(fluxes->qold,&membuffer_cpu[I_q],fluxes->num_bytes);
+            memcpy(fluxes->qold,&membuffer_cpu[I_q],fluxes->num_bytes); // do another fortran rountine here (back to m,i,j)
         }        
     }
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_CUDA_MEMCOPY_H2H]);       
