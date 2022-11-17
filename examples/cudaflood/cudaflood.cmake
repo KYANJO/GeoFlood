@@ -4,5 +4,6 @@
 ## GeoFlood examples
 ## ----------------------------------
 
-add_subdirectory(cpuflood)
-add_subdirectory(cudaflood)
+add_subdirectory(teton)
+# add_subdirectory(malpasset)
+# add_subdirectory(triton)

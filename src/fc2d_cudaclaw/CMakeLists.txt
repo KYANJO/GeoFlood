@@ -75,5 +75,5 @@ if(BUILD_TESTING)
     fc2d_cudaclaw_options.h.TEST.cpp
   )
   target_link_libraries(fc2d_cudaclaw.TEST testutils cudaclaw)
-  register_unit_tests(fc2d_cudaclaw.TEST)
+#   register_unit_tests(fc2d_cudaclaw.TEST)
 endif(BUILD_TESTING)
