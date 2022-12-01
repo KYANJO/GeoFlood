@@ -108,20 +108,20 @@ def setplot(plotdata):
     plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
     plotitem.patchedges_show = 0
-    plotaxes.xlimits = [0,48000]
-    plotaxes.ylimits = [0,17400]
+    plotaxes.xlimits = 'auto'
+    plotaxes.ylimits = 'auto'
 
     # Add contour lines of bathymetry:
-    plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
-    plotitem.plot_var = geoplot.topo
-    from numpy import arange, linspace
-    plotitem.contour_levels = linspace(0,900,40)
-    plotitem.amr_contour_colors = ['k']  # color on each level
-    plotitem.kwargs = {'linestyles':'solid'}
-    plotitem.amr_contour_show = [1]
-    plotitem.celledges_show = 0
-    plotitem.patchedges_show = 0
-    plotitem.show = True
+    # plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
+    # plotitem.plot_var = geoplot.topo
+    # from numpy import arange, linspace
+    # plotitem.contour_levels = linspace(0,900,40)
+    # plotitem.amr_contour_colors = ['k']  # color on each level
+    # plotitem.kwargs = {'linestyles':'solid'}
+    # plotitem.amr_contour_show = [1]
+    # plotitem.celledges_show = 0
+    # plotitem.patchedges_show = 0
+    # plotitem.show = True
 
 
     def addgauges(current_data):
@@ -167,10 +167,24 @@ def setplot(plotdata):
         from pylab import plot, legend, xticks, floor, axis, xlabel,title
         t = current_data.t
         gaugeno = current_data.gaugeno
-        if gaugeno == 1:
-            title('Wilford')
-        elif gaugeno == 2:
-            title('Malpasset City')
+        if gaugeno == 6:
+            title('P6')
+        elif gaugeno == 7:
+            title('P7')
+        elif gaugeno == 8:
+            title('P8')
+        elif gaugeno == 9:
+            title('P9')
+        elif gaugeno == 10:
+            title('P10')
+        elif gaugeno == 11:
+            title('P11')
+        elif gaugeno == 12:
+            title('P12')
+        elif gaugeno == 13:
+            title('P13')
+        elif gaugeno == 14:
+            title('P14')
 
         # plot(t, 0*t, 'k')
         n = int(floor(t.max()/3600.) + 2)
