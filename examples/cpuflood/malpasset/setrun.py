@@ -36,7 +36,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 10.0              # Total number of hours in simulation     
+    n_hours = 1.5              # Total number of hours in simulation     
     
 
     frames_per_minute = 60/30   # Frames every 1/2 hour
@@ -191,7 +191,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_aux = 3
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 2
+    clawdata.capa_index = 0 #flag set to 0 if coordinate system = 1 otherwise 2
 
     # -------------
     # Initial time:
@@ -442,7 +442,7 @@ def setrun(claw_pkg='geoclaw'):
                     # region_lower[1],region_upper[1]])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
-    regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
+    regions.append([minlevel,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
                     clawdata.lower[1],clawdata.upper[1]])
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
