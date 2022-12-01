@@ -103,3 +103,24 @@ def region_coords(xll,xur, num_cells,lower,upper):
     figsize = np.array([mx_zoom, my_zoom])   # [1,1]
 
     return region_lower, region_upper, figsize
+
+def read_locations_data(malpasset_loc):
+    with open (malpasset_loc, "r") as myfile:
+        data = myfile.read().splitlines()
+    data2 = []
+    for i in range(1, len(data)):
+        data[i] = data[i].split()
+        data2.append([float(j) for j in data[i]])
+
+    data2 = np.array(data2)
+    x = []
+    y = []
+    for data in data2:
+        x.append(data[1])
+        y.append(data[2])
+    police = [range(17),x[:17], y[:17]]
+    transformers = [range(17,20),x[17:20], y[17:20]]
+    gauges = [range(6,15),x[20:29], y[20:29]]
+    
+    return police, transformers, gauges
+

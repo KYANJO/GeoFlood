@@ -36,10 +36,10 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 1.5              # Total number of hours in simulation     
+    n_hours = 10              # Total number of hours in simulation     
     
 
-    frames_per_minute = 60/30   # Frames every 1/2 hour
+    frames_per_minute = 1/30   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -69,6 +69,9 @@ topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
 # topofile = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
 # topofile = 'scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2'
 # topofile = 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'
+
+# --------------------- Police, transformer and guage data -----------------------------------------------
+malpasset_loc = "./malpasset_locs.txt"
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -431,30 +434,29 @@ def setrun(claw_pkg='geoclaw'):
 
 
     # Box containing gauge location locations
-    # xll = [957738.41,  1844520.82]
-    # xur = [957987.1, 1844566.5]  # from email
-    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
-    #                                                 clawdata.num_cells,
-    #                                                 clawdata.lower,
-    #                                                 clawdata.upper)
+    xll = [957738.41,  1844520.82]
+    xur = [957987.1, 1844566.5]  # from email
+    region_lower, region_upper,_ = tools.region_coords(xll,xur,
+                                                    clawdata.num_cells,
+                                                    clawdata.lower,
+                                                    clawdata.upper)
 
-    # regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-                    # region_lower[1],region_upper[1]])
+    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
+                    region_lower[1],region_upper[1]])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([minlevel,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
                     clawdata.lower[1],clawdata.upper[1]])
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
-    gno = [6,7,8,9,10,11,12,13,14] # gauge numbers
-    xc = [4947.46,5717.30,6775.14,7128.20,8585.30,9674.97,10939.15,11724.37,12723.70] # x-coordinates
-    yc = [4289.71,4407.61,3869.23,3162.00,3443.08,3085.89,3044.78,2810.41,2485.08] # y-coordinates
+    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
 
     print('\nLocation of Gauges:')
 
-    for i in range(len(gno)):
-        print('\tGauge %s at (%s, %s)' % (gno[i], xc[i], yc[i]))
-        # rundata.gaugedata.gauges.append([gno[i],xc[i],yc[i],0,clawdata.tfinal])
+    # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
+    for i in range(len(gauges[0])):
+        print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
+        rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
 
     # -------------------------------------------------------
     # For developers

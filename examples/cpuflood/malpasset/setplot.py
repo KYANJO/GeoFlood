@@ -85,8 +85,8 @@ def setplot(plotdata):
     plotaxes.scaled = True
 
 
-    dark_blue = [0.2,0.2,0.7];
-    light_blue = [0.7,0.7,1.0];
+    dark_blue = [0.2,0.2,0.7]
+    light_blue = [0.7,0.7,1.0]
     flooding_colormap = colormaps.make_colormap({ -1.0:light_blue,
                                                  1.0:dark_blue})
     # Water
