@@ -28,7 +28,7 @@ scratch_dir = os.path.join('../scratch')
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
 initial_dt = 1  # Initial time step
-fixed_dt = False  # Take constant time step
+fixed_dt = True  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
 output_style = 1
@@ -36,24 +36,24 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 1.5              # Total number of hours in simulation     
+    n_hours = 10.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 10/30   # Frames every 1/2 hour
+    frames_per_minute = 60/30   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
     step_interval = 10   # Create output file every 10 steps
-    total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
+    total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
+mx = 32
 my = 32
 
 minlevel = 0
-maxlevel = 3 #resolution based on levels
+maxlevel = 3 #resolution based on levels 
 ratios_x = [2,4,4,4]
 ratios_y = [2,4,4,4]
 ratios_t = [2,4,4,4]
@@ -67,6 +67,7 @@ num_dim = 2
 # --------------------- Topography file -----------------------------------------------
 topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
 # topofile = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
+# topofile = 'scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2'
 # topofile = 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'
 
 #------------------------------
@@ -418,16 +419,6 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
 
-    # -----------------------------------------------
-    # INL Regions
-    #   Regions to be refined :
-    #    (1) Refine initial reservoir to level 4
-    #        (otherwise, we won't resolve valley, and
-    #        won't fill the reservoir properly)
-    #    (2) Refine around nuclear power plant (indicated by gauge
-    #        100, 101, ..., 115, below)
-    #    (3) Computational domain, with maxlevel=4
-    #
     # To specify regions of refinement append lines of the form
     #    regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
 
@@ -436,6 +427,8 @@ def setrun(claw_pkg='geoclaw'):
 
     # Region containing initial reservoir
     regions.append([maxlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
+    # regions.append([maxlevel,maxlevel, 0, 1.e10,4701.183,4655.553,4143.407, 4392.104])
+
 
     # Box containing gauge location locations
     # xll = [957738.41,  1844520.82]
@@ -446,11 +439,11 @@ def setrun(claw_pkg='geoclaw'):
     #                                                 clawdata.upper)
 
     # regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-    #                 region_lower[1],region_upper[1]])
+                    # region_lower[1],region_upper[1]])
 
-    # # Computational domain.  With exception of region above, don't go beyond level 4
-    # regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
-    #                 clawdata.lower[1],clawdata.upper[1]])
+    # Computational domain.  With exception of region above, don't go beyond level 4
+    regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
+                    clawdata.lower[1],clawdata.upper[1]])
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gno = [6,7,8,9,10,11,12,13,14] # gauge numbers
@@ -499,11 +492,11 @@ def setgeo(rundata):
 
     # == Physics ==
     geo_data.gravity = 9.81
-    geo_data.coordinate_system = 2   # LatLong coordinates
+    geo_data.coordinate_system = 1   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
-    geo_data.coriolis_forcing = True
+    geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
@@ -524,19 +517,12 @@ def setgeo(rundata):
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
 
-    topo_data.topofiles.append([2, 1, 1, 0, 1e10, 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'])
-    topo_data.topofiles.append([2, 2, 2, 0, 1e10, 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'])
-    topo_data.topofiles.append([2, 1, 3, 0, 1e10, 'scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2'])
-    topo_data.topofiles.append([2, 1, 3, 0, 1e10, 'scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2'])
-    topo_data.topofiles.append([2, 1, 3, 0, 1e10, 'scratch/Malpasset/malpasset_grid2_1m_nolc.topotype2'])
-    topo_data.topofiles.append([2, 1, 3, 0, 1e10, 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'])
-
-
-
-    # == setdtopo.data values ==
-    # topo_data = rundata.topo_data
-    # for moving topography, append lines of the form :   (<= 1 allowed for now!)
-    #   [topotype, minlevel,maxlevel,fname]
+    topo_data.topofiles.append([2, minlevel, minlevel, 0, 1e10, 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'])
+    topo_data.topofiles.append([2, minlevel+1, minlevel+1, 0, 1e10, 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'])
+    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2'])
+    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2'])
+    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid2_1m_nolc.topotype2'])
+    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 4
@@ -545,8 +531,8 @@ def setgeo(rundata):
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
     
-    rundata.qinit_data.qinitfiles.append([1,1,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
-    # rundata.qinit_data.qinitfiles.append([1,4,'scratch/Malpasset/init_h_5m_cadam.xyz'])
+    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
+    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_h_5m_cadam.xyz'])
 
 
     return rundata
