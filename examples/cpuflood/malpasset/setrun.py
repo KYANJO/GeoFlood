@@ -36,10 +36,10 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 10              # Total number of hours in simulation     
+    n_hours = 1.2              # Total number of hours in simulation     
     
 
-    frames_per_minute = 1/30   # Frames every 1/2 hour
+    frames_per_minute = 60/30   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -53,7 +53,7 @@ mx = 32
 my = 32
 
 minlevel = 0
-maxlevel = 3 #resolution based on levels 
+maxlevel = 4 #resolution based on levels 
 ratios_x = [2,4,4,4]
 ratios_y = [2,4,4,4]
 ratios_t = [2,4,4,4]
@@ -140,7 +140,7 @@ def setrun(claw_pkg='geoclaw'):
         print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
         print("")
 
-        dims_topo = ur_topo - ll_topo
+        # dims_topo = ur_topo - ll_topo
 
         dim_topo = ur_topo - ll_topo
         mdpt_topo = ll_topo + 0.5*dim_topo
@@ -153,7 +153,7 @@ def setrun(claw_pkg='geoclaw'):
         clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
         clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
 
-        return dims_topo, clawdata.lower,clawdata.upper
+        return dim_topo, clawdata.lower,clawdata.upper
 
     
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile)
@@ -181,7 +181,7 @@ def setrun(claw_pkg='geoclaw'):
 
     lon = np.array([clawdata.lower[0],clawdata.upper[0]])
     lat = np.array([clawdata.lower[1],clawdata.upper[1]])
-    d = tools.compute_distances(lon,lat)
+    # d = tools.compute_distances(lon,lat)
    
     # ---------------
     # Size of system:
@@ -391,7 +391,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Block dimensions for non-square domains
     geoflooddata.mi = 1
-    geoflooddata.mj = 1
+    geoflooddata.mj = 2
 
     geoflooddata.user = {'example'     : 1}
 
@@ -429,23 +429,23 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
+    regions.append([minlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
     # regions.append([maxlevel,maxlevel, 0, 1.e10,4701.183,4655.553,4143.407, 4392.104])
 
 
     # Box containing gauge location locations
-    xll = [957738.41,  1844520.82]
-    xur = [957987.1, 1844566.5]  # from email
-    region_lower, region_upper,_ = tools.region_coords(xll,xur,
-                                                    clawdata.num_cells,
-                                                    clawdata.lower,
-                                                    clawdata.upper)
+    # xll = [957738.41,  1844520.82]
+    # xur = [957987.1, 1844566.5]  # from email
+    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
+    #                                                 clawdata.num_cells,
+    #                                                 clawdata.lower,
+    #                                                 clawdata.upper)
 
-    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-                    region_lower[1],region_upper[1]])
+    # regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
+    #                 region_lower[1],region_upper[1]])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
-    regions.append([minlevel,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
+    regions.append([minlevel,maxlevel,0, 1e10, clawdata.lower[0],clawdata.upper[0],
                     clawdata.lower[1],clawdata.upper[1]])
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
@@ -511,7 +511,7 @@ def setgeo(rundata):
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
     refinement_data.deep_depth = 1e2
-    refinement_data.max_level_deep = 3
+    refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = False
 
     # == settopo.data values ==

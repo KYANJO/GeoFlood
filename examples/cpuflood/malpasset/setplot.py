@@ -97,7 +97,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmax = 30
     plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = False
+    plotitem.patchedges_show = True
 
     # Land
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
@@ -202,7 +202,7 @@ def setplot(plotdata):
     plotdata.parallel = False
     plotdata.printfigs = True                # print figures
     plotdata.print_format = 'png'            # file format
-    plotdata.print_framenos = range(0,36)          # list of frames to print
+    plotdata.print_framenos = range(0,100,25)          # list of frames to print
     plotdata.print_gaugenos = 'all'            # list of gauges to print
     plotdata.print_fignos = [0,300]            # list of figures to print
     plotdata.html = True                     # create html files of plots?
