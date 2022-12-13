@@ -3,7 +3,7 @@ function plot_malpasset()
 close all;
 
 % plot_topo('scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2','g');
-[ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2',[0 0 1]);
+[ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2','b');
 % plot_topo('scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2','r');
 % plot_topo('scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2','w');
 % [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2',[1 0 0]);
