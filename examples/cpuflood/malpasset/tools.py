@@ -124,3 +124,80 @@ def read_locations_data(malpasset_loc):
     
     return police, transformers, gauges
 
+def ozone(x2,y2,z2):
+    """
+    @description: Convert ECEF coordinates to geodetic coordinates using Ozone's method
+    @source: obtained from https://www.researchgate.net/publication/254250446_Transforming_cartesian_coordinates_X_Y_Z_to_geographical_coordinates_h 
+    """
+
+    a = 6378137 # WGS-84 ellipsiod semi-major axis
+    f = 1/298.257223563 # WGS-84 ellipsiod flattening parameter
+    b = a*(1-f) # WGS-84 ellipsiod semi-minor axis
+    p = np.sqrt((x2**2) + (y2**2)) # distance from z-axis
+    e = np.sqrt(f*(2 - f)) # eccentricity
+    #==== Ozone's method =====
+    M = (a*p - ((a**2) - (b**2)))/(2*b*z2)
+    N = (a*p + ((a**2) - (b**2)))/(2*b*z2)
+    V = 4*N*M + 1
+    W = 2*(N**2 - M**2)
+    I = (np.sqrt((V/3)**3 + (W/2)**2) + (W/2))**(1/3) - (np.sqrt((V/3)**3 + (W/2)**2) - (W/2))**(1/3)
+    J = np.sqrt(2*I + 4*M**2)
+    K = (2*(N - M*I))/J
+    G = (2*M + J)**2 - 4*(I - K)
+    u = (2*M + J + np.sqrt(G))/2
+    t_phi = 2*a*u/(b*(u**2 - 1))
+    lat = np.degrees(np.arctan(t_phi))
+    lon = np.degrees(np.arctan(y2/x2))
+    v = a/(np.sqrt(1 - (e**2)*np.degrees(np.sin(lat)**2))) # radius of curvature in the prime vertical
+    h = (p/np.degrees(np.cos(lat))) - v
+    return lat, lon, h
+
+def xyz_to_latlon(file):   
+    with open (file, "r") as myfile:
+        data = myfile.read().splitlines()
+    data2 = []
+    for i in range(2, len(data)):
+        data[i] = data[i].split()
+        data2.append([float(j) for j in data[i]])
+
+    data2 = np.array(data2)
+    x = []; y = []; z = []
+    for data in data2:
+        x.append(data[1])
+        y.append(data[2])
+        z.append(data[3])
+
+    R = 6371e3 # metres radius of earth
+
+    #====== X,Y,Z are obtained from https://tool-online.com/en/coordinate-converter.php took the corresponding XYZ for latlon coordinates of the reservior ======
+    # used [lat,lon,h] = [43.512128, 6.75660, 55m] of the reservior as the starting point and converted it to XYZ using the above website to obtain the following XYZ of the reservior
+
+    [X,Y,Z] = [4600827.391, 545086.101,  4368976.942] #XYZ of the reservior
+
+    x2 = [X]; y2 = [Y]; z2 = [Z]
+    for i in range(1,len(x)):
+        x1 = x[i] - x[i-1] #distance between two x points
+        y1 = y[i] - y[i-1] #distance between two y points
+        z1 = z[i] - z[i-1] #distance between two z points
+        X = X + x1
+        Y = Y + y1
+        Z = Z + z1
+        x2.append(X)
+        y2.append(Y)
+        z2.append(Z)
+
+    x2 = np.floor(x2).astype(int)
+    y2 = np.floor(y2).astype(int)
+    z2 = np.floor(z2).astype(int)
+
+    #===== converting xyz to latlon ======
+    lat, lon, h = ozone(x2,y2,z2)
+
+    #===== write to a file ======
+    with open('latlon.csv', 'w') as f:
+        for i in range(len(lat)-1):
+            f.write(str(lat[i])+ " " + str(lon[i]) + " " + str(h[i]))
+            f.write("\n")
+
+    return lat, lon, z2
+
