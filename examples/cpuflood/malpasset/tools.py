@@ -108,7 +108,7 @@ def read_locations_data(malpasset_loc):
     with open (malpasset_loc, "r") as myfile:
         data = myfile.read().splitlines()
     data2 = []
-    for i in range(1, len(data)):
+    for i in range(1,len(data)):
         data[i] = data[i].split()
         data2.append([float(j) for j in data[i]])
 
@@ -118,9 +118,9 @@ def read_locations_data(malpasset_loc):
     for data in data2:
         x.append(data[1])
         y.append(data[2])
-    police = [range(17),x[:17], y[:17]]
-    transformers = [range(17,20),x[17:20], y[17:20]]
-    gauges = [range(6,15),x[20:29], y[20:29]]
+    police = [range(16),x[:16], y[:16]]
+    transformers = [range(16,19),x[16:19], y[16:19]]
+    gauges = [range(6,15),x[19:28], y[19:28]]
     
     return police, transformers, gauges
 
@@ -199,5 +199,5 @@ def xyz_to_latlon(file):
             f.write(str(lat[i])+ " " + str(lon[i]) + " " + str(h[i]))
             f.write("\n")
 
-    return lat, lon, z2
+    return lat, lon, h
 

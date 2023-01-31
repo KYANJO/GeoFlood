@@ -2,11 +2,12 @@ function plot_malpasset()
 
 close all;
 
-% plot_topo('scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2','g');
-[ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2','b');
-% plot_topo('scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2','r');
-% plot_topo('scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2','w');
-% [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2',[1 0 0]);
+[ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2','g');
+% [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2','b');
+% [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2','b'); 
+% [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2','b');
+% [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_grid2_1m_nolc.topotype2','r');
+% [ax,bx,ay,by] = plot_topo('scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2','w');
 
 % axis([957738.41,957987.1,1844520.82, 1844566.5]);
 shg
@@ -78,7 +79,7 @@ p = surf(xm,ym,T');
 set(p,'cdata',c');
 set(p,'edgecolor','none');
 
-colormap([0 0 1; cvec]);
+colormap([1 0 0;1 1 1]);
 set(p,'cdatamapping','direct');
 
 

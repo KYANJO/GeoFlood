@@ -54,6 +54,8 @@ def setplot(plotdata):
     lower = [953236.00000000, 1832407.25000000]
     upper = [959554.00000000, 1848572.75000000]
 
+    # lower = [6.69262004,  43.40252126]
+    # upper = [6.78171094,  43.55083988 ]
     #-----------------------------------------------------------
     # Figure for KML files (large view)
     # This under-resolves the finest level.
@@ -106,6 +108,8 @@ def setplot(plotdata):
     plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
+    plotitem.amr_celledges_show = [0,0,0]
+    plotitem.patchedges_show = False
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)
@@ -238,15 +242,15 @@ def setplot(plotdata):
 
     plotdata.parallel = False
     plotdata.print_format = 'png'           # file format
-    plotdata.print_framenos = 'all'         # list of frames to print
+    plotdata.print_framenos = range(0,100,2)         # list of frames to print
     plotdata.print_gaugenos = 'all'         # list of gauges to print
     plotdata.print_fignos = [1,300]         # list of figures to print
 
     plotdata.printfigs = True              # print figures
     plotdata.overwrite = True
 
-    plotdata.html = False                     # create html files of plots?
-    plotdata.html_movie = False                     # create html files of plots?
+    plotdata.html = True                     # create html files of plots?
+    plotdata.html_movie = True                    # create html files of plots?
     plotdata.html_homelink = '../README.html'   # pointer for top of index
 
     plotdata.latex = False                    # create latex file of plots?
