@@ -39,8 +39,8 @@ extern "C"
 
 void malpasset_link_solvers(fclaw2d_global_t *glob);
 
-// #define TETON_QINIT   FCLAW_F77_FUNC(teton_qinit,TETON_QINIT)
-// void TETON_QINIT(const int* meqn,const int* mbc,
+// #define MALPASSET_QINIT   FCLAW_F77_FUNC(malpasset_qinit,MALPASSET_QINIT)
+// void MALPASSET_QINIT(const int* meqn,const int* mbc,
 //                  const int* mx, const int* my,
 //                  const double* xlower, const double* ylower,
 //                  const double* dx, const double* dy,

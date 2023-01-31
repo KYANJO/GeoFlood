@@ -37,5 +37,5 @@ void malpasset_link_solvers(fclaw2d_global_t *glob)
        can set these with customized functions, if desired. */
     fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
 
-    // geoclaw_vt->qinit = &malpasset_QINIT;
+    // geoclaw_vt->qinit = &MALPASSET_QINIT;
 }
