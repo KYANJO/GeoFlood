@@ -118,7 +118,7 @@ def read_locations_data(malpasset_loc):
     for data in data2:
         x.append(data[1])
         y.append(data[2])
-    police = [range(17),x[:16], y[:16]]
+    police = [range(17),x[:17], y[:17]]
     transformers = [range(17,20),x[17:20], y[17:20]]
     gauges = [range(6,15),x[20:29], y[20:29]]
     
