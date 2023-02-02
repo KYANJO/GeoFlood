@@ -59,7 +59,7 @@ ratios_y = [2]*maxlevel
 ratios_t = [2]*maxlevel
 
 #-------------------manning coefficient -----------------------------------------------
-manning_coefficient = 0.033
+manning_coefficient = 0.03333
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2

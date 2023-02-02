@@ -10,7 +10,12 @@ function setplot is called to set the plot parameters.
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import image
 from clawpack.geoclaw import topotools
+
+# --------------------- Police, transformer and guage data -----------------------------------------------
+malpasset_loc = "./malpasset_locs.txt"
+
 
 #--------------------------
 def setplot(plotdata):
@@ -120,11 +125,11 @@ def setplot(plotdata):
     #-----------------------------------------------------------
     # Figure for KML files (zoomed view on region)
     #----------------------------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Transformers (zoom)',figno=2)
-    plotfigure.show = True
+    # plotfigure = plotdata.new_plotfigure(name='Transformers (zoom)',figno=2)
+    # plotfigure.show = True
 
-    plotfigure.use_for_kml = True
-    plotfigure.kml_use_for_initial_view = False
+    # plotfigure.use_for_kml = True
+    # plotfigure.kml_use_for_initial_view = False
 
     # Latlong box used for GoogleEarth
 
@@ -161,17 +166,64 @@ def setplot(plotdata):
     plotfigure.kml_tile_images = False    # Tile images for faster loading.  Requires GDAL [False]
 
     # Color axis : transparency below 0.1*(cmax-cmin)
-    # cmin = 0
-    # cmax = 5
-    # cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    cmin = 0
+    cmax = 5
+    cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
 
     # Water
-    # plotaxes = plotfigure.new_plotaxes('kml')
-    # plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    # plotitem.plot_var = geoplot.depth   # Plot height field h.
-    # plotitem.pcolor_cmap = geoplot.googleearth_flooding
-    # plotitem.pcolor_cmin = cmin
-    # plotitem.pcolor_cmax = cmax
+    plotaxes = plotfigure.new_plotaxes('kml')
+    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
+    plotitem.plot_var = geoplot.depth   # Plot height field h.
+    plotitem.pcolor_cmap = geoplot.googleearth_flooding
+    plotitem.pcolor_cmin = cmin
+    plotitem.pcolor_cmax = cmax
+
+    # plot point locations 
+    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
+    
+    # Physical model points locations (Gauges)
+    gauge_points = ['P6','P7','P8','P9','P10','P11','P12','P13','P14']
+    gauge_loc = []
+    for i in range(len(gauges[0])):
+        gauge_loc.append([gauges[1][i],gauges[2][i]])   
+
+    # Physical model points locations (Transformers)
+    transformer_points = ['A','B','c']
+    transformer_loc = []
+    for i in range(len(transformers[0])):
+        transformer_loc.append([transformers[1][i],transformers[2][i]])
+
+    # Physical model points locations (Police)
+    police_points = ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15','S16','S17']
+    police_loc = []
+    for i in range(len(police[0])):
+        police_loc.append([police[1][i],police[2][i]])
+
+    point_labels = transformer_points + gauge_points + police_points
+    point_list = [transformer_loc, gauge_loc, police_loc]
+    point_list = [item for sublist in point_list for item in sublist]
+    
+    # Plot and overlay points on the plotted image
+    plt.style.use('default')
+    # im = image.imread("_plots/temp/fig1/frame0098fig1/frame0098fig1.png")
+    
+    for i,pt in enumerate(point_list):
+        lab = point_labels[i]
+        if i>2 and i<=11:
+            plt.plot(pt[0],pt[1],'k*',markersize=4)
+            plt.annotate(lab, xy=pt, xytext=(pt[0]-50,pt[1]-350))
+        elif i>11:
+            plt.plot(pt[0],pt[1],'k*',markersize=4)
+            plt.annotate(lab, xy=pt, xytext=(pt[0]-25,pt[1]+100))
+        else:
+            plt.plot(pt[0],pt[1],'r*',markersize=4)
+            plt.annotate(lab, xy=pt, xytext=(pt[0]-5,pt[1]+100))
+    
+    # plt.imshow(im)
+    plt.savefig('malpasset_points.png',dpi=300)
+    
+
+    #-----------------------------------------
 
     #-----------------------------------------
     # Figures for gauges
@@ -234,8 +286,7 @@ def setplot(plotdata):
 
     plotaxes.afteraxes = afterframe
 
-
-    #-----------------------------------------
+    
 
     # Parameters used only when creating html and/or latex hardcopy
     # e.g., via pyclaw.plotters.frametools.printframes:
