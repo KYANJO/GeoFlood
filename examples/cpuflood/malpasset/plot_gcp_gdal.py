@@ -71,11 +71,24 @@ def rewrite_kml(kml_file):
     east = '959554.0'
     west = '953236.0'
 
+
+    # in exponential notation
+    north_e = '1.84857e+06'
+    south_e = '1.83241e+06'
+
+    # in interger notation
+    east_e = '959554'
+    west_e = '953236'
+
     # replace with the new values(different gcp points have different latlon box)
     north_r = '43.549942109'
     south_r = '43.400191065'
     east_r = '6.781941194'
     west_r = '6.690324187'
+
+    # since -180 < east_r, west_r > 180 then
+    east_i =  "{:.4f}".format(float(str(float(east) - 360)))
+    west_i = "{:.4f}".format(float(str(float(west) - 360)))
 
     # compute the average lat and lon
     av_lat = (float(north) + float(south))/2
@@ -92,7 +105,6 @@ def rewrite_kml(kml_file):
     with open(kml_file, 'r') as f:
         filedata = f.read()
         file = filedata.replace(str(range), str(range_r))
-    
     # write the new kml file
     with open(kml_file, 'w') as f:
         f.write(file)
@@ -101,14 +113,12 @@ def rewrite_kml(kml_file):
     with open(kml_file, 'r') as f:
         filedata = f.read()
         file = filedata.replace(str(av_lat), str(average_lat))
-
     with open(kml_file, 'w') as f:
         f.write(file)   
 
     with open(kml_file, 'r') as f:
         filedata = f.read()
         file = filedata.replace(str(av_lon), str(average_lon))
-
     with open(kml_file, 'w') as f:
         f.write(file)
 
@@ -116,15 +126,25 @@ def rewrite_kml(kml_file):
     with open(kml_file, 'r') as f:
         filedata = f.read()
         file = filedata.replace(north, north_r)
-
     # write the new kml file
     with open(kml_file, 'w') as f:
         f.write(file)
 
     with open(kml_file, 'r') as f:
         filedata = f.read()
-        file = file.replace(south, south_r)
+        file = filedata.replace(north_e, north_r)
+    with open(kml_file, 'w') as f:
+        f.write(file)
 
+    with open(kml_file, 'r') as f:
+        filedata = f.read()
+        file = file.replace(south_e, south_r)
+    with open(kml_file, 'w') as f:
+        f.write(file)
+
+    with open(kml_file, 'r') as f:
+        filedata = f.read()
+        file = file.replace(south, south_r)
     # write the new kml file
     with open(kml_file, 'w') as f:
         f.write(file)
@@ -132,7 +152,20 @@ def rewrite_kml(kml_file):
     with open(kml_file, 'r') as f:
         filedata = f.read()
         file = file.replace(east, east_r)
+    # write the new kml file
+    with open(kml_file, 'w') as f:
+        f.write(file)
 
+    with open(kml_file, 'r') as f:
+        filedata = f.read()
+        file = file.replace(east_i, east_r)
+    # write the new kml file
+    with open(kml_file, 'w') as f:
+        f.write(file)
+
+    with open(kml_file, 'r') as f:
+        filedata = f.read()
+        file = file.replace(east_e, east_r)
     # write the new kml file
     with open(kml_file, 'w') as f:
         f.write(file)
@@ -140,7 +173,20 @@ def rewrite_kml(kml_file):
     with open(kml_file, 'r') as f:
         filedata = f.read()
         file = file.replace(west, west_r)
+    # write the new kml file
+    with open(kml_file, 'w') as f:
+        f.write(file)
+    
+    with open(kml_file, 'r') as f:
+        filedata = f.read()
+        file = file.replace(west_i, west_r)
+    # write the new kml file
+    with open(kml_file, 'w') as f:
+        f.write(file)
 
+    with open(kml_file, 'r') as f:
+        filedata = f.read()
+        file = file.replace(west_e, west_r)
     # write the new kml file
     with open(kml_file, 'w') as f:
         f.write(file)
@@ -185,8 +231,9 @@ for folder in os.listdir():
                 os.system("rm " + image_in[:-4] + "_gcp.tif") # remove the _gcp image (size is large)
         os.chdir("..") # go back to the fig1 folder
 
-# go back to the kmz folder
-os.chdir("..")
+os.chdir("../kml")  # go back to the kml folder
+rewrite_kml("regions.kml") # rewrite the regions.kml file
+os.chdir("..") # go back to the kmz folder
 rewrite_kml("doc.kml") # edit the *.kml file
 
 # finally open the .kml file to visualize the georeferenced image in google earth
