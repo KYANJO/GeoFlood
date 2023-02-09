@@ -72,10 +72,10 @@ def rewrite_kml(kml_file):
     west = '953236.0'
 
     # replace with the new values(different gcp points have different latlon box)
-    north_r = '43.548787426'
-    south_r = '43.400118651'
-    east_r = '6.781588849'
-    west_r = '6.689219689'
+    north_r = '43.549942109'
+    south_r = '43.400191065'
+    east_r = '6.781941194'
+    west_r = '6.690324187'
 
     # compute the average lat and lon
     av_lat = (float(north) + float(south))/2
