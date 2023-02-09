@@ -71,11 +71,11 @@ def rewrite_kml(kml_file):
     east = '959554.0'
     west = '953236.0'
 
-    # replace with the new values
-    north_r = '43.549018793'
-    south_r = '43.399937799'
-    east_r = '6.781409352'
-    west_r = '6.692786195'
+    # replace with the new values(different gcp points have different latlon box)
+    north_r = '43.548787426'
+    south_r = '43.400118651'
+    east_r = '6.781588849'
+    west_r = '6.689219689'
 
     # compute the average lat and lon
     av_lat = (float(north) + float(south))/2
@@ -169,7 +169,7 @@ os.system("unzip -o *.kmz") # unzip the kmz file, overwrite if unzipped already 
 os.chdir("fig1") # go into the fig1 folder
 
 # locate the gcp points file
-gcp_points = "../../../../mlp_gcp_final.points" # locate the gcp points file from the frame folders
+gcp_points = "../../../../malpasset_gcp.points" # locate the gcp points file from the frame folders
 
 print('Geo-referencing images...')
 
