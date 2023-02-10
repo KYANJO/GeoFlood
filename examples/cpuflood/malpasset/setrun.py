@@ -52,8 +52,8 @@ if output_style == 3:
 mx = 32
 my = 32
 
-minlevel = 2
-maxlevel = 3 #resolution based on levels 
+minlevel = 1
+maxlevel = 6 #resolution based on levels 
 ratios_x = [2]*maxlevel
 ratios_y = [2]*maxlevel
 ratios_t = [2]*maxlevel
@@ -399,7 +399,7 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     amrdata = rundata.amrdata
 
-    amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
+    amrdata.amr_levels_max = maxlevel   # max number of refinement levels
     amrdata.refinement_ratios_x = ratios_x 
     amrdata.refinement_ratios_y = ratios_y
     amrdata.refinement_ratios_t = ratios_t
@@ -428,20 +428,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([minlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
-    # regions.append([maxlevel,maxlevel, 0, 1.e10,6.756660,6.759780633284454,43.5121218, 43.512880494845895])
-
-
-    # Box containing gauge location locations
-    # xll = [957738.41,  1844520.82]
-    # xur = [957987.1, 1844566.5]  # from email
-    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
-    #                                                 clawdata.num_cells,
-    #                                                 clawdata.lower,
-    #                                                 clawdata.upper)
-
-    # regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
-    #                 region_lower[1],region_upper[1]])
+    regions.append([maxlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
     regions.append([minlevel,maxlevel,0, 1e10, clawdata.lower[0],clawdata.upper[0],
@@ -509,6 +496,7 @@ def setgeo(rundata):
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
+    refinement_data.speed_tolerance = [1.e-2]*maxlevel
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = True
