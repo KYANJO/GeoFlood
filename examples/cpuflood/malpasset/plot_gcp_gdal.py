@@ -87,25 +87,56 @@ def read_locations_data(malpasset_loc):
     
     return police, transformers, gauges
 
+def exp_int(north,south,east,west):
+    """
+    This function converts the latlon box to exponential and integer notation
+    """
+    north_e = '{:.5e}'.format(float(north))
+    south_e = '{:.5e}'.format(float(south))
+    east_e = str(int(float(east)))
+    west_e = str(int(float(west)))
+    return north_e, south_e, east_e, west_e
+
+def replace_latlonbox(north,south,east,west,north_e,south_e,east_e,west_e,north_r,south_r,east_r,west_r,east_i,west_i,kml_file):
+    """
+    This function replaces the latlon box in the kml file with the new latlon box
+    """
+    domain_box = [north,south,east,west]
+    domain_box_i = [north,south,east_i,west_i] #for simpilicity
+    domain_boxe = [north_e,south_e,east_e,west_e]
+    domain_search = [domain_box,domain_box_i,domain_boxe]
+    domain_box_replace = [north_r,south_r,east_r,west_r]
+    for i in range(len(domain_search)):
+        for j in range(len(domain_box_replace)):
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(domain_search[i][j], domain_box_replace[j])
+            with open(kml_file, 'w') as f:
+                f.write(file)
+
+                
 def rewrite_kml(kml_file,coordinates,malpasset_loc,gauge_lat_long):
     """
     This function rewrites the *.kml file to change the latlon box, range, and average lat and lon
     """
     #computational domain (latlon box) for the image
-    [north,south,east,west] = coordinates[0]
+    [north_ic,south_ic,east_ic,west_ic] = coordinates[0][0]
+    [north,south,east,west] = coordinates[1][0]
 
     # in exponential and interger notation
-    north_e = '{:.5e}'.format(float(north))
-    south_e = '{:.5e}'.format(float(south))
-    east_e = str(int(float(east)))
-    west_e = str(int(float(west)))
+    north_ec, south_ec, east_ec, west_ec = exp_int(north_ic,south_ic,east_ic,west_ic) # for intial reservior
+    north_e, south_e, east_e, west_e = exp_int(north,south,east,west) # for computational domain
 
     # replace with the new values(different gcp points have different latlon box)
-    [north_r, south_r, east_r, west_r] = coordinates[1]
+    [north_ir, south_ir, east_ir, west_ir] = coordinates[0][1]
+    [north_r, south_r, east_r, west_r] = coordinates[1][1]
 
     # since -180 < east_r, west_r > 180 then
+    east_inc =  "{:.4f}".format(float(str(float(east_ic) - 360)))
+    west_inc = "{:.4f}".format(float(str(float(west_ic) - 360)))
     east_i =  "{:.4f}".format(float(str(float(east) - 360)))
     west_i = "{:.4f}".format(float(str(float(west) - 360)))
+
 
     # compute the average lat and lon
     av_lat = (float(north) + float(south))/2
@@ -166,19 +197,10 @@ def rewrite_kml(kml_file,coordinates,malpasset_loc,gauge_lat_long):
             f.write(file)
 
     # replace the latlon box
-    domain_box = [north,south,east,west]
-    domain_box_i = [north,south,east_i,west_i] #for simpilicity
-    domain_boxe = [north_e,south_e,east_e,west_e]
-    domain_search = [domain_box,domain_box_i,domain_boxe]
-    domain_box_replace = [north_r,south_r,east_r,west_r]
-    for i in range(len(domain_search)):
-        for j in range(len(domain_box_replace)):
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(domain_search[i][j], domain_box_replace[j])
-            with open(kml_file, 'w') as f:
-                f.write(file)
+    replace_latlonbox(north_ic,south_ic,east_ic,west_ic,north_ec,south_ec,east_ec,west_ec,north_ir,south_ir,east_ir,west_ir,east_inc,west_inc,kml_file) # for initial conditions
+    replace_latlonbox(north,south,east,west,north_e,south_e,east_e,west_e,north_r,south_r,east_r,west_r,east_i,west_i,kml_file) # for the simulation
 
+    
 def overlay_image_google_earth(func_arg):
     '''
     This function overlays the a georeferenced simulated image onto google earth.
@@ -242,13 +264,25 @@ def overlay_image_google_earth(func_arg):
 
 # === end of function definitions ===
 
-# === define the latlon box ===
+# === define the latlon box for the initial reservior ===
+north_i = '1844566.5000'
+south_i = '1844520.82'
+east_i = '957987.1'
+west_i = '957738.41'
+
+# === Initial reservior in lat-long ===
+north_il = '43.548464'
+south_il = '43.512148'
+east_il = '6.780684'
+west_il = '6.737070'
+
+# === define the latlon box for the simulation ===
 north = '1848572.75'
 south = '1832407.25'
 east = '959554.0'
 west = '953236.0'
 
-# === define the latlon box for the reference image ===
+# === define the latlon box for the reference image (Acting as our computational domain for the visualization) ===
 north_r = '43.549942109'
 south_r = '43.400191065'
 east_r = '6.781941194'
@@ -259,8 +293,10 @@ gauge_lat = [43.508383,43.503714,43.493864,43.488525,43.476069,43.466011,43.4504
 gauge_lon = [6.757204,6.758799,6.751142,6.740853,6.743523,6.736402,6.735097,6.721494,6.716970]
 
 # === function arguments ===
-gauge_lat_long = [gauge_lat, gauge_lon]   
-coordinates = [[north,south,east,west],[north_r,south_r,east_r,west_r]]    
+gauge_lat_long = [gauge_lat, gauge_lon]
+cordinates_i = [[north_i,south_i,east_i,west_i],[north_il,south_il,east_il,west_il]]   
+coordinates_f = [[north,south,east,west],[north_r,south_r,east_r,west_r]]    
+coordinates = [cordinates_i,coordinates_f]
 
 # === locate data files ===
 malpasset_loc = "../../../malpasset_locs.txt"   # Police, transformer and guage data
