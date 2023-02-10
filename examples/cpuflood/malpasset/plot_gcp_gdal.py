@@ -3,10 +3,13 @@
 # Date: 02/08/2023 10:00:00 am
 
 # === Import libraries ===
-import pandas as pd
-import numpy as np
-from osgeo import gdal
 import os
+import numpy as np
+import pandas as pd
+from time import sleep
+from osgeo import gdal
+from random import random
+from multiprocessing import Pool
 
 # === Define functions ===
 def gcp_gdal(gcp_points, image_in):
@@ -61,30 +64,44 @@ def range_kml(y1,y2,x1,x2):
     initial_height = min([1000*dist_factor*domain_width,9656064.0])   # <= 6000 miles
     return initial_height
 
-def rewrite_kml(kml_file):
+def read_locations_data(malpasset_loc):
+    """
+    This function reads in the locations of the police stations, transformers, and gauges from a file
+    """
+    with open (malpasset_loc, "r") as myfile:
+        data = myfile.read().splitlines()
+    data2 = []
+    for i in range(1,len(data)):
+        data[i] = data[i].split()
+        data2.append([float(j) for j in data[i]])
+
+    data2 = np.array(data2)
+    x = []
+    y = []
+    for data in data2:
+        x.append(data[1])
+        y.append(data[2])
+    police = [range(17),x[:17], y[:17]]
+    transformers = [range(17,20),x[17:20], y[17:20]]
+    gauges = [range(6,15),x[20:29], y[20:29]]
+    
+    return police, transformers, gauges
+
+def rewrite_kml(kml_file,coordinates,malpasset_loc,gauge_lat_long):
     """
     This function rewrites the *.kml file to change the latlon box, range, and average lat and lon
     """
     #computational domain (latlon box) for the image
-    north = '1848572.75'
-    south = '1832407.25'
-    east = '959554.0'
-    west = '953236.0'
+    [north,south,east,west] = coordinates[0]
 
-
-    # in exponential notation
-    north_e = '1.84857e+06'
-    south_e = '1.83241e+06'
-
-    # in interger notation
-    east_e = '959554'
-    west_e = '953236'
+    # in exponential and interger notation
+    north_e = '{:.5e}'.format(float(north))
+    south_e = '{:.5e}'.format(float(south))
+    east_e = str(int(float(east)))
+    west_e = str(int(float(west)))
 
     # replace with the new values(different gcp points have different latlon box)
-    north_r = '43.549942109'
-    south_r = '43.400191065'
-    east_r = '6.781941194'
-    west_r = '6.690324187'
+    [north_r, south_r, east_r, west_r] = coordinates[1]
 
     # since -180 < east_r, west_r > 180 then
     east_i =  "{:.4f}".format(float(str(float(east) - 360)))
@@ -98,13 +115,71 @@ def rewrite_kml(kml_file):
     average_lon = (float(east_r) + float(west_r))/2
 
     #compute the range of lat and lon in meters
-    range = range_kml(south,north,west,east) 
+    range_ = range_kml(south,north,west,east) 
     range_r  = range_kml(south_r,north_r,west_r,east_r)
+
+    # check if in the kml directory 
+    if os.path.exists("levels"): # choose levels since its the only directory in the kml directory
+
+        # approximate the gauge locations
+        [gauge_lat,gauge_lon] = gauge_lat_long
+
+        police, transformers, gauge = read_locations_data(malpasset_loc)
+
+        gauge_loc = []
+        gauge_round = []
+        for i in range(len(gauge[0])):
+            gauge_loc.append([gauge[1][i],gauge[2][i]])  
+            y2 = "{:.5e}".format(gauge_loc[i][1])
+            if y2[6] == '0':
+                y2 = "{:.4e}".format(gauge_loc[i][1])
+            gauge_round.append([int(gauge_loc[i][0].round()),y2])
+        
+        #for x1,x2 > 180 and < -180
+        gauge_360 = np.array(gauge_loc) - 360
+        
+        # replace the gauge locations
+        for i in range(len(gauge_loc)):
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(str(gauge_loc[i][0]), str(gauge_lon[i]))
+            with open(kml_file, 'w') as f:
+                f.write(file)
+
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(str(gauge_loc[i][1]), str(gauge_lat[i]))
+            with open(kml_file, 'w') as f:
+                f.write(file)
+
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(str(gauge_360[i][0]), str(gauge_lon[i]))
+            with open(kml_file, 'w') as f:
+                f.write(file)
+
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(str(gauge_360[i][1]), str(gauge_lat[i]))
+            with open(kml_file, 'w') as f:
+                f.write(file)
+
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(str(gauge_round[i][0]), str(gauge_lon[i]))
+            with open(kml_file, 'w') as f:
+                f.write(file)
+
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(str(gauge_round[i][1]), str(gauge_lat[i]))
+            with open(kml_file, 'w') as f:
+                f.write(file)
 
     # replace the range
     with open(kml_file, 'r') as f:
         filedata = f.read()
-        file = filedata.replace(str(range), str(range_r))
+        file = filedata.replace(str(range_), str(range_r))
     # write the new kml file
     with open(kml_file, 'w') as f:
         f.write(file)
@@ -191,51 +266,103 @@ def rewrite_kml(kml_file):
     with open(kml_file, 'w') as f:
         f.write(file)
 
-# check if the _plots folder exists
-if os.path.exists("_plots"):
-    print("_plots folder exists")
-else:
-    print("_plots folder does not exist")
-    os.system("python make_plots_kml.py")
+def overlay_image_google_earth(func_arg):
+    '''
+    This function overlays the a georeferenced simulated image onto google earth.
+    '''
+    # get the arguments
+    gcp_points,coordinates,malpasset_loc,gauge_lat_long = func_arg
 
-# go into the _plots folder
-os.chdir("_plots")
+    # check if the _plots folder exists
+    if os.path.exists("_plots"):
+        print("_plots folder exists")
+    else:
+        print("_plots folder does not exist")
+        os.system("python make_plots_kml.py")
 
-# check if the kmz folder exists
-if os.path.exists("kmz"):
-    print("kmz folder exists")
-else:
-    print("kmz folder does not exist")
-    os.system("mkdir kmz")
+    # go into the _plots folder
+    os.chdir("_plots")
 
-os.chdir("kmz") # go into the kmz folder
-os.system("cp -f ../*.kmz .") # copy the kmz file to the kmz folder
-os.system("unzip -o *.kmz") # unzip the kmz file, overwrite if unzipped already (to avoid georeferencing twice)
+    # check if the kmz folder exists
+    if os.path.exists("kmz"):
+        print("kmz folder exists")
+    else:
+        print("kmz folder does not exist")
+        os.system("mkdir kmz")
 
-os.chdir("fig1") # go into the fig1 folder
+    os.chdir("kmz") # go into the kmz folder
+    os.system("cp -f ../*.kmz .") # copy the kmz file to the kmz folder
+    os.system("unzip -o *.kmz") # unzip the kmz file, overwrite if unzipped already (to avoid georeferencing twice)
 
-# locate the gcp points file
+    os.chdir("fig1") # go into the fig1 folder
+
+    print('Geo-referencing images...')
+
+    # access images in the frame* folders
+    for folder in os.listdir():
+        if folder.startswith("frame"):
+            os.chdir(folder) # go into the frame* folder
+            rewrite_kml("doc.kml",coordinates,malpasset_loc,gauge_lat_long) # edit the *.kml file
+            for image in os.listdir():
+                if image.endswith("png"):
+                    image_in = image # get the image name
+                    image_out = gcp_gdal(gcp_points, image_in) # call the gcp_gdal function
+                    os.system("rm " + image_in[:-4] + "_gcp.tif") # remove the _gcp image (size is large)
+            os.chdir("..") # go back to the fig1 folder
+
+    os.chdir("../kml")  # go back to the kml folder
+    rewrite_kml("regions.kml",coordinates,malpasset_loc,gauge_lat_long) # rewrite the regions.kml file
+    rewrite_kml("gauges.kml",coordinates,malpasset_loc,gauge_lat_long) # rewrite the gauges.kml file
+    os.chdir("..") # go back to the kmz folder
+    rewrite_kml("doc.kml",coordinates,malpasset_loc,gauge_lat_long) # edit the *.kml file
+
+    # finally open the .kml file to visualize the georeferenced image in google earth
+    print("Opening the .kml file in Google Earth")
+    os.system("open doc.kml")
+
+# === end of function definitions ===
+
+# === define the latlon box ===
+north = '1848572.75'
+south = '1832407.25'
+east = '959554.0'
+west = '953236.0'
+
+# === define the latlon box for the reference image ===
+north_r = '43.549942109'
+south_r = '43.400191065'
+east_r = '6.781941194'
+west_r = '6.690324187'
+
+# === guages locations latlong (approximate) ===
+gauge_lat = [43.508383,43.503331,43.496959,43.488525,43.476069,43.466861,43.463255,43.435098,43.429378]
+gauge_lon = [6.757204,6.757630,6.754451,6.740853,6.743523,6.736303,6.736045,6.723366,6.718464]
+
+# === function arguments ===
+gauge_lat_long = [gauge_lat, gauge_lon]   
+coordinates = [[north,south,east,west],[north_r,south_r,east_r,west_r]]    
+
+# === locate data files ===
+malpasset_loc = "../../../malpasset_locs.txt"   # Police, transformer and guage data
 gcp_points = "../../../../malpasset_gcp.points" # locate the gcp points file from the frame folders
 
-print('Geo-referencing images...')
+# make one fuction argument
+func_arg = [gcp_points,coordinates,malpasset_loc,gauge_lat_long]
 
-# access images in the frame* folders
-for folder in os.listdir():
-    if folder.startswith("frame"):
-        os.chdir(folder) # go into the frame* folder
-        rewrite_kml("doc.kml") # edit the *.kml file
-        for image in os.listdir():
-            if image.endswith("png"):
-                image_in = image # get the image name
-                image_out = gcp_gdal(gcp_points, image_in) # call the gcp_gdal function
-                os.system("rm " + image_in[:-4] + "_gcp.tif") # remove the _gcp image (size is large)
-        os.chdir("..") # go back to the fig1 folder
+def task(func_arg):
+    # unpack the function arguments
+    gcp_points,coordinates,malpasset_loc,gauge_lat_long = func_arg
+    # block for a moment
+    sleep(random())
+    # call the function
+    return overlay_image_google_earth(func_arg)
 
-os.chdir("../kml")  # go back to the kml folder
-rewrite_kml("regions.kml") # rewrite the regions.kml file
-os.chdir("..") # go back to the kmz folder
-rewrite_kml("doc.kml") # edit the *.kml file
+# === parallelization using multiprocessing ===
+if __name__ == '__main__':
+    with Pool() as p:
+        # prepare the arguments
+        args = [func_arg]
+        # run the function
+        p.map(task, args)
 
-# finally open the .kml file to visualize the georeferenced image in google earth
-print("Opening the .kml file in Google Earth")
-os.system("open doc.kml")
+
