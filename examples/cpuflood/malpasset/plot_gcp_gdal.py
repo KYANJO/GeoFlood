@@ -316,9 +316,16 @@ def overlay_image_google_earth(func_arg):
     os.chdir("..") # go back to the kmz folder
     rewrite_kml("doc.kml",coordinates,malpasset_loc,gauge_lat_long) # edit the *.kml file
 
-    # finally open the .kml file to visualize the georeferenced image in google earth
-    print("Opening the .kml file in Google Earth")
-    os.system("open doc.kml")
+    # make a .kmz file
+    print("Making a .kmz file")
+    os.system("rm -f *.kmz") # remove the old kmz file
+    os.mkdir("../_geoReferenced")
+    os.system("zip -r -o -9 ../_geoReferenced/MalpassetDam.kmz *") # make a new .kmz file and save it in the _geoReferenced folder
+    os.chdir("../_geoReferenced") # go back to the _geoReferenced folder
+
+    # finally open the .kmz file to visualize the georeferenced image in google earth
+    print("Opening the .kmz file in Google Earth")
+    os.system("open MalpassetDam.kmz")
 
 # === end of function definitions ===
 
@@ -335,8 +342,8 @@ east_r = '6.781941194'
 west_r = '6.690324187'
 
 # === guages locations latlong (approximate) ===
-gauge_lat = [43.508383,43.503331,43.496959,43.488525,43.476069,43.466861,43.463255,43.435098,43.429378]
-gauge_lon = [6.757204,6.757630,6.754451,6.740853,6.743523,6.736303,6.736045,6.723366,6.718464]
+gauge_lat = [43.508383,43.503714,43.493864,43.488525,43.476069,43.466011,43.450400,43.432585,43.428329]
+gauge_lon = [6.757204,6.758799,6.751142,6.740853,6.743523,6.736402,6.735097,6.721494,6.716970]
 
 # === function arguments ===
 gauge_lat_long = [gauge_lat, gauge_lon]   
