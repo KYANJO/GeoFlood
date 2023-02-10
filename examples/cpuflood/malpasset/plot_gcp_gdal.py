@@ -138,133 +138,46 @@ def rewrite_kml(kml_file,coordinates,malpasset_loc,gauge_lat_long):
         #for x1,x2 > 180 and < -180
         gauge_360 = np.array(gauge_loc) - 360
         
+        # gauge list
+        gauge_list = [gauge_loc,gauge_round,gauge_360]
         # replace the gauge locations
         for i in range(len(gauge_loc)):
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(str(gauge_loc[i][0]), str(gauge_lon[i]))
-            with open(kml_file, 'w') as f:
-                f.write(file)
+            for j in range(len(gauge_list)):
+                with open(kml_file, 'r') as f:
+                    filedata = f.read()
+                    file = filedata.replace(str(gauge_list[j][i][0]), str(gauge_lon[i]))
+                with open(kml_file, 'w') as f:
+                    f.write(file)
 
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(str(gauge_loc[i][1]), str(gauge_lat[i]))
-            with open(kml_file, 'w') as f:
-                f.write(file)
+                with open(kml_file, 'r') as f:
+                    filedata = f.read()
+                    file = filedata.replace(str(gauge_list[j][i][1]), str(gauge_lat[i]))
+                with open(kml_file, 'w') as f:
+                    f.write(file)
 
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(str(gauge_360[i][0]), str(gauge_lon[i]))
-            with open(kml_file, 'w') as f:
-                f.write(file)
-
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(str(gauge_360[i][1]), str(gauge_lat[i]))
-            with open(kml_file, 'w') as f:
-                f.write(file)
-
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(str(gauge_round[i][0]), str(gauge_lon[i]))
-            with open(kml_file, 'w') as f:
-                f.write(file)
-
-            with open(kml_file, 'r') as f:
-                filedata = f.read()
-                file = filedata.replace(str(gauge_round[i][1]), str(gauge_lat[i]))
-            with open(kml_file, 'w') as f:
-                f.write(file)
-
-    # replace the range
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = filedata.replace(str(range_), str(range_r))
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    # replace the averages
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = filedata.replace(str(av_lat), str(average_lat))
-    with open(kml_file, 'w') as f:
-        f.write(file)   
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = filedata.replace(str(av_lon), str(average_lon))
-    with open(kml_file, 'w') as f:
-        f.write(file)
+    # replace the range and lat-long averages
+    av_lat_s = [str(range_),str(av_lat),str(av_lon)]
+    av_lat_r = [str(range_r), str(average_lat),str(average_lon)]
+    for i in range(len(av_lat_s)):
+        with open(kml_file, 'r') as f:
+            filedata = f.read()
+            file = filedata.replace(av_lat_s[i], av_lat_r[i])
+        with open(kml_file, 'w') as f:
+            f.write(file)
 
     # replace the latlon box
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = filedata.replace(north, north_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = filedata.replace(north_e, north_r)
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(south_e, south_r)
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(south, south_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(east, east_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(east_i, east_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(east_e, east_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(west, west_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-    
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(west_i, west_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
-
-    with open(kml_file, 'r') as f:
-        filedata = f.read()
-        file = file.replace(west_e, west_r)
-    # write the new kml file
-    with open(kml_file, 'w') as f:
-        f.write(file)
+    domain_box = [north,south,east,west]
+    domain_box_i = [north,south,east_i,west_i] #for simpilicity
+    domain_boxe = [north_e,south_e,east_e,west_e]
+    domain_search = [domain_box,domain_box_i,domain_boxe]
+    domain_box_replace = [north_r,south_r,east_r,west_r]
+    for i in range(len(domain_search)):
+        for j in range(len(domain_box_replace)):
+            with open(kml_file, 'r') as f:
+                filedata = f.read()
+                file = filedata.replace(domain_search[i][j], domain_box_replace[j])
+            with open(kml_file, 'w') as f:
+                f.write(file)
 
 def overlay_image_google_earth(func_arg):
     '''
@@ -274,20 +187,16 @@ def overlay_image_google_earth(func_arg):
     gcp_points,coordinates,malpasset_loc,gauge_lat_long = func_arg
 
     # check if the _plots folder exists
-    if os.path.exists("_plots"):
-        print("_plots folder exists")
-    else:
-        print("_plots folder does not exist")
+    if not os.path.exists("_plots"):
+        print("_plots folder does not exist, creating _plots folder...")
         os.system("python make_plots_kml.py")
 
     # go into the _plots folder
     os.chdir("_plots")
 
     # check if the kmz folder exists
-    if os.path.exists("kmz"):
-        print("kmz folder exists")
-    else:
-        print("kmz folder does not exist")
+    if not os.path.exists("kmz"):
+        print("kmz folder does not exist, creating kmz folder...")
         os.system("mkdir kmz")
 
     os.chdir("kmz") # go into the kmz folder
@@ -319,7 +228,7 @@ def overlay_image_google_earth(func_arg):
     # make a .kmz file
     print("Making a .kmz file")
     os.system("rm -f *.kmz") # remove the old kmz file
-    
+
     # check if the _geoReferenced folder exists
     if not os.path.exists("../_geoReferenced"):
         os.mkdir("../_geoReferenced")
@@ -370,7 +279,7 @@ def task(func_arg):
 
 # === parallelization using multiprocessing ===
 if __name__ == '__main__':
-    with Pool() as p:
+    with Pool(processes = 4) as p:
         # prepare the arguments
         args = [func_arg]
         # run the function
