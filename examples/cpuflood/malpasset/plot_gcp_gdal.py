@@ -319,7 +319,11 @@ def overlay_image_google_earth(func_arg):
     # make a .kmz file
     print("Making a .kmz file")
     os.system("rm -f *.kmz") # remove the old kmz file
-    os.mkdir("../_geoReferenced")
+    
+    # check if the _geoReferenced folder exists
+    if not os.path.exists("../_geoReferenced"):
+        os.mkdir("../_geoReferenced")
+   
     os.system("zip -r -o -9 ../_geoReferenced/MalpassetDam.kmz *") # make a new .kmz file and save it in the _geoReferenced folder
     os.chdir("../_geoReferenced") # go back to the _geoReferenced folder
 
