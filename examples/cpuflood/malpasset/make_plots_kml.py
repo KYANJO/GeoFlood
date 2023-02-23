@@ -113,8 +113,8 @@ def setplot(plotdata):
     plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
-    plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = False
+    # plotitem.amr_celledges_show = [0,0,0]
+    plotitem.patchedges_show = True       # Show patch edges
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)
@@ -125,11 +125,11 @@ def setplot(plotdata):
     #-----------------------------------------------------------
     # Figure for KML files (zoomed view on region)
     #----------------------------------------------------------
-    # plotfigure = plotdata.new_plotfigure(name='Transformers (zoom)',figno=2)
-    # plotfigure.show = True
+    plotfigure = plotdata.new_plotfigure(name='Transformers (zoom)',figno=2)
+    plotfigure.show = True
 
-    # plotfigure.use_for_kml = True
-    # plotfigure.kml_use_for_initial_view = False
+    plotfigure.use_for_kml = True
+    plotfigure.kml_use_for_initial_view = False
 
     # Latlong box used for GoogleEarth
 
@@ -166,17 +166,17 @@ def setplot(plotdata):
     plotfigure.kml_tile_images = False    # Tile images for faster loading.  Requires GDAL [False]
 
     # Color axis : transparency below 0.1*(cmax-cmin)
-    cmin = 0
-    cmax = 5
-    cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    # cmin = 0
+    # cmax = 5
+    # cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
 
-    # Water
-    plotaxes = plotfigure.new_plotaxes('kml')
-    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    plotitem.plot_var = geoplot.depth   # Plot height field h.
-    plotitem.pcolor_cmap = geoplot.googleearth_flooding
-    plotitem.pcolor_cmin = cmin
-    plotitem.pcolor_cmax = cmax
+    # # Water
+    # plotaxes = plotfigure.new_plotaxes('kml')
+    # plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
+    # plotitem.plot_var = geoplot.depth   # Plot height field h.
+    # plotitem.pcolor_cmap = geoplot.googleearth_flooding
+    # plotitem.pcolor_cmin = cmin
+    # plotitem.pcolor_cmax = cmax
 
     # plot point locations 
     police, transformers, gauges = tools.read_locations_data(malpasset_loc)

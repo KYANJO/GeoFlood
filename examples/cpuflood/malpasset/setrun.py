@@ -9,6 +9,7 @@ import os
 import sys
 import numpy as np
 from pdb import *
+from clawpack.amrclaw.data import FlagRegion
 
 import tools
 
@@ -49,14 +50,14 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 32
-my = 32
+mx = 16
+my = 16
 
-minlevel = 1
-maxlevel = 6 #resolution based on levels 
-ratios_x = [2]*maxlevel
-ratios_y = [2]*maxlevel
-ratios_t = [2]*maxlevel
+minlevel = 2
+maxlevel = 5 #resolution based on levels 
+ratios_x = [2]*(maxlevel-1)
+ratios_y = [2]*(maxlevel-1)
+ratios_t = [2]*(maxlevel-1)
 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.03333
@@ -66,6 +67,7 @@ num_dim = 2
 
 # --------------------- Topography file -----------------------------------------------
 topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
+topofile_int = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
 malpasset_loc = "./malpasset_locs.txt"
@@ -131,8 +133,9 @@ def setrun(claw_pkg='geoclaw'):
         # ll_topo = np.array([957738.41,  1844520.8])
         # ur_topo = np.array([957987.1, 1844566.5])
 
+       
         print("")
-        print("Topo domain")
+        print("Topo domain for %s:" % topofile)
         print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
         print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
         print("")
@@ -371,7 +374,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
-    geoflooddata.regrid_interval = 1
+    geoflooddata.regrid_interval = 3
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
 
@@ -399,7 +402,7 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     amrdata = rundata.amrdata
 
-    amrdata.amr_levels_max = maxlevel   # max number of refinement levels
+    amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
     amrdata.refinement_ratios_x = ratios_x 
     amrdata.refinement_ratios_y = ratios_y
     amrdata.refinement_ratios_t = ratios_t
@@ -410,12 +413,13 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center','capacity','yleft','center']
+    amrdata.aux_type = ['center','capacity','yleft']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
+    amrdata.flag2refine_tol = 0.01
     amrdata.regrid_interval = 3
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
@@ -428,17 +432,63 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
+    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile_int)
+    regions.append([maxlevel,maxlevel,0, 1e10, clawdata.lower[0],clawdata.upper[0],clawdata.lower[1],clawdata.upper[1]])
+    print("")
+    print("Initial reservoir domain")
+    print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
+    print("%-12s (%14.8f, %12.8f)" % ("Upper right",clawdata.upper[0],clawdata.upper[1]))
+    print("")
+    # regions.append([minlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
+    # regions.append([maxlevel,maxlevel, 0, 1.e10,6.756660,6.759780633284454,43.5121218, 43.512880494845895])
+    
+    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
+    # regions.append([maxlevel,maxlevel,0, 1e10, gauges[0][0] - 200,gauges[0][1] + 200,clawdata.lower[1],gauges[1][4]])
+    # for i in range(1,len(gauges[0])-1):
+    #     x1 = gauges[0][i] - 200
+    #     x2 = gauges[0][i+1] + 200
+    #     y1 = gauges[1][i]
+    #     y2 = gauges[1][i+1]
+    #     regions.append([maxlevel,maxlevel,0, 1e10, x1,x2,y1,y2])
 
-    # Computational domain.  With exception of region above, don't go beyond level 4
-    regions.append([minlevel,maxlevel,0, 1e10, clawdata.lower[0],clawdata.upper[0],
-                    clawdata.lower[1],clawdata.upper[1]])
+    # specifiying flagregions for AMR
+    # flagregion = FlagRegion(num_dim=2) 
+    # flagregion.name = 'Region_domain'
+    # flagregion.minlevel = maxlevel
+    # flagregion.maxlevel = maxlevel
+    # flagregion.t1 = 0
+    # flagregion.t2 = 1e10
+    # flagregion.spatial_region_type = 1 # Rectangle
+    # for i in range(len(gauges[0])-1):
+    #     x1 = gauges[0][i] - 200
+    #     x2 = gauges[0][i+1] + 200
+    #     y1 = gauges[1][i]
+    #     y2 = gauges[1][i+1]
+    #     flagregion.spatial_region = [x1,x2,y1,y2]
+    #     rundata.flagregiondata.flagregions.append(flagregion)
+
+
+    # Box containing gauge location locations
+    # for i in range(len(gauges[0])-1):
+    #     # xll = [956080.1,  1836498.3]
+    #     # xur = [958002.6, 1844274.6] 
+    #     xll = [gauges[0][i], gauges[1][i]]
+    #     xur = [gauges[0][i+1], gauges[1][i+1]]
+    #     region_lower, region_upper,_ = tools.region_coords(xll,xur,
+    #                                                     clawdata.num_cells,
+    #                                                     clawdata.lower,
+    #                                                     clawdata.upper)
+
+    #     regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
+    #     regions.append([maxlevel,maxlevel,0, 1e10, xll[0],xur[0],xll[1],xur[1]])
+
+    # Computational domain. 
+    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile) # get topo domain limits (Note this line is needed)
+    
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
-    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
 
     print('\nLocation of Gauges:')
-
     # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
     for i in range(len(gauges[0])):
         print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
@@ -496,10 +546,10 @@ def setgeo(rundata):
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
-    refinement_data.speed_tolerance = [1.e-2]*maxlevel
+    refinement_data.speed_tolerance = [1.e-1]*6
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
-    refinement_data.variable_dt_refinement_ratios = True
+    refinement_data.variable_dt_refinement_ratios = False
 
     # == settopo.data values ==
     topo_data = rundata.topo_data
