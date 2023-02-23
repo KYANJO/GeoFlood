@@ -1,4 +1,4 @@
-SUBROUTINE fc2d_geoclaw_flag2refine(blockno, meqn,maux,qvec, auxvec, dx,dy, & 
+SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx,dy, & 
     xc,yc,t,level, maxlevel, init_flag, is_coarsening)
 
     USE geoclaw_module, ONLY : dry_tolerance, sea_level
@@ -8,8 +8,8 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, meqn,maux,qvec, auxvec, dx,dy, &
     
     IMPLICIT NONE
 
-    INTEGER :: blockno, init_flag,level, meqn, maux, maxlevel,mx,my
-    DOUBLE PRECISION :: qvec(meqn),auxvec(maux), xc,yc,dx,dy,t
+    INTEGER, intent(in)::blockno, init_flag,level, meqn, maux, maxlevel, mx1,my1
+    DOUBLE PRECISION :: qvec(meqn),auxvec(maux),xc,yc,dx,dy,t
     logical :: is_coarsening
 
     INTEGER :: flag_patch, m, max_num_speeds
@@ -17,16 +17,21 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, meqn,maux,qvec, auxvec, dx,dy, &
     LOGICAL :: allowflag
 
     DOUBLE PRECISION :: x,y,x1,x2,y1,y2,xlow,xhi,ylow,yhi
-    INTEGER :: i,j
+    INTEGER :: i,j,mx,my
 
     include 'regions.i'
 
-    mx = 16
-    my = 16
-    deep_depth = 100
+    mx = int(mx1)
+    my = int(my1)
+    
+    ! mx1 = mx
+    ! my1 = my
+
+    deep_depth = 100 ! meters (set to default value sinece its deprecated)
 
     ! loop over interior points on this grid block
     DO 200 j = 1,my
+        ! write(*,*) 'flag2refine: mx,my = ',mx,my
         y = ylower +  (j-0.5d0)*dy
         y1 = ylower + (j-1)*dy
         y2 = ylower + j*dy

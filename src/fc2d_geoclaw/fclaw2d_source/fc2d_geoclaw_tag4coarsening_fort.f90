@@ -104,7 +104,7 @@ SUBROUTINE fc2d_geoclaw_test_coarsen(blockno, mx,my,mbc,meqn,maux,xlower,ylower,
             enddo
 
             flag_patch = fc2d_geoclaw_flag2refine( & 
-                    blockno, meqn, maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
+                    blockno,mx,my, meqn, maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
                     maxlevel, init_flag, is_coarsening)
 
 !!          # flag_patch : 
