@@ -309,13 +309,13 @@ def task(func_arg):
     # unpack the function arguments
     gcp_points,coordinates,malpasset_loc,gauge_lat_long = func_arg
     # block for a moment
-    sleep(random())
+    sleep(0.05)
     # call the function
     return overlay_image_google_earth(func_arg)
 
 # === parallelization using multiprocessing ===
 if __name__ == '__main__':
-    with Pool(processes = 4) as p:
+    with Pool() as p:
         # prepare the arguments
         args = [func_arg]
         # run the function
