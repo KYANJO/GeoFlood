@@ -9,7 +9,6 @@ import os
 import sys
 import numpy as np
 from pdb import *
-from clawpack.amrclaw.data import FlagRegion
 
 import tools
 
@@ -40,7 +39,7 @@ if output_style == 1:
     n_hours = 1.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 60/25   # (1 frame every 25 mins)
+    frames_per_minute = 60/50   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -50,11 +49,11 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
-my = 16
+mx = 32
+my = 32
 
 minlevel = 2
-maxlevel = 5 #resolution based on levels 
+maxlevel = 6 #resolution based on levels 
 ratios_x = [2]*(maxlevel-1)
 ratios_y = [2]*(maxlevel-1)
 ratios_t = [2]*(maxlevel-1)
@@ -439,55 +438,26 @@ def setrun(claw_pkg='geoclaw'):
     print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
     print("%-12s (%14.8f, %12.8f)" % ("Upper right",clawdata.upper[0],clawdata.upper[1]))
     print("")
-    # regions.append([minlevel,maxlevel, 0, 1.e10,957738.41,957987.1,1844520.82, 1844566.5])
-    # regions.append([maxlevel,maxlevel, 0, 1.e10,6.756660,6.759780633284454,43.5121218, 43.512880494845895])
     
-    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
-    # regions.append([maxlevel,maxlevel,0, 1e10, gauges[0][0] - 200,gauges[0][1] + 200,clawdata.lower[1],gauges[1][4]])
-    # for i in range(1,len(gauges[0])-1):
-    #     x1 = gauges[0][i] - 200
-    #     x2 = gauges[0][i+1] + 200
-    #     y1 = gauges[1][i]
-    #     y2 = gauges[1][i+1]
-    #     regions.append([maxlevel,maxlevel,0, 1e10, x1,x2,y1,y2])
-
-    # specifiying flagregions for AMR
-    # flagregion = FlagRegion(num_dim=2) 
-    # flagregion.name = 'Region_domain'
-    # flagregion.minlevel = maxlevel
-    # flagregion.maxlevel = maxlevel
-    # flagregion.t1 = 0
-    # flagregion.t2 = 1e10
-    # flagregion.spatial_region_type = 1 # Rectangle
-    # for i in range(len(gauges[0])-1):
-    #     x1 = gauges[0][i] - 200
-    #     x2 = gauges[0][i+1] + 200
-    #     y1 = gauges[1][i]
-    #     y2 = gauges[1][i+1]
-    #     flagregion.spatial_region = [x1,x2,y1,y2]
-    #     rundata.flagregiondata.flagregions.append(flagregion)
-
-
-    # Box containing gauge location locations
-    # for i in range(len(gauges[0])-1):
-    #     # xll = [956080.1,  1836498.3]
-    #     # xur = [958002.6, 1844274.6] 
-    #     xll = [gauges[0][i], gauges[1][i]]
-    #     xur = [gauges[0][i+1], gauges[1][i+1]]
-    #     region_lower, region_upper,_ = tools.region_coords(xll,xur,
-    #                                                     clawdata.num_cells,
-    #                                                     clawdata.lower,
-    #                                                     clawdata.upper)
-
-    #     regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
-    #     regions.append([maxlevel,maxlevel,0, 1e10, xll[0],xur[0],xll[1],xur[1]])
-
     # Computational domain. 
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile) # get topo domain limits (Note this line is needed)
     
+    # Region containing the Lake
+    xll = [9.575e5,  clawdata.lower[1]]
+    xur = [clawdata.upper[0], 1.835e6] 
+
+    region_lower, region_upper,_ = tools.region_coords(xll,xur,
+                                                    clawdata.num_cells,
+                                                    clawdata.lower,
+                                                    clawdata.upper)
+    print('Lake domain')
+    print('%-12s (%14.8f, %12.8f)' % ('x',region_lower[0],region_upper[0]))
+    print('%-12s (%14.8f, %12.8f)' % ('y',region_lower[1],region_upper[1]))
+    regions.append([minlevel-1,minlevel-1,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
+
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
-
+    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
     print('\nLocation of Gauges:')
     # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
     for i in range(len(gauges[0])):
