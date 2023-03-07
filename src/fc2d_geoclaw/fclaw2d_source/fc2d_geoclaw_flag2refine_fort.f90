@@ -8,7 +8,8 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx
     
     IMPLICIT NONE
 
-    INTEGER, intent(in)::blockno, init_flag,level, meqn, maux, maxlevel, mx1,my1
+    INTEGER, INTENT(IN) :: mx1, my1
+    INTEGER :: blockno, init_flag,level, meqn, maux, maxlevel
     DOUBLE PRECISION :: qvec(meqn),auxvec(maux),xc,yc,dx,dy,t
     logical :: is_coarsening
 
@@ -17,15 +18,29 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx
     LOGICAL :: allowflag
 
     DOUBLE PRECISION :: x,y,x1,x2,y1,y2,xlow,xhi,ylow,yhi
-    INTEGER :: i,j,mx,my
+    INTEGER :: i,j,k, mx, my
 
     include 'regions.i'
 
-    mx = int(mx1)
-    my = int(my1)
-    
-    ! mx1 = mx
-    ! my1 = my
+    mx = 16
+    my = 16
+
+    ! if (mx1 == 4) then
+    !     mx = 4
+    !     my = 4
+    ! else if (mx1 == 8) then
+    !     mx = 8
+    !     my = 8
+    ! else if (mx1 == 16) then
+    !     mx = 16
+    !     my = 16
+    ! else if (mx1 == 32) then
+    !     mx = 32
+    !     my = 32
+    ! else if (mx1 == 64) then
+    !     mx = 64
+    !     my = 64
+    ! endif
 
     deep_depth = 100 ! meters (set to default value sinece its deprecated)
 
@@ -75,8 +90,9 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx
    40       CONTINUE
 
         IF (allowflag(x,y,t,level)) THEN
-        
+            
             max_num_speeds = min(size(speed_tolerance),maxlevel)
+            speed = sqrt(qvec(2)**2 + qvec(3)**2) / qvec(1)
 
             th_factor = 1
             IF (is_coarsening) THEN
@@ -89,22 +105,39 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx
 
                 !! Check wave height criteria
                 eta = qvec(1) + auxvec(1)
+                
                 IF (abs(eta - sea_level) > th_factor*wave_tolerance) THEN
                     IF (level .lt. maxlevel) THEN
                         ! refine to this level in deep water
                         flag_patch = 1
+                        ! write(*,*) 'eta = ',eta
                         RETURN
                     ENDIF
 
                     IF (dabs(auxvec(1)).lt. deep_depth ) THEN
-                        ! refine to this level in shallow water (shoeregion or river banks or flood edges) 
+                        ! refine to this level in shallow water (shoreregion or river banks or flood edges) 
                         flag_patch = 1
+                        ! write(*,*) 'mx,my = ',mx1,my1
                         RETURN
                     ENDIF
+
+                    flag_patch = 0
+                    RETURN
                 ENDIF
 
+                ! don't refine in deep water if already at maxlevel
+                if (abs(auxvec(1))> deep_depth .and. speed < 0.01) then
+                    flag_patch = 0
+                    RETURN
+                endif
+
+                ! refine at maximum velocity-depth product is 0.5 m/s
+                if (speed/qvec(1) > 0.5) then
+                    flag_patch = 1
+                    RETURN
+                endif
+
                 ! Check speed criteria
-                speed = sqrt(qvec(2)**2 + qvec(3)**2) / qvec(1)
                 DO m = 1,max_num_speeds
                     IF (speed > th_factor*speed_tolerance(m) .AND. level <= m) THEN
                     ! IF (speed > th_factor*speed_tolerance(m)) THEN
@@ -116,7 +149,7 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx
     ELSE
             !  It isn't clear what this means;  do we not refine the entire patch
             ! IF a single cell cannot be refined? 
-            flag_patch = -1
+            flag_patch = 0
             RETURN
         ENDIF
 100    CONTINUE  !# end loop on i
