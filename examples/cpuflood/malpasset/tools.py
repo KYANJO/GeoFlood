@@ -121,8 +121,9 @@ def read_locations_data(malpasset_loc):
     police = [range(17),x[:17], y[:17]]
     transformers = [range(17,20),x[17:20], y[17:20]]
     gauges = [range(6,15),x[20:29], y[20:29]]
+    all_guages = [range(29),x, y]
     
-    return police, transformers, gauges
+    return police, transformers, gauges, all_guages 
 
 def ozone(x2,y2,z2):
     """

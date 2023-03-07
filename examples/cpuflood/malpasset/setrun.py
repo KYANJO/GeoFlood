@@ -36,7 +36,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 1.0              # Total number of hours in simulation     
+    n_hours = 0.8              # Total number of hours in simulation     
     
 
     frames_per_minute = 60/50   # (1 frame every 25 mins)
@@ -49,8 +49,8 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 32
-my = 32
+mx = 16
+my = 16
 
 minlevel = 2
 maxlevel = 6 #resolution based on levels 
@@ -443,8 +443,8 @@ def setrun(claw_pkg='geoclaw'):
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile) # get topo domain limits (Note this line is needed)
     
     # Region containing the Lake
-    xll = [9.575e5,  clawdata.lower[1]]
-    xur = [clawdata.upper[0], 1.835e6] 
+    xll = [9.57e5,  clawdata.lower[1]]
+    xur = [clawdata.upper[0], 1.834e6] 
 
     region_lower, region_upper,_ = tools.region_coords(xll,xur,
                                                     clawdata.num_cells,
@@ -453,17 +453,32 @@ def setrun(claw_pkg='geoclaw'):
     print('Lake domain')
     print('%-12s (%14.8f, %12.8f)' % ('x',region_lower[0],region_upper[0]))
     print('%-12s (%14.8f, %12.8f)' % ('y',region_lower[1],region_upper[1]))
-    regions.append([minlevel-1,minlevel-1,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
+    regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
+
+    xll = [9.57e5,  clawdata.lower[1]]
+    xur = [9.585e5, 1.832e6] 
+    region_lower, region_upper,_ = tools.region_coords(xll,xur,
+                                                    clawdata.num_cells,
+                                                    clawdata.lower,
+                                                    clawdata.upper)
+
+    # regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
 
 
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
-    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
-    print('\nLocation of Gauges:')
-    # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
-    for i in range(len(gauges[0])):
-        print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
-        rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
+    police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
 
+    print('\nLocation of Gauges:')
+    for i in range(len(all_guages[0])):
+        print('\tGauge %s at (%s, %s)' % (all_guages[0][i], all_guages[1][i],all_guages[2][i]))
+        rundata.gaugedata.gauges.append([all_guages[0][i], all_guages[1][i],all_guages[2][i], 0., 1e10])
+
+    # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
+    # for i in range(len(gauges[0])):
+    #     print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
+    #     rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
+
+    #
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:

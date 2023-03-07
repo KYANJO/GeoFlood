@@ -42,7 +42,7 @@ def setplot(plotdata):
     # Some global kml flags
     #-----------------------------------------
     plotdata.kml_name = "Malpasset Dam"
-    plotdata.kml_starttime = [1959,12,2,21,14,0]  # Date/time of event in UTC [None]
+    plotdata.kml_starttime = [1959,12,2,5,14,0]  # Date/time of event in UTC [None]
     plotdata.kml_tz_offset = 1    # Time zone offset (in hours) of event. [None]
 
     plotdata.kml_index_fname = "MalpassetDam"  # name for .kmz and .kml files ["_GoogleEarth"]
@@ -114,7 +114,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     # plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = True       # Show patch edges
+    plotitem.patchedges_show = False       # Show patch edges
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)
@@ -179,7 +179,7 @@ def setplot(plotdata):
     # plotitem.pcolor_cmax = cmax
 
     # plot point locations 
-    police, transformers, gauges = tools.read_locations_data(malpasset_loc)
+    police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
     
     # Physical model points locations (Gauges)
     gauge_points = ['P6','P7','P8','P9','P10','P11','P12','P13','P14']
@@ -203,26 +203,26 @@ def setplot(plotdata):
     point_list = [transformer_loc, gauge_loc, police_loc]
     point_list = [item for sublist in point_list for item in sublist]
     
-    # Plot and overlay points on the plotted image
-    plt.style.use('default')
-    # im = image.imread("_plots/temp/fig1/frame0098fig1/frame0098fig1.png")
+    # # Plot and overlay points on the plotted image
+    # plt.style.use('default')
+    # # im = image.imread("_plots/temp/fig1/frame0098fig1/frame0098fig1.png")
     
-    for i,pt in enumerate(point_list):
-        lab = point_labels[i]
-        if i>2 and i<=11:
-            plt.plot(pt[0],pt[1],'k*',markersize=4)
-            plt.annotate(lab, xy=pt, xytext=(pt[0]-50,pt[1]-350))
-        elif i>11:
-            plt.plot(pt[0],pt[1],'k*',markersize=4)
-            plt.annotate(lab, xy=pt, xytext=(pt[0]-25,pt[1]+100))
-        else:
-            plt.plot(pt[0],pt[1],'r*',markersize=4)
-            plt.annotate(lab, xy=pt, xytext=(pt[0]-5,pt[1]+100))
+    # for i,pt in enumerate(point_list):
+    #     lab = point_labels[i]
+    #     if i>2 and i<=11:
+    #         plt.plot(pt[0],pt[1],'k*',markersize=4)
+    #         plt.annotate(lab, xy=pt, xytext=(pt[0]-50,pt[1]-350))
+    #     elif i>11:
+    #         plt.plot(pt[0],pt[1],'k*',markersize=4)
+    #         plt.annotate(lab, xy=pt, xytext=(pt[0]-25,pt[1]+100))
+    #     else:
+    #         plt.plot(pt[0],pt[1],'r*',markersize=4)
+    #         plt.annotate(lab, xy=pt, xytext=(pt[0]-5,pt[1]+100))
     
-    # plt.imshow(im)
-    plt.savefig('malpasset_points.png',dpi=300)
+    # # plt.imshow(im)
+    # plt.savefig('malpasset_points.png',dpi=300)
     
-
+    
     #-----------------------------------------
 
     #-----------------------------------------
@@ -260,24 +260,11 @@ def setplot(plotdata):
         from pylab import plot, legend, xticks, floor, axis, xlabel,title
         t = current_data.t
         gaugeno = current_data.gaugeno
-        if gaugeno == 6:
-            title('P6')
-        elif gaugeno == 7:
-            title('P7')
-        elif gaugeno == 8:
-            title('P8')
-        elif gaugeno == 9:
-            title('P9')
-        elif gaugeno == 10:
-            title('P10')
-        elif gaugeno == 11:
-            title('P11')
-        elif gaugeno == 12:
-            title('P12')
-        elif gaugeno == 13:
-            title('P13')
-        elif gaugeno == 14:
-            title('P14')
+        # locations points
+        guage_labels = police_points + transformer_points + gauge_points
+        for n,pt in enumerate(guage_labels):
+            if gaugeno == n:
+                title(pt)
 
         # plot(t, 0*t, 'k')
         n = int(floor(t.max()/3600.) + 2)
