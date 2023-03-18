@@ -109,12 +109,13 @@ def setplot(plotdata):
     # Water
     plotaxes = plotfigure.new_plotaxes('kml')
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    plotitem.plot_var = geoplot.depth   # Plot height field h.
+    # plotitem.plot_var = geoplot.depth   # Plot height field h.
+    plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
     plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     # plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = False       # Show patch edges
+    plotitem.patchedges_show = True       # Show patch edges
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)

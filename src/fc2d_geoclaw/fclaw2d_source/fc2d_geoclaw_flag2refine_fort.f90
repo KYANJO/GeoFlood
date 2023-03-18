@@ -22,8 +22,10 @@ SUBROUTINE fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxvec, dx
 
     include 'regions.i'
 
-    mx = 16
-    my = 16
+    mx = int(mx1)
+    my = int(my1)
+    ! mx = 16
+    ! my = 16
 
     ! if (mx1 == 4) then
     !     mx = 4

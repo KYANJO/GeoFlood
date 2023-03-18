@@ -36,10 +36,10 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 0.8              # Total number of hours in simulation     
+    n_hours = 1.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 60/50   # (1 frame every 25 mins)
+    frames_per_minute = 60/25   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -49,10 +49,10 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
-my = 16
+mx = 32
+my = 32
 
-minlevel = 2
+minlevel = 3
 maxlevel = 6 #resolution based on levels 
 ratios_x = [2]*(maxlevel-1)
 ratios_y = [2]*(maxlevel-1)
@@ -192,7 +192,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_eqn = 3
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 3
+    clawdata.num_aux = 1
 
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = 0 #flag set to 0 if coordinate system = 1 otherwise 2
@@ -402,9 +402,9 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = ratios_x 
-    amrdata.refinement_ratios_y = ratios_y
-    amrdata.refinement_ratios_t = ratios_t
+    amrdata.refinement_ratios_x = [2,4,4,4,4] 
+    amrdata.refinement_ratios_y = [2,4,4,4,4]
+    amrdata.refinement_ratios_t = [2,4,4,4,4]
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -412,7 +412,7 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center','capacity','yleft']
+    amrdata.aux_type = ['center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -457,10 +457,10 @@ def setrun(claw_pkg='geoclaw'):
 
     xll = [9.57e5,  clawdata.lower[1]]
     xur = [9.585e5, 1.832e6] 
-    region_lower, region_upper,_ = tools.region_coords(xll,xur,
-                                                    clawdata.num_cells,
-                                                    clawdata.lower,
-                                                    clawdata.upper)
+    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
+                                                    # clawdata.num_cells,
+                                                    # clawdata.lower,
+                                                    # clawdata.upper)
 
     # regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
 
