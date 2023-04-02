@@ -1,4 +1,4 @@
-# ----------------------------------------------
+ .  # ----------------------------------------------
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
@@ -49,11 +49,14 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
-my = 16
+# grid_resolution = 5  # meters ~ 80000 nodes
+# mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
+# my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
+mx = 20
+my = 20
 
-mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
-mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
+mi = 10  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
+mj = 20  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
 minlevel = 2 
 maxlevel = 5 #resolution based on levels 
