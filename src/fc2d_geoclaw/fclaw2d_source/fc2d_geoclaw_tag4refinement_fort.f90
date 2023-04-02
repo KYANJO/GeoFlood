@@ -43,7 +43,7 @@ SUBROUTINE fc2d_geoclaw_fort_tag4refinement(mx,my,mbc,meqn,maux,xlower,ylower, &
                 auxvec(m) = aux(m,i,j)
             enddo
             flag_patch = fc2d_geoclaw_flag2refine( & 
-                    blockno, meqn,maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
+                    blockno,mx,my, meqn,maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
                     maxlevel, init_flag, is_coarsening)
 
 !!          # -1 : Not conclusive (possibly ghost cell); don't tag for refinement

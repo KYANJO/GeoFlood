@@ -23,7 +23,15 @@ class GeoFlooddata(object):
         self.coarsen_threshold = 0.5
         self.subcycle = False
         self.output = True
+        self.output_gauges = True
+        self.cuda = False
         self.verbosity = 'essential'
+        self.refinement_criteria = 'value'
+        self.smooth_refine = False
+        self.advance_one_step = False
+        self.outstyle_uses_maxlevel = True
+        self.ghost_patch_pack_aux = False
+        self.conservation_check = False
 
         self.mi = 1
         self.mj = 1
@@ -42,7 +50,9 @@ class GeoFlooddata(object):
         amrdata = rundata.amrdata
 
         user = {
-        '   # User defined parameters' : None}
+        '   # User defined parameters' : None,
+        '   cuda' : self.cuda,
+        }
         for k in self.user.keys():
             user[f'   {k:}'] = self.user[k]
 
@@ -84,7 +94,8 @@ class GeoFlooddata(object):
         '   coarsen_threshold' : self.coarsen_threshold, "\n"
 
         "   # Smooth refinement (around finest level)":None,
-        '   smooth-refine' : "True",
+        '   smooth-refine' : self.smooth_refine,
+        '   refinement-criteria' : self.refinement_criteria, "\n"
         '   smooth-level' : self.maxlevel,"\n"
 
 
@@ -118,6 +129,12 @@ class GeoFlooddata(object):
 
         '# File and console IO' : None,
         '   output' : self.output,
+        '   output-gauges' : self.output_gauges,
+        '   smooth-refine' : "False",
+        '   advance-one-step' : self.advance_one_step,
+        '   outstyle-uses-maxlevel' : self.outstyle_uses_maxlevel,
+        '   ghost_patch_pack_aux' : self.ghost_patch_pack_aux,
+        '   conservation-check' : self.conservation_check,
         '   verbosity' : self.verbosity,"\n"
 
 
@@ -208,7 +225,7 @@ class GeoFlooddata(object):
         #print(ascii_out)
 
 
-        geoflood['geoflood'] = {
+        geoflood['geoclaw'] = {
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
             '   #   1 => Godunov,': None,  
@@ -223,7 +240,7 @@ class GeoFlooddata(object):
             '   src_term': src_split,"\n"
 
             '   # Use an f-waves update (default : True)'
-            '   use-fwaves' : clawdata.use_fwaves,"\n"
+            '   use_fwaves' : clawdata.use_fwaves,"\n"
 
             '   # Number of waves': None,
             '   mwaves': clawdata.num_waves,"\n"
@@ -248,8 +265,9 @@ class GeoFlooddata(object):
             '   # 3 => solid wall for systems where q(2) is normal velocity':None,
             '   mthbc' : mthbc_str,"\n"
 
-            '   dry-tolerance-c': geo_data.dry_tolerance,
-            '   wave-tolerance-c': refinement_data.wave_tolerance, "\n"
+            '   dry_tolerance_c': geo_data.dry_tolerance,
+            '   wave_tolerance_c': refinement_data.wave_tolerance, 
+            '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
 
 
             '   # Output' : None,

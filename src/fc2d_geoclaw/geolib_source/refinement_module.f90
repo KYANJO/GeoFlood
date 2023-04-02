@@ -30,7 +30,6 @@ contains
     ! =========================================================================
     subroutine set_refinement(file_name)
         
-        use amr_module, only: mxnest
         use utility_module, only: get_value_count
         
         implicit none
@@ -40,7 +39,6 @@ contains
         
         ! Locals
         integer, parameter :: unit = 127
-        integer :: i
         character(len=128) :: line
 
         if (.not.module_setup) then
