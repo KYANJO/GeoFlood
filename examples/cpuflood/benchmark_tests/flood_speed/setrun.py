@@ -15,13 +15,13 @@ import tools
 #===============================================================================
 # Importing scripts dictionary
 #===============================================================================
-sys.path.append('../../../scripts')
+sys.path.append('../../../../scripts')
 import geoflood # -- importing geoflood.py
 
 #===============================================================================
 # scratch directory
 #===============================================================================
-scratch_dir = os.path.join('../scratch')
+scratch_dir = os.path.join('scratch')
 
 #===============================================================================
 # User specified parameters
@@ -36,7 +36,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 1.0              # Total number of hours in simulation     
+    n_hours = 5.0              # Total number of hours in simulation     
     
 
     frames_per_minute = 4/60   # (1 frame every 25 mins)
@@ -62,17 +62,14 @@ ratios_y = [2]*(maxlevel-1)
 ratios_t = [2]*(maxlevel-1)
  
 #-------------------manning coefficient -----------------------------------------------
-manning_coefficient = 0.03333
+manning_coefficient = 0.05
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
 
-# --------------------- Topography file -----------------------------------------------
-topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
-topofile_int = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
-malpasset_loc = "./malpasset_locs.txt"
+gauge_loc = "./scratch/gauge_loc.csv"
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -119,49 +116,10 @@ def setrun(claw_pkg='geoclaw'):
 
     # Number of space dimensions:
     clawdata.num_dim = num_dim
-
-    def get_topo(topofile):
-        m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
-
-        # Derived info from the topo map
-        mx_topo = m_topo - 1
-        my_topo = n_topo - 1
-        xurcorner = xllcorner + cellsize*mx_topo
-        yurcorner = yllcorner + cellsize*my_topo
-
-        ll_topo = np.array([xllcorner, yllcorner])
-        ur_topo = np.array([xurcorner, yurcorner])
-
-        # ll_topo = np.array([957738.41,  1844520.8])
-        # ur_topo = np.array([957987.1, 1844566.5])
-
-       
-        print("")
-        print("Topo domain for %s:" % topofile)
-        print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
-        print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
-        print("")
-
-        # dims_topo = ur_topo - ll_topo
-
-        dim_topo = ur_topo - ll_topo
-        mdpt_topo = ll_topo + 0.5*dim_topo
-
-        dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
-
-        clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
-        clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
-
-        clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
-        clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
-
-        return dim_topo, clawdata.lower,clawdata.upper
-
     
-    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile)
-     # Try to match aspect ratio of topo map
-    # clawdata.lower = np.array([6.756660, 6.759780])
-    # clawdata.upper = np.array([43.512128, 43.512880])
+    clawdata.lower = np.array([0, 1000])
+    clawdata.upper = np.array([0,2000])
+
     clawdata.num_cells[0] = mx
     clawdata.num_cells[1] = my
 
@@ -171,21 +129,8 @@ def setrun(claw_pkg='geoclaw'):
     print("%-12s (%14.8f, %12.8f)" % ("Upper right",clawdata.upper[0],clawdata.upper[1]))
     print("")
 
-    print("Approximate aspect ratio : {0:16.8f}".format(float(mi*clawdata.num_cells[0])/(mj*clawdata.num_cells[1])))
-    print("Actual      aspect ratio : {0:16.8f}".format(dims_topo[0]/dims_topo[1]))
-
-    # print "[{0:20.12f},{1:20.12f}]".format(*clawdata.lower)
-    # print "[{0:20.12f},{1:20.12f}]".format(*clawdata.upper)
-
     dims_computed = np.array([clawdata.upper[0]-clawdata.lower[0], clawdata.upper[1]-clawdata.lower[1]])
     print("Computed aspect ratio    : {0:20.12f}".format(dims_computed[0]/dims_computed[1]))
-
-    print("")
-    print("Details in km : ")    
-
-    lon = np.array([clawdata.lower[0],clawdata.upper[0]])
-    lat = np.array([clawdata.lower[1],clawdata.upper[1]])
-    d = tools.compute_distances(lon,lat)
    
     # ---------------
     # Size of system:
@@ -446,53 +391,15 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile_int)
-    regions.append([maxlevel,maxlevel,0, 1e10, clawdata.lower[0],clawdata.upper[0],clawdata.lower[1],clawdata.upper[1]])
-    print("")
-    print("Initial reservoir domain")
-    print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
-    print("%-12s (%14.8f, %12.8f)" % ("Upper right",clawdata.upper[0],clawdata.upper[1]))
-    print("")
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,10,990,1010])
     
-    # Computational domain. 
-    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile) # get topo domain limits (Note this line is needed)
-    
-    # Region containing the Lake
-    xll = [9.57e5,  clawdata.lower[1]]
-    xur = [clawdata.upper[0], 1.834e6] 
-
-    region_lower, region_upper,_ = tools.region_coords(xll,xur,
-                                                    clawdata.num_cells,
-                                                    clawdata.lower,
-                                                    clawdata.upper)
-    print('Lake domain')
-    print('%-12s (%14.8f, %12.8f)' % ('x',region_lower[0],region_upper[0]))
-    print('%-12s (%14.8f, %12.8f)' % ('y',region_lower[1],region_upper[1]))
-    regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
-
-    xll = [9.57e5,  clawdata.lower[1]]
-    xur = [9.585e5, 1.832e6] 
-    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
-                                                    # clawdata.num_cells,
-                                                    # clawdata.lower,
-                                                    # clawdata.upper)
-
-    # regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
-
-
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
-    police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
+    gaugeno,x,y = tools.read_locations_data(gauge_loc)
 
     print('\nLocation of Gauges:')
-    for i in range(len(all_guages[0])):
-        # print('\tGauge %s at (%s, %s)' % (all_guages[0][i], all_guages[1][i],all_guages[2][i]))
-        rundata.gaugedata.gauges.append([all_guages[0][i], all_guages[1][i],all_guages[2][i], 0., 1e10])
-
-    # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
-    # for i in range(len(gauges[0])):
-    #     print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
-    #     rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
-
+    for i in range(gaugeno):
+        print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
+        rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
     #
     # -------------------------------------------------------
     # For developers
@@ -557,23 +464,12 @@ def setgeo(rundata):
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
     # topo_data.topofiles.append([1, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_topo.xyz'])
 
-    topo_data.topofiles.append([2, minlevel, minlevel, 0, 1e10, 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel+1, minlevel+1, 0, 1e10, 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid2_1m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'])
-
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4
+    rundata.qinit_data.qinit_type = 0
     rundata.qinit_data.qinitfiles = []
     rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
-    
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
-    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_h_5m_cadam.xyz'])
-
 
     return rundata
     # end of function setgeo

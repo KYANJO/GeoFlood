@@ -26,9 +26,12 @@ class GeoFlooddata(object):
         self.output_gauges = True
         self.cuda = False
         self.verbosity = 'essential'
+        self.refinement_criteria = 'value'
         self.smooth_refine = False
         self.advance_one_step = False
         self.outstyle_uses_maxlevel = True
+        self.ghost_patch_pack_aux = False
+        self.conservation_check = False
 
         self.mi = 1
         self.mj = 1
@@ -92,6 +95,7 @@ class GeoFlooddata(object):
 
         "   # Smooth refinement (around finest level)":None,
         '   smooth-refine' : self.smooth_refine,
+        '   refinement-criteria' : self.refinement_criteria, "\n"
         '   smooth-level' : self.maxlevel,"\n"
 
 
@@ -129,6 +133,8 @@ class GeoFlooddata(object):
         '   smooth-refine' : "False",
         '   advance-one-step' : self.advance_one_step,
         '   outstyle-uses-maxlevel' : self.outstyle_uses_maxlevel,
+        '   ghost_patch_pack_aux' : self.ghost_patch_pack_aux,
+        '   conservation-check' : self.conservation_check,
         '   verbosity' : self.verbosity,"\n"
 
 
