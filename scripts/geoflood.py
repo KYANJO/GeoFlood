@@ -71,7 +71,8 @@ class GeoFlooddata(object):
         '   maux': clawdata.num_aux,"\n"
 
         '   # Number of equations' : None,
-        '   meqn': clawdata.num_eqn        
+        '   meqn': clawdata.num_eqn ,  "\n"   
+        '   refinement-criteria' : self.refinement_criteria  
             }
 
         if clawdata.output_step_interval is None:
@@ -95,7 +96,6 @@ class GeoFlooddata(object):
 
         "   # Smooth refinement (around finest level)":None,
         '   smooth-refine' : self.smooth_refine,
-        '   refinement-criteria' : self.refinement_criteria, "\n"
         '   smooth-level' : self.maxlevel,"\n"
 
 
