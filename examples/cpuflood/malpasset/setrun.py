@@ -55,7 +55,7 @@ my = 16
 mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
 mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
 
-minlevel = 2 
+minlevel = 3
 maxlevel = 5 #resolution based on levels 
 ratios_x = [2]*(maxlevel-1)
 ratios_y = [2]*(maxlevel-1)
@@ -376,8 +376,8 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
-    geoflooddata.refine_threshold = 0.01
-    geoflooddata.coarsen_threshold = 0.005
+    geoflooddata.refine_threshold = 0.5
+    geoflooddata.coarsen_threshold = 0.05
     geoflooddata.smooth_refine = False
     geoflooddata.regrid_interval = 3
     geoflooddata.advance_one_step = False
