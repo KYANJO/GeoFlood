@@ -1,8 +1,8 @@
 program bc
     implicit none
-    double precision :: flow_depth
+    double precision :: flow_depth, flow_interp
 
-    ! call inflow_interpolation(flow_depth)
+    ! call inflow_interpolation(flow_depth,inflow_interp)
 
 end program bc
 
@@ -48,16 +48,19 @@ subroutine fc2d_geoflood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,t,dt,mthb
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
     do 105 j = 1-mbc,my+mbc
-        do 105 ibc=1,mbc
-            aux(1,1-ibc,j) = aux(1,1,j)
-            do 105 m=1,meqn
-                !  apply only at the middle of the western side of the floodplain
-                if (j == 1000+mbc) then
-                    call inflow_interpolation(flow_depth,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
-                    q(m,1-ibc,j) = flow_depth
-                else
-                    q(m,1-ibc,j) = q(m,1,j)
-                end if
+        
+            !  apply only at the middle of the western side of the floodplain
+            y  = ylower + (j-0.5d0)*dy
+            if (abs(y-1000) < 10) then
+                call inflow_interpolation(flow_depth,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
+                do 105 ibc=1,mbc
+                    q(1,1-ibc,j) = flow_depth         ! h
+                    q(2,1-ibc,j) = flow_interp/20.0d0 ! hu = flow_interp/base_width
+                    q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
+                enddo
+            else
+                q(m,1-ibc,j) = q(m,1,j)
+            end if
 105         continue
     end do
     goto 199
@@ -87,10 +90,11 @@ subroutine fc2d_geoflood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,t,dt,mthb
 
 
 
-end subroutine fc2d_geoflood_bc2
+! end subroutine fc2d_geoflood_bc2
 
 
-subroutine inflow_interpolation(flow_depth,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
+! subroutine inflow_interpolation(flow_depth,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
+subroutine inflow_interpolation(flow_depth, flow_interp)
 
     ! This subroutine linearly interpolates the inflow boundary condition values from a file which are applied along a 20 m line in the middle of the western side of teh floodplain.
 
@@ -98,7 +102,7 @@ subroutine inflow_interpolation(flow_depth,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,m
 
     ! declare variables
     double precision, dimension(:), allocatable :: tt, inflow
-    double precision, dimension(meqn,1-mbc:mx+mbc,1-mbc:my+mbc), intent(inout) :: q
+    ! double precision, dimension(meqn,1-mbc:mx+mbc,1-mbc:my+mbc), intent(inout) :: q
     double precision :: dx,dy,slope,x,y,t,inflow_interp, xlower, ylower
     double precision :: flow_depth                        ! intent(in,out)
 
@@ -119,13 +123,17 @@ subroutine inflow_interpolation(flow_depth,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,m
     y = 1000.0
 
     ! compute the slope of the channel
-    xindex = int((x - xlower) / dx)   ! index of midpoint along x-axis
-    yindex = int((y - ylower) / dy)   ! index of midpoint along y-axis
-    do i = 1,meqn
-        slope = (q(i,xindex+1,yindex+1) - q(i,xindex-1,yindex-1)) / (2*dx)   ! slope at midpoint
-    end do
+    ! xindex = int((x - xlower) / dx)   ! index of midpoint along x-axis
+    ! yindex = int((y - ylower) / dy)   ! index of midpoint along y-axis
+    ! do i = 1,meqn
+    !     slope = (q(i,xindex+1,yindex+1) - q(i,xindex-1,yindex-1)) / (2*dx)   ! slope at midpoint
+    ! end do
 
-    ! slope = 0.01
+    slope = 0.0001
+
+    write(*,*) 'enter the value of t '
+    read (*,*) t
+
 
     !  find the nearest time values
     do i = 1,n-1
