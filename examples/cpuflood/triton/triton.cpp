@@ -34,24 +34,17 @@
 #include <fc2d_geoclaw_options.h>
 
 static
-fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
+fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, 
+                                fclaw_options_t* fclaw_opt)
 {
     /* Mapped, multi-block domain */
     p4est_connectivity_t     *conn = NULL;
     fclaw2d_domain_t         *domain;
-    fclaw2d_map_context_t    *cont = NULL, *brick = NULL;
+    fclaw2d_map_context_t    *cont = NULL;
 
-    int mi,mj,a,b;
-
-    mi = fclaw_opt->mi;
-    mj = fclaw_opt->mj;
-    a = 0; /* non-periodic */
-    b = 0;
-
-    /* Rectangular brick domain */
-    conn = p4est_connectivity_new_brick(mi,mj,a,b);
-    brick = fclaw2d_map_new_brick(conn,mi,mj);
-    cont = fclaw2d_map_new_nomap_brick(brick);
+    /* Size is set by [ax,bx] x [ay, by], set in .ini file */
+    conn = p4est_connectivity_new_unitsquare();
+    cont = fclaw2d_map_new_nomap();
 
     domain = fclaw2d_domain_new_conn_map (mpicomm, fclaw_opt->minlevel, conn, cont);
     fclaw2d_domain_list_levels(domain, FCLAW_VERBOSITY_ESSENTIAL);
@@ -59,7 +52,6 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
 
     return domain;
 }
-
 
 
 static
