@@ -1,8 +1,13 @@
+# Add boundary conditions as a library
+add_library(flood_speed_f OBJECT
+  fortran/fc2d_geoflood_bc2.f90
+)
 
 add_executable(flood_speed 
 	flood_speed_user.cpp
 	flood_speed_user.h
 	flood_speed.cpp
+	$<TARGET_OBJECTS:flood_speed_f>
 )
 
 target_include_directories(flood_speed PRIVATE 

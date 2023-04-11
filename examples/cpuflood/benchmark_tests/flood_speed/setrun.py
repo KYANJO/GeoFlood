@@ -1,4 +1,4 @@
- .  # ----------------------------------------------
+# ----------------------------------------------
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
@@ -9,6 +9,7 @@ import os
 import sys
 import numpy as np
 from pdb import *
+import clawpack.geoclaw.topotools as tt
 
 import tools
 
@@ -58,11 +59,12 @@ my = 20
 mi = 10  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 20  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 2 
-maxlevel = 5 #resolution based on levels 
-ratios_x = [2]*(maxlevel-1)
-ratios_y = [2]*(maxlevel-1)
-ratios_t = [2]*(maxlevel-1)
+minlevel = 0 
+maxlevel = 0 #resolution based on levels 
+maxlevel_ = 2
+ratios_x = [2]*(maxlevel_-1)
+ratios_y = [2]*(maxlevel_-1)
+ratios_t = [2]*(maxlevel_-1)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
@@ -71,7 +73,7 @@ manning_coefficient = 0.05
 num_dim = 2
 
 
-# --------------------- Police, transformer and guage data -----------------------------------------------
+# --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
 
 #------------------------------
@@ -120,8 +122,8 @@ def setrun(claw_pkg='geoclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
     
-    clawdata.lower = np.array([0, 1000])
-    clawdata.upper = np.array([0,2000])
+    clawdata.lower = np.array([0, 0])
+    clawdata.upper = np.array([1000,2000])
 
     clawdata.num_cells[0] = mx
     clawdata.num_cells[1] = my
@@ -287,7 +289,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'extrap'
+    clawdata.bc_lower[0] = 'user'
     clawdata.bc_upper[0] = 'extrap'
 
     clawdata.bc_lower[1] = 'extrap'
@@ -349,7 +351,7 @@ def setrun(claw_pkg='geoclaw'):
     # difference  : difference (e.g. dqx = q(i+1,j)-q(i-1,j)) exceeds threshold
     # gradient    : gradient exceeds threshold
     # user        : User defined criteria     
-    geoflooddata.refinement_criteria = 'value' 
+    geoflooddata.refinement_criteria = 'minmax' 
 
     # geoflood verbosity choices : 
     # 0 or 'silent'      : No output to the terminal
@@ -394,7 +396,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,10,990,1010])
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,20,980,1020]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -465,7 +467,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    # topo_data.topofiles.append([1, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_topo.xyz'])
+    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'bathy.topotype2'])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
@@ -478,9 +480,35 @@ def setgeo(rundata):
     # end of function setgeo
     # ----------------------
 
+#-------------------
+# generate bathymetry data for a ground elevation of uniform 0.0m
+#-------------------
+# def generate_bathymetry(run_data, out_file):
+#     #  specify the number of nodes in the xy domain ~ 80000 nodes
+#     nx = mx*mi 
+#     ny = my*mj 
+#     ax = 0.0
+#     bx = 1000.0
+#     ay = 0.0
+#     by = 2000.0
+
+#     # generate a uniform ground elevation of 0.0m
+#     topo_func = lambda x,y: 0.0
+
+#     # create a bathymetry object
+#     topo = tt.Topography(topo_func=topo_func, topo_type=2)
+#     topo.x = np.linspace(ax, bx, nx)
+#     topo.y = np.linspace(ay, by, ny)
+
+#     # write the bathymetry to a file
+#     topo.write(out_file)
+
+
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     rundata,geoflooddata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
+
+    # generate_bathymetry(rundata, 'bathy.topotype2')
