@@ -45,6 +45,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
             y  = ylower + (j-0.5d0)*dy
             if (abs(y-1000) < 10) then
                 call inflow_interpolation(flow_depth,inflow_interp,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
+                ! write (*,*) 'flow_depth = ', flow_depth, ' inflow_interp = ', inflow_interp
                 do ibc=1,mbc
                     q(1,1-ibc,j) = flow_depth         ! h
                     q(2,1-ibc,j) = inflow_interp/20.0d0 ! hu = flow_interp/base_width
@@ -237,7 +238,7 @@ subroutine inflow_interpolation(flow_depth,inflow_interp,t,dx,dy,xlower,ylower,q
     integer :: i,xindex,yindex,n = 5
 
     ! Open the file for reading
-    open(10,file="bc.txt",status='old',action='read')
+    open(10,file="fortran/bc.txt",status='old',action='read')
 
     ! read in the boundary condition values
     allocate(tt(n),inflow(n))
@@ -245,19 +246,6 @@ subroutine inflow_interpolation(flow_depth,inflow_interp,t,dx,dy,xlower,ylower,q
         read(10,*) tt(i), inflow(i)
     end do
     close(10)
-
-    ! middle of the western side of the floodplain
-    x = 0.0
-    y = 1000.0
-
-    ! compute the slope of the channel
-    ! xindex = int((x - xlower) / dx)   ! index of midpoint along x-axis
-    ! yindex = int((y - ylower) / dy)   ! index of midpoint along y-axis
-    ! do i = 1,meqn
-    !     slope = (q(i,xindex+1,yindex+1) - q(i,xindex-1,yindex-1)) / (2*dx)   ! slope at midpoint
-    ! end do
-
-    slope = 0.0001
 
     !  find the nearest time values
     do i = 1,n-1
@@ -275,49 +263,50 @@ subroutine inflow_interpolation(flow_depth,inflow_interp,t,dx,dy,xlower,ylower,q
     end if
 
     ! Use Newton-Raphson method to compute the inflow depth
-    call Newton_Raphson(slope,inflow_interp, flow_depth)
-
+    call Riemann_invariants(inflow_interp,flow_depth,h1,u1)
+    WRITE (*,*) 'flow_depth = ', flow_depth, 'T = ', t
     ! free up memory
     deallocate(tt,inflow) 
 
 ! end program
 end subroutine inflow_interpolation
-
-!  NRM routine to be used in the main program
-subroutine  Newton_Raphson(slope,inflow_interp, flow_depth)
-    implicit none
-
-    ! declare variables
-    real(kind=8), intent(in) :: slope,inflow_interp
-    real(kind=8), intent(out) :: flow_depth
-    real(kind=8) :: Manning_coefficient,base_width,tol,R,func,dfunc
-    integer :: i, max_iter
-
-    ! initialize variables
-    Manning_coefficient = 0.05 ! Manning's coefficient
-    base_width = 20.0          ! base width of the channel
-    tol = 1.0e-6               ! tolerance for convergence
-    max_iter = 100             ! maximum number of iterations
-    
-    ! initial guess for the flow depth
-    flow_depth = 0.1
-
-    ! Newton-Raphson method
-    if (inflow_interp == 0.0) then
-        flow_depth = 0.0
-    else
-        do i = 1,max_iter
-            R = (base_width*flow_depth)/(base_width + (2*flow_depth)) ! hydraulic radius
-            func = flow_depth - ((inflow_interp*Manning_coefficient)/((R**(2/3))*base_width*sqrt(slope))) ! function to be solved
-            dfunc = 1.0 + (((2*Manning_coefficient*inflow_interp)*(R**(1/3)))/(3*base_width*(flow_depth**2)*sqrt(slope))) ! derivative of the function
-            flow_depth = flow_depth - func/dfunc ! update the flow depth
-            if (abs(func) < tol) exit ! check for convergence
-        end do
-    end if
-    
-    ! write(*,*) "The flow depth is ", flow_depth
   
-end subroutine Newton_Raphson
+! NRM  routine to solve Riemann invariants
+subroutine Riemann_invariants(hu0,h0,h1,u1)
 
+implicit none
 
+! declare variables
+real(kind=8), intent(in) :: hu0
+real(kind=8), intent(out) :: h0
+real(kind=8) :: h1,u1,g,func,dfunc,tol
 
+integer :: i, max_iter
+
+! initialize variables
+g = 9.81 ! gravitational acceleration
+tol = 1.0e-6 ! tolerance for convergence
+max_iter = 100 ! maximum number of iterations
+h0 = 1
+
+! solve Riemann invariants
+if (hu0 == 0.0) then
+    h0 = 0.0
+else
+    do i = 1,max_iter
+        func = hu0/h0 - 2*sqrt(g*h0) - u1 +2*sqrt(g*h1) ! function to be solved
+
+        dfunc = -hu0/(h0**2) - sqrt(g/h0)  
+
+        if (dfunc == 0.0) then
+            write(*,*) "The derivative is zero"
+            exit
+        end if
+
+        h0 = h0 - func/dfunc ! update the flow depth
+
+        if (abs(func) < tol) exit ! check for convergence
+    end do
+end if
+
+end subroutine Riemann_invariants
