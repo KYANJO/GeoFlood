@@ -1,6 +1,7 @@
 # Add boundary conditions as a library
 add_library(disconnected_water_body_f OBJECT
   fortran/fc2d_geoflood_bc2.f90
+  fortran/qinit.f90
 )
 
 add_executable(disconnected_water_body 

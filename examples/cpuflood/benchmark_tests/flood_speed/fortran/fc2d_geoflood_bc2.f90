@@ -233,7 +233,7 @@ subroutine inflow_interpolation(flow_depth,inflow_interp,t,dx,dy,xlower,ylower,q
     real(kind=8), dimension(:), allocatable :: tt, inflow
     real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: slope,x,y,inflow_interp
-    real(kind=8) :: flow_depth                        ! intent(in,out)
+    real(kind=8) :: flow_depth , h1 =0, u1 =0                       ! intent(in,out)
 
     integer :: i,xindex,yindex,n = 5
 

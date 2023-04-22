@@ -37,11 +37,11 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    # n_hours = 20.0              # Total number of hours in simulation     
-    n_hours = 1.0              # Total number of hours in simulation
+    n_hours = 20.0              # Total number of hours in simulation     
+    # n_hours = 1.0              # Total number of hours in simulation
     
 
-    frames_per_minute = 60/25   # (1 frame every 25 mins)
+    frames_per_minute = 8/60   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -60,8 +60,8 @@ my = 10
 mi = 7  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 1  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 2
-maxlevel = 5 #resolution based on levels 
+minlevel = 1
+maxlevel = 3 #resolution based on levels 
 maxlevel_ = 5
 ratios_x = [2]*(maxlevel_-1)
 ratios_y = [2]*(maxlevel_-1)
@@ -126,8 +126,47 @@ def setrun(claw_pkg='geoclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
     
-    clawdata.lower = np.array([0, 0])
-    clawdata.upper = np.array([700,100])
+    # clawdata.lower = np.array([0, 0])
+    # clawdata.upper = np.array([700,100])
+
+    def get_topo(topofile):
+        m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
+
+        # Derived info from the topo map
+        mx_topo = m_topo - 1
+        my_topo = n_topo - 1
+        xurcorner = xllcorner + cellsize*mx_topo
+        yurcorner = yllcorner + cellsize*my_topo
+
+        ll_topo = np.array([xllcorner, yllcorner])
+        ur_topo = np.array([xurcorner, yurcorner])
+
+        # ll_topo = np.array([957738.41,  1844520.8])
+        # ur_topo = np.array([957987.1, 1844566.5])
+
+       
+        print("")
+        print("Topo domain for %s:" % topofile)
+        print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
+        print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
+        print("")
+
+        # dims_topo = ur_topo - ll_topo
+
+        dim_topo = ur_topo - ll_topo
+        mdpt_topo = ll_topo + 0.5*dim_topo
+
+        dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+
+        clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
+        clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+
+        clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+        clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+
+        return dim_topo, clawdata.lower,clawdata.upper
+
+    dims_topo, clawdata.lower, clawdata.upper = get_topo(topo_file)
 
     clawdata.num_cells[0] = mx
     clawdata.num_cells[1] = my
@@ -330,7 +369,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
-    geoflooddata.refine_threshold = 0.0001
+    geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = False
     geoflooddata.regrid_interval = 3
@@ -340,7 +379,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.subcycle = True
     geoflooddata.output = True
-    geoflooddata.output_gauges = False
+    geoflooddata.output_gauges = True
 
 
     # Block dimensions for non-square domains
@@ -400,7 +439,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,0,100]) # left wall
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,10,0,100]) # left wall
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -409,6 +448,10 @@ def setrun(claw_pkg='geoclaw'):
     for i in range(gaugeno):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
+
+    # rundata.gaugedata.gauges.append([0, 400,y[i],9.67, 0., 1e10])
+    # rundata.gaugedata.gauges.append([1, 600,y[i],10.0, 0., 1e10])
+
     #
     # -------------------------------------------------------
     # For developers
@@ -453,7 +496,7 @@ def setgeo(rundata):
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 0.0
+    geo_data.sea_level = 9.7
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
@@ -463,7 +506,7 @@ def setgeo(rundata):
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
     refinement_data.speed_tolerance = [1.e-1]*6
-    refinement_data.deep_depth = 9.7
+    refinement_data.deep_depth = 15.0
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = True
 
@@ -490,28 +533,6 @@ def setgeo(rundata):
     # end of function setgeo
     # ----------------------
 
-#-------------------
-# generate bathymetry data for a ground elevation of uniform 0.0m
-#-------------------
-# def generate_bathymetry(run_data, out_file):
-#     #  specify the number of nodes in the xy domain ~ 80000 nodes
-#     nx = mx*mi 
-#     ny = my*mj 
-#     ax = 0.0
-#     bx = 1000.0
-#     ay = 0.0
-#     by = 2000.0
-
-#     # generate a uniform ground elevation of 0.0m
-#     topo_func = lambda x,y: 0.0
-
-#     # create a bathymetry object
-#     topo = tt.Topography(topo_func=topo_func, topo_type=2)
-#     topo.x = np.linspace(ax, bx, nx)
-#     topo.y = np.linspace(ay, by, ny)
-
-#     # write the bathymetry to a file
-#     topo.write(out_file)
 
 
 if __name__ == '__main__':

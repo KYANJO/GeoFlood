@@ -29,6 +29,8 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 
     real(kind=8) :: h, hu, y
 
+    real(kind=8) :: h1 = 9.7d0, u1=0.0d0
+
     ! -------------------------------------------------------------------
     !  left boundary
     ! -------------------------------------------------------------------
@@ -39,15 +41,15 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
     100 continue
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
+    call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1)
     do j = 1-mbc,my+mbc
-    
-        call inflow_interpolation(h,hu,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
-        ! write (*,*) 'flow_depth = ', flow_depth, ' inflow_interp = ', inflow_interp
         do ibc=1,mbc
+            ! aux(1,1-ibc,j) = aux(1,1,j)
             q(1,1-ibc,j) = h        
             q(2,1-ibc,j) = hu 
             q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
-        end do
+            
+        enddo
     end do
     goto 199
 
@@ -215,88 +217,109 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 end subroutine disconnected_water_body_bc2
 
 
-subroutine inflow_interpolation(inflow_interp,hu,t,dx,dy,xlower,ylower,q,meqn,mbc,mx,my)
-
-    ! This subroutine linearly interpolates the inflow boundary condition values from a file which are applied along a 20 m line in the middle of the western side of teh floodplain.
+subroutine read_file_interpolate(file_name, t, zinterp, hu0, h1, u1)
 
     implicit none
 
     ! declare variables
-    integer, intent(in) :: meqn, mbc, mx, my
-    real(kind=8), intent(in) :: xlower, ylower, dx, dy, t
-    real(kind=8), dimension(:), allocatable :: tt, inflow
-    real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-    real(kind=8) :: slope,x,y,inflow_interp
-    real(kind=8) :: flow_depth,hu, h1 = 9.7, u1 = 0                       ! intent(in,out)
+    character(len=*), intent(in) :: file_name
+    real(kind=8), dimension(:), allocatable :: time,z
+    real(kind=8) :: t, zinterp, hu0, h1 , u1
+    character(len=100) :: line
 
-    integer :: i,xindex,yindex,n = 5
+    integer :: i,j,num_rows
 
-    ! Open the file for reading
-    open(10,file="fortran/bc.txt",status='old',action='read')
+    ! ----- read time and z from a file -----------------------
+    !  open the file for reading
+    open(10,file=file_name,status='old')
 
-    ! read in the boundary condition values
-    allocate(tt(n),inflow(n))
-    do i=1,n
-        read(10,*) tt(i), inflow(i)
+    ! count the number of rows in the file
+    num_rows = 0
+    do 
+        read(10,*,iostat=i) line
+        if (i /= 0) exit
+        num_rows = num_rows + 1
     end do
+
+    ! allocate memory for time and z
+    allocate(time(num_rows),z(num_rows))
+
+    ! rewind the file
+    rewind(10)
+
+    ! read data
+    do i = 1,num_rows
+        read(10,*) time(i), z(i)
+        ! write(*,*) time(i), z(i)
+    end do
+
+    ! close the file
     close(10)
 
-    !  find the nearest time values
-    do i = 1,n-1
-        if (t >= tt(i) .and. t <= tt(i+1)) then
-            exit
-        end if
-    end do
+    ! ------ Linear interpolation -----------------------------
 
-    ! linearly interpolate the inflow boundary condition values 
-    inflow_interp = inflow(i) + (inflow(i+1) - inflow(i)) / (tt(i+1) - tt(i)) * (t - tt(i))
+    ! initialize zinterp to zero
+    zinterp = 0.0
 
-    ! constraint the inflow boundary condition values to be positive
-    if (inflow_interp < 0.0) then
-        inflow_interp = 0.0
+    ! check if t is within the time range and set the value of zinterp
+    if (t < time(1)) then
+        zinterp = z(1)
+    else if (t > time(size(time))) then
+        zinterp = z(size(z))
+    else
+        do i = 1,size(time)-1
+            if (t >= time(i) .and. t <= time(i+1)) then
+                zinterp = z(i) + (z(i+1) - z(i)) / (time(i+1) - time(i)) * (t - time(i))
+                exit
+            end if
+        end do
     end if
 
-    ! Use Newton-Raphson method to compute the inflow depth
-    call Riemann_invariants(inflow_interp, hu,h1,u1)
-    ! WRITE (*,*) 'inflow_discharge = ', hu, 'T = ', t
-    ! free up memory
-    deallocate(tt,inflow) 
+    ! write(*,*) 'The value of zinterp' , zinterp
+    ! ----- end of linear interpolation ------------------------
+    !
+    ! ----- call the Riemann invariant subroutine --------------
+    call Riemann_invariants(zinterp,hu0,h1,u1)
+    ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'T = ', t
 
-! end program
-end subroutine inflow_interpolation
+    ! free up memory
+    deallocate(time,z)
+end subroutine read_file_interpolate
+
   
 ! NRM  routine to solve Riemann invariants
 subroutine Riemann_invariants(h0,hu0,h1,u1)
 
-implicit none
+    implicit none
 
-! declare variables
-real(kind=8) :: hu0,h0,h1,u1
-real(kind=8) :: g,func,dfunc,tol
+    ! declare variables
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: func,dfunc, tol,g
 
-integer :: i, max_iter
 
-! initialize variables
-g = 9.81 ! gravitational acceleration
-tol = 1.0e-6 ! tolerance for convergence
-max_iter = 100 ! maximum number of iterations
-hu0 = 0.1 ! initial guess for the inflow discharge
+    integer :: i, max_iter
 
-! solve Riemann invariants
-! if (hu0 == 0.0) then
-if (h0 == 0.0) then
-    hu0 = 0.0
-else
-    do i = 1,max_iter
-        func = hu0/h0 - 2*sqrt(g*h0) - u1 +2*sqrt(g*h1) ! function to be solved
+    ! initialize variables
+    g = 9.81d0 ! gravitational acceleration
+    tol = 1.0e-6 ! tolerance for convergence
+    max_iter = 100 ! maximum number of iterations
+    hu0 = 0.1d0 ! initial guess for the inflow discharge
 
-        ! dfunc = -hu0/(h0**2) - sqrt(g/h0)   ! when hu0 is provided
-        dfunc = 1.d0/h0 ! when hu0 is not provided, i.e. h0 is provided
+    ! solve Riemann invariants
+    ! if (hu0 == 0.0) then
+    if (h0 == 0.0) then
+        hu0 = 0.0
+    else
+        do i = 1,max_iter
+            func = hu0/h0 - 2*sqrt(g*h0) - u1 +2*sqrt(g*h1) ! function to be solved
 
-        hu0 = hu0 - func/dfunc ! update the flow depth
+            ! dfunc = -hu0/(h0**2) - sqrt(g/h0)   ! when hu0 is provided
+            dfunc = 1.d0/h0 ! when hu0 is not provided, i.e. h0 is provided
 
-        if (abs(func) < tol) exit ! check for convergence
-    end do
-end if
+            hu0 = hu0 - func/dfunc ! update the flow depth
+
+            if (abs(func) < tol) exit ! check for convergence
+        end do
+    end if
 
 end subroutine Riemann_invariants

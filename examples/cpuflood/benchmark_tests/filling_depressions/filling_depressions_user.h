@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2022 Carsten Burstedde, Donna Calhoun, Scott Aiton
+Copyright (c) 2012 Carsten Burstedde, Donna Calhoun
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,20 +23,42 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "disconnected_water_body_user.h"
+#ifndef FILLING_DEPRESSIONS_USER_H
+#define FILLING_DEPRESSIONS_USER_H
 
 #include <fclaw2d_include_all.h>
 
-#include <fclaw2d_clawpatch.h>
-#include <fc2d_geoclaw.h>
-
-void disconnected_water_body_link_solvers(fclaw2d_global_t *glob)
+#ifdef __cplusplus
+extern "C"
 {
-
-    /* These are set by GeoClaw for convenience, but the user
-       can set these with customized functions, if desired. */
-    fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
-
-    geoclaw_vt->bc2 = &DISCONNECTED_WATER_BODY_BC2; /* special BC at the left boundary */
-    // geoclaw_vt->qinit = &DISCONNECTED_WATER_BODY_QINIT; /* initial condition */
+#if 0
 }
+#endif
+#endif
+
+
+void filling_depressions_link_solvers(fclaw2d_global_t *glob);
+
+//  BC (Fortran to c)
+#define FILLING_DEPRESSIONS_BC2   FCLAW_F77_FUNC(filling_depressions_bc2, FILLING_DEPRESSIONS_BC2)
+
+void FILLING_DEPRESSIONS_BC2(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    const double q[], const int* maux,
+                    const double aux[], const double* t,
+                    const double* dt, const int mthbc[]);
+
+
+/* Mappings */
+fclaw2d_map_context_t* fclaw2d_map_new_nomap();
+
+#ifdef __cplusplus
+#if 0
+{
+#endif
+}
+#endif
+
+#endif

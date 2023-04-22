@@ -23,20 +23,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "disconnected_water_body_user.h"
+#include "filling_depressions_user.h"
 
 #include <fclaw2d_include_all.h>
 
 #include <fclaw2d_clawpatch.h>
 #include <fc2d_geoclaw.h>
 
-void disconnected_water_body_link_solvers(fclaw2d_global_t *glob)
+void filling_depressions_link_solvers(fclaw2d_global_t *glob)
 {
 
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
     fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
 
-    geoclaw_vt->bc2 = &DISCONNECTED_WATER_BODY_BC2; /* special BC at the left boundary */
-    // geoclaw_vt->qinit = &DISCONNECTED_WATER_BODY_QINIT; /* initial condition */
+    geoclaw_vt->bc2 = &FILLING_DEPRESSIONS_BC2; /* special BC at the left boundary */
 }

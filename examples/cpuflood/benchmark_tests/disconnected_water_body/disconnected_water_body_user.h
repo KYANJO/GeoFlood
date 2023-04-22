@@ -51,6 +51,17 @@ void DISCONNECTED_WATER_BODY_BC2(const int* meqn, const int* mbc,
                     const double* dt, const int mthbc[]);
 
 
+//  Initial condition (Fortran to c)
+#define DISCONNECTED_WATER_BODY_QINIT FCLAW_F77_FUNC(disconnected_water_body_qinit,  DISCONNECTED_WATER_BODY_QINIT)
+
+void DISCONNECTED_WATER_BODY_QINIT(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    double q[], const int* maux, double aux[]);
+
+
+
 /* Mappings */
 fclaw2d_map_context_t* fclaw2d_map_new_nomap();
 
