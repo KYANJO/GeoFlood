@@ -32,6 +32,10 @@ class GeoFlooddata(object):
         self.outstyle_uses_maxlevel = True
         self.ghost_patch_pack_aux = False
         self.conservation_check = False
+        self.tikz_out = False
+        self.tikz_figsize = "4 4"
+        self.tikz_plot_prefix = 'plot'
+        self.tikz_plot_suffix = 'png'
 
         self.mi = 1
         self.mj = 1
@@ -147,7 +151,14 @@ class GeoFlooddata(object):
 
         '   # Block dimensions' : None,
         '   mi': self.mi,
-        '   mj': self.mj
+        '   mj': self.mj,"\n"
+
+        '   # Tikz output' : None,
+        '   tikz-out': self.tikz_out,
+        '   tikz-figsize': self.tikz_figsize,
+        '   tikz-plot-prefix': self.tikz_plot_prefix,
+        '   tikz-plot-suffix': self.tikz_plot_suffix
+
         }
 
         #mthbc

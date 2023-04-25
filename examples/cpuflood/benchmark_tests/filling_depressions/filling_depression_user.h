@@ -23,8 +23,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef FLOOD_SPEED_USER_H
-#define FLOOD_SPEED_USER_H
+#ifndef FILLING_DEPRESSIONS_USER_H
+#define FILLING_DEPRESSIONS_USER_H
 
 #include <fclaw2d_include_all.h>
 
@@ -37,12 +37,12 @@ extern "C"
 #endif
 
 
-void flood_speed_link_solvers(fclaw2d_global_t *glob);
+void filling_depressions_link_solvers(fclaw2d_global_t *glob);
 
 //  BC (Fortran to c)
-#define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
+#define FILLING_DEPRESSIONS_BC2   FCLAW_F77_FUNC(filling_depressions_bc2, FILLING_DEPRESSIONS_BC2)
 
-void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
+void FILLING_DEPRESSIONS_BC2(const int* meqn, const int* mbc,
                     const int* mx, const int* my,
                     const double* xlower, const double* ylower,
                     const double* dx, const double* dy,

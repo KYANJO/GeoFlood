@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012 Carsten Burstedde, Donna Calhoun
+Copyright (c) 2012-2022 Carsten Burstedde, Donna Calhoun, Scott Aiton
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,42 +23,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef FLOOD_SPEED_USER_H
-#define FLOOD_SPEED_USER_H
+#include "filling_depressions_user.h"
 
 #include <fclaw2d_include_all.h>
 
-#ifdef __cplusplus
-extern "C"
+#include <fclaw2d_clawpatch.h>
+#include <fc2d_geoclaw.h>
+
+void filling_depressions_link_solvers(fclaw2d_global_t *glob)
 {
-#if 0
+
+    /* These are set by GeoClaw for convenience, but the user
+       can set these with customized functions, if desired. */
+    fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+
+    geoclaw_vt->bc2 = &FILLING_DEPRESSIONS_BC2; /* special BC at the left boundary */
 }
-#endif
-#endif
-
-
-void flood_speed_link_solvers(fclaw2d_global_t *glob);
-
-//  BC (Fortran to c)
-#define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
-
-void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
-                    const int* mx, const int* my,
-                    const double* xlower, const double* ylower,
-                    const double* dx, const double* dy,
-                    const double q[], const int* maux,
-                    const double aux[], const double* t,
-                    const double* dt, const int mthbc[]);
-
-
-/* Mappings */
-fclaw2d_map_context_t* fclaw2d_map_new_nomap();
-
-#ifdef __cplusplus
-#if 0
-{
-#endif
-}
-#endif
-
-#endif
