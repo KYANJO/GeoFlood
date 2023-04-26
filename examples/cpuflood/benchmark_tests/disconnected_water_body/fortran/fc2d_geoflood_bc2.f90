@@ -29,8 +29,8 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 
     real(kind=8) :: h, hu, y
 
-    real(kind=8) :: h1 = 9.7d0, u1=0.0d0
-
+    real(kind=8) :: h1, u1=0.0d0
+  
     ! -------------------------------------------------------------------
     !  left boundary
     ! -------------------------------------------------------------------
@@ -41,16 +41,18 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
     100 continue
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
-    call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1)
+      h1 = 0.0d0
+    call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1, meqn, mbc, mx, my, maux, aux,q)
     do j = 1-mbc,my+mbc
         do ibc=1,mbc
-            ! aux(1,1-ibc,j) = aux(1,1,j)
+            aux(1,1-ibc,j) = aux(1,ibc,j)
             q(1,1-ibc,j) = h        
             q(2,1-ibc,j) = hu 
-            q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
-            
+            q(3,1-ibc,j) = hu             ! hv vertical velocity = 0
+            ! q(4,ibc,j) = q(4,1-ibc,j)
         enddo
     end do
+  
     goto 199
 
     110 continue
@@ -217,17 +219,20 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 end subroutine disconnected_water_body_bc2
 
 
-subroutine read_file_interpolate(file_name, t, zinterp, hu0, h1, u1)
+subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,meqn, mbc, mx, my, maux, aux,q)
 
     implicit none
 
     ! declare variables
+    integer, intent(in) :: meqn, mbc, mx, my, maux
+    real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+    real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
     character(len=*), intent(in) :: file_name
     real(kind=8), dimension(:), allocatable :: time,z
-    real(kind=8) :: t, zinterp, hu0, h1 , u1
+    real(kind=8) :: t, zinterp, hu0, h1 , u1,h0
     character(len=100) :: line
 
-    integer :: i,j,num_rows
+    integer :: i,j,num_rows,ibc
 
     ! ----- read time and z from a file -----------------------
     !  open the file for reading
@@ -279,8 +284,15 @@ subroutine read_file_interpolate(file_name, t, zinterp, hu0, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    call Riemann_invariants(zinterp,hu0,h1,u1)
-    ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'T = ', t
+
+    do j = 1-mbc, my+mbc
+        do ibc = 1,mbc
+            h0 = max(zinterp - aux(4,ibc,j), 0.0d0)
+            call Riemann_invariants(h0,hu0,h1,u1)
+        end do
+    end do
+    ! call Riemann_invariants(zinterp,hu0,h1,u1)
+    write(*,*) 'zinterp = ', zinterp, 'h0 =', h0, 'hu0 = ', hu0, 'T = ', t
 
     ! free up memory
     deallocate(time,z)
@@ -303,7 +315,7 @@ subroutine Riemann_invariants(h0,hu0,h1,u1)
     g = 9.81d0 ! gravitational acceleration
     tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
-    hu0 = 0.1d0 ! initial guess for the inflow discharge
+    hu0 = 0.0001d0 ! initial guess for the inflow discharge
 
     ! solve Riemann invariants
     ! if (hu0 == 0.0) then
@@ -311,7 +323,7 @@ subroutine Riemann_invariants(h0,hu0,h1,u1)
         hu0 = 0.0
     else
         do i = 1,max_iter
-            func = hu0/h0 - 2*sqrt(g*h0) - u1 +2*sqrt(g*h1) ! function to be solved
+            func = hu0/h0 - 2*sqrt(g*h0) - u1 + 2*sqrt(g*h1) ! function to be solved
 
             ! dfunc = -hu0/(h0**2) - sqrt(g/h0)   ! when hu0 is provided
             dfunc = 1.d0/h0 ! when hu0 is not provided, i.e. h0 is provided
