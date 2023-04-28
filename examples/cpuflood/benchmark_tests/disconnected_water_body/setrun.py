@@ -408,7 +408,7 @@ def setrun(claw_pkg='geoclaw'):
     # Hydrograph data:
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.read_data = False
+    hydrographdata.read_data = True
     hydrographdata.initial_velocity = 0.0
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
@@ -418,7 +418,7 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.elevation = [9.7, 9.7, 10.35, 10.35, 9.7, 9.7]
     
    
-    hydrographdata.hydrograph_file = 'bc.txt'
+    hydrographdata.hydrograph_filename = 'bc.txt'
 
     # -----------------------------------------------
     # AMR parameters:
