@@ -412,12 +412,12 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.initial_velocity = 0.0
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
-    hydrographdata.hydrograph_type = 'elevation' # 'elevation' or 'discharge'
+    hydrographdata.channel_width = 100
+    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 3600, 39600, 43200, 72000]
     hydrographdata.discharge = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     hydrographdata.elevation = [9.7, 9.7, 10.35, 10.35, 9.7, 9.7]
     
-   
     hydrographdata.hydrograph_filename = 'bc.txt'
 
     # -----------------------------------------------
