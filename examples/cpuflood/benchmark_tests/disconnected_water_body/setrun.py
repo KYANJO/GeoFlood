@@ -28,7 +28,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 20  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -60,12 +60,11 @@ my = 10
 mi = 7  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 1  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 1
+minlevel = 2
 maxlevel = 3 #resolution based on levels 
-maxlevel_ = 5
-ratios_x = [2]*(maxlevel_-1)
-ratios_y = [2]*(maxlevel_-1)
-ratios_t = [2]*(maxlevel_-1)
+ratios_x = [2]*(maxlevel)
+ratios_y = [2]*(maxlevel)
+ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.03
@@ -79,6 +78,7 @@ gauge_loc = "./scratch/gauge_loc.csv"
 
 # --------------------- topograpy data -----------------------------------------------
 topo_file = "./scratch/test1DEM.asc"
+# topo_file = "./scratch/test1DEM_.topo"
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -496,7 +496,7 @@ def setgeo(rundata):
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 9.7
+    geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
@@ -521,13 +521,13 @@ def setgeo(rundata):
     # 2: perturbation to momentum, hu.
     # 3: perturbation to momentum, hv.
     # 4: surface elevation eta is defined by the file and results in depth h=max(eta-b,0)
-    rundata.qinit_data.qinit_type = 1
+    rundata.qinit_data.qinit_type = 0
     rundata.qinit_data.qinitfiles = []
-    rundata.qinit_data.variable_eta_init = True
+    # rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
    
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'ic.topotype1'])
+    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'test1.xyz'])
 
     return rundata
     # end of function setgeo

@@ -27,10 +27,10 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 
     integer :: m, i, j, ibc, jbc
 
-    real(kind=8) :: h, hu, y
+    real(kind=8) :: h, hu, y, x
 
-    real(kind=8) :: h1 = 9.7d0, u1=0.0d0
-
+    real(kind=8) :: h1, u1=0.001d0
+  
     ! -------------------------------------------------------------------
     !  left boundary
     ! -------------------------------------------------------------------
@@ -41,16 +41,27 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
     100 continue
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
-    call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1)
+    ! h1 = 0.0001d0
+    
     do j = 1-mbc,my+mbc
         do ibc=1,mbc
-            ! aux(1,1-ibc,j) = aux(1,1,j)
-            q(1,1-ibc,j) = h        
-            q(2,1-ibc,j) = hu 
-            q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
-            
+            ! aux(1,1-ibc,j) = aux(1,ibc,j)
+            h1 = max(9.7d0 - aux(1,1-ibc,j), 0.0d0)
+            call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1, meqn, mbc, mx, my, maux, aux,q)
+            if (t <= 0.25) then 
+                q(1,1-ibc,j) = h1
+                q(2,1-ibc,j) = hu
+                q(3,1-ibc,j) = 0.0d0
+            else
+                q(1,1-ibc,j) = h        
+                q(2,1-ibc,j) = 0.0d0
+                q(3,1-ibc,j) = 0.0d0    
+            endif        
+             
         enddo
     end do
+
+
     goto 199
 
     110 continue
@@ -217,17 +228,20 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 end subroutine disconnected_water_body_bc2
 
 
-subroutine read_file_interpolate(file_name, t, zinterp, hu0, h1, u1)
+subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,meqn, mbc, mx, my, maux, aux,q)
 
     implicit none
 
     ! declare variables
+    integer, intent(in) :: meqn, mbc, mx, my, maux
+    real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+    real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
     character(len=*), intent(in) :: file_name
     real(kind=8), dimension(:), allocatable :: time,z
-    real(kind=8) :: t, zinterp, hu0, h1 , u1
+    real(kind=8) :: t, zinterp, hu0, h1 , u1,h0
     character(len=100) :: line
 
-    integer :: i,j,num_rows
+    integer :: i,j,num_rows,ibc
 
     ! ----- read time and z from a file -----------------------
     !  open the file for reading
@@ -279,14 +293,100 @@ subroutine read_file_interpolate(file_name, t, zinterp, hu0, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    call Riemann_invariants(zinterp,hu0,h1,u1)
-    ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'T = ', t
+
+    do j = 1-mbc, my+mbc
+        do ibc = 1,mbc
+            ! aux(1,1-ibc,j) = aux(1,ibc,j)
+            ! if (t >= 0.625 .and. zinterp >= 10.27d0) then 
+            !     h0 = 0.22d0
+            ! else
+            h0 = max(zinterp - aux(1,1-ibc,j), 0.0d0)
+            ! end if
+            ! call Riemann_invariants(h0,hu0,h1,u1)
+            call newton_raphson(h0,hu0,h1,u1)
+            ! write(*,*) zinterp ,aux(4,1,j) + q(4,1,j), h0, t
+        end do
+    end do
+    ! call Riemann_invariants(zinterp,hu0,h1,u1)
+    ! write(*,*) zinterp ,aux(1,1-ibc,j), aux(1,1-ibc,j) + q(4,1,j), h0,  t
+    ! write(*,*) 'zinterp = ', zinterp, 'h0 =', h0, 'hu0 = ', hu0, 'T = ', t
 
     ! free up memory
     deallocate(time,z)
 end subroutine read_file_interpolate
 
   
+subroutine newton_raphson(h0,xn,h1,u1)
+
+    implicit none
+
+    ! declare variables
+    real(kind=8) :: h0,h1,u1,x0,xn,tol
+    real(kind=8) :: func,fxn,dfxn,dfunc_hu0
+
+    integer :: i, max_iter
+
+    ! initialize variables
+    tol = 1.0e-6 ! tolerance for convergence
+    max_iter = 100 ! maximum number of iterations
+    x0 = 0.001d0 ! initial guess for the inflow discharge
+
+    ! solve Riemann invariants
+    ! if (hu0 == 0.0) then
+    if (h0 == 0.0) then
+        xn = 0.0
+    else
+        xn = x0
+        do i = 1, max_iter
+            fxn = func(xn,h0,h1,u1)
+            if (abs(fxn) < tol) then
+                return 
+            end if
+            dfxn = dfunc_hu0(xn,h0,h1,u1)
+            ! dfxn = dfunc_h0(xn,h0,h1,u1)
+            xn = xn - fxn/dfxn
+        end do
+        write(*,*) 'Newton-Raphson did not converge'
+        xn = 0.0
+    endif
+end subroutine newton_raphson
+
+real(kind=8) function func(hu0,h0,h1,u1)
+    implicit none
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: g
+    
+    g = 9.81d0 ! gravitational acceleration
+
+    func = hu0/h0 - 2*sqrt(g*h0) - u1 + 2*sqrt(g*h1)
+
+end function func
+
+!  given hu0
+real(kind=8) function dfunc_h0(hu0,h0,h1,u1)
+    implicit none
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: g
+    
+    g = 9.81d0 ! gravitational acceleration
+
+    dfunc_h0 = -hu0/(h0**2) - sqrt(g/h0)
+
+end function dfunc_h0
+
+! given h0
+real(kind=8) function dfunc_hu0(hu0,h0,h1,u1)
+    implicit none
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: g
+    
+    g = 9.81d0 ! gravitational acceleration
+
+    dfunc_hu0 = 1/h0
+
+end function dfunc_hu0
+
+
 ! NRM  routine to solve Riemann invariants
 subroutine Riemann_invariants(h0,hu0,h1,u1)
 
@@ -303,7 +403,7 @@ subroutine Riemann_invariants(h0,hu0,h1,u1)
     g = 9.81d0 ! gravitational acceleration
     tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
-    hu0 = 0.1d0 ! initial guess for the inflow discharge
+    hu0 = 0.001d0 ! initial guess for the inflow discharge
 
     ! solve Riemann invariants
     ! if (hu0 == 0.0) then
@@ -311,7 +411,7 @@ subroutine Riemann_invariants(h0,hu0,h1,u1)
         hu0 = 0.0
     else
         do i = 1,max_iter
-            func = hu0/h0 - 2*sqrt(g*h0) - u1 +2*sqrt(g*h1) ! function to be solved
+            func = hu0/h0 - 2*sqrt(g*h0) - u1 + 2*sqrt(g*h1) ! function to be solved
 
             ! dfunc = -hu0/(h0**2) - sqrt(g/h0)   ! when hu0 is provided
             dfunc = 1.d0/h0 ! when hu0 is not provided, i.e. h0 is provided
@@ -319,6 +419,7 @@ subroutine Riemann_invariants(h0,hu0,h1,u1)
             hu0 = hu0 - func/dfunc ! update the flow depth
 
             if (abs(func) < tol) exit ! check for convergence
+           
         end do
     end if
 
