@@ -405,6 +405,22 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.verbosity = 'production'
 
     # -----------------------------------------------
+    # Hydrograph data:
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.read_data = False
+    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_discharge = 0.0
+    hydrographdata.initial_elevation = 0.0
+    hydrographdata.hydrograph_type = 'elevation' # 'elevation' or 'discharge'
+    hydrographdata.time = [0.0, 300, 3600, 39600, 43200, 72000]
+    hydrographdata.discharge = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    hydrographdata.elevation = [9.7, 9.7, 10.35, 10.35, 9.7, 9.7]
+    
+   
+    hydrographdata.hydrograph_file = 'bc.txt'
+
+    # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
     amrdata = rundata.amrdata
@@ -469,7 +485,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata,geoflooddata
+    return rundata,geoflooddata, hydrographdata
     # end of function setrun
     # ----------------------
 
@@ -537,9 +553,8 @@ def setgeo(rundata):
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    rundata,geoflooddata = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-
-    # generate_bathymetry(rundata, 'bathy.topotype2')
+    hydrographdata.write()  # writes a geoflood hydrograph file

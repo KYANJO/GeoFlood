@@ -8,7 +8,7 @@
 
 # Importing required libraries
 from configparser import ConfigParser
- 
+
 class GeoFlooddata(object):
     # Several geoflood attributes (ignore for now)
 
@@ -41,8 +41,6 @@ class GeoFlooddata(object):
         self.mj = 1
 
         #things we didnt set in fclaw options and geoflood.py
-        
-
 
     def write(self,rundata):
         geoflood = ConfigParser(allow_no_value=True)
@@ -235,7 +233,6 @@ class GeoFlooddata(object):
         #print(clawdata.output_format)
         #print(ascii_out)
 
-
         geoflood['geoclaw'] = {
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
@@ -285,5 +282,58 @@ class GeoFlooddata(object):
             '   ascii-out': ascii_out
             }
             
-        with open('geoflood.ini','w') as geofloodfile:
+        with open('geoflood_.ini','w') as geofloodfile:
             geoflood.write(geofloodfile)
+
+
+class Hydrographdata(object):
+
+    def __init__(self):
+        #  either read from file or set in setrun.py
+        self.read_data = False # if true, read from file instead of setrun.py
+        # self.hydrograph_filename = filename
+        self.hydrograph_type = 'discharge' # 'discharge' or 'elevation'
+        self.hydrograph_variables = ['time','discharge'] # 'time','discharge','elevation'
+        self.hydrograph_numrows = 0
+
+        # hydrograph data
+        self.time = []
+        self.discharge = []
+        self.elevation = []
+
+        # channel data
+        self.width = 0.0
+        self.depth = 0.1
+        self.area = 0.0
+        self.wetted_perimeter = 0.1
+        self.friction_slope = 0.01
+        self.bed_slope = 0.01
+        self.froude = 1.0
+        
+        # initial conditions
+        self.intial_velocity = 0.0
+        self.initial_elevation = 0.0
+        self.initial_discharge = 0.0
+
+    def write(self): 
+        # check if hydrograph file is provided or set in setrun.py
+        if self.read_data == False:
+            hydrograph = open('hydrograph.data','w')
+            hydrograph.write('# hydrograph data\n')
+            if self.hydrograph_type == 'discharge':
+                hydrograph.write('# type: discharge\n')
+                hydrograph.write('# time (s) discharge (m^3/s)\n')
+                hydrograph.write('# %d\n' % len(self.time))
+                for i in range(len(self.time)):
+                    hydrograph.write('%f %f\n' % (self.time[i],self.discharge[i]))
+            else:
+                hydrograph.write('# type: elevation\n')
+                hydrograph.write('# time (s) elevation (m)\n')
+                hydrograph.write('# %d\n' % len(self.time))
+                for i in range(len(self.time)):
+                    hydrograph.write('%f %f\n' % (self.time[i],self.elevation[i]))
+            hydrograph.close()
+    
+ 
+
+        
