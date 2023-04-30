@@ -12,6 +12,7 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
     USE refinement_module, ONLY: set_refinement
     USE storm_module, only: set_storm
     USE friction_module, only: setup_variable_friction
+    USE hydrograph_module, only: read_hydrograph_data
 
     IMPLICIT NONE
 
@@ -59,5 +60,6 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
 !   CALL set_fixed_grids()            !# Fixed grid settings (deprecated form clawpack v5.9.0)
     CALL set_storm()                  ! Set storm parameters
     CALL setup_variable_friction()    ! Set variable friction parameters
+    CALL read_hydrograph_data()       ! Set hydrograph parameters
 
 END SUBROUTINE fc2d_geoclaw_set_modules
