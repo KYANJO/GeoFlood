@@ -282,7 +282,7 @@ class GeoFlooddata(object):
             '   ascii-out': ascii_out
             }
             
-        with open('geoflood_.ini','w') as geofloodfile:
+        with open('geoflood.ini','w') as geofloodfile:
             geoflood.write(geofloodfile)
 
 
@@ -314,6 +314,7 @@ class Hydrographdata(object):
         self.intial_velocity = 0.0
         self.initial_elevation = 0.0
         self.initial_discharge = 0.0
+        self.initial_depth = 0.1
 
     def write(self): 
         
@@ -322,7 +323,7 @@ class Hydrographdata(object):
        
         # hydrograph.write('# initial condition\n')
         # hydrograph.write('# discharge (m^3/s) elevation (m) velocity (m/s)\n')
-        hydrograph.write('%f %f %f\n' % (self.initial_discharge,self.initial_elevation,self.intial_velocity))
+        hydrograph.write('%f %f %f %f\n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.intial_velocity,self.initial_depth))
 
         # hydrograph.write('\n# channel width\n')
         # hydrograph.write('%f\n' % self.channel_width)

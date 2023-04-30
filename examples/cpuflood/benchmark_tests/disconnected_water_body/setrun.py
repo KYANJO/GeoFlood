@@ -28,7 +28,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 20  # Initial time step
+initial_dt = 60  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -60,8 +60,8 @@ my = 10
 mi = 7  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 1  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 2
-maxlevel = 3 #resolution based on levels 
+minlevel = 1
+maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -408,17 +408,18 @@ def setrun(claw_pkg='geoclaw'):
     # Hydrograph data:
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.read_data = True
+    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
     hydrographdata.initial_velocity = 0.0
     hydrographdata.initial_discharge = 0.0
-    hydrographdata.initial_elevation = 0.0
+    hydrographdata.initial_elevation = 9.7
+    hydrographdata.initial_depth = 0.0
     hydrographdata.channel_width = 100
-    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
+    hydrographdata.hydrograph_type = 'elevation' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 3600, 39600, 43200, 72000]
     hydrographdata.discharge = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     hydrographdata.elevation = [9.7, 9.7, 10.35, 10.35, 9.7, 9.7]
     
-    hydrographdata.hydrograph_filename = 'bc.txt'
+    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
 
     # -----------------------------------------------
     # AMR parameters:
