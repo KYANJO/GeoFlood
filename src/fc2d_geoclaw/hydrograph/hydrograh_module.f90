@@ -54,10 +54,13 @@ contains
             end if
 
             !  read the first line (initial conditions)
-            read(unit,*) q1(2), q1(1), u1, q1(4)
+            read(unit,*) q1(2), q1(4), u1, q1(1)
 
             !  asume momentum in y direction is zero
             q1(3) = 0.0d0
+
+            ! compute the momentum in x direction (just right at the cell boundary)
+            q1(2) = q1(1)*u1
 
             !  read the second line (reading from file or setrun.py)
             read(unit,*) read_file
@@ -124,9 +127,9 @@ contains
         real(kind=8), dimension(4), intent(out) :: q0
 
         if (hydrograph_type == 'discharge') then
-            call interpolation(t,hu,q0(2))
+            call interpolation(t,hu,q0(1))
         else
-            call interpolation(t,eta,q0(1))
+            call interpolation(t,eta,q0(4))
         end if
 
 

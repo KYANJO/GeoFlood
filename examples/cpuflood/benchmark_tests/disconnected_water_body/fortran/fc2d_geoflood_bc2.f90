@@ -17,7 +17,7 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
-    use hydrograph_module, only: q0,q1,u1,time,eta,hu,hydrograph_type
+    use hydrograph_module, only: q0,q1,time,eta,hu,hydrograph_type
     use hydrograph_module, only: inflow_interpolate, newton_raphson
 
     implicit none
@@ -30,7 +30,7 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
 
     integer :: m, i, j, ibc, jbc
 
-    real(kind=8) :: h_0, hu_0
+    real(kind=8) :: b_0, hu_0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -48,15 +48,15 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
         do ibc=1,mbc
             ! aux(1,1-ibc,j) = aux(1,ibc,j)
             call inflow_interpolate(t,q0)
-            h_0 = q0(1)
-            q0(1) = max(q0(1) - aux(1,1-ibc,j), 0.0d0)
+            b_0 = q0(4)
+            q0(1) = max(q0(4) - aux(1,1-ibc,j), 0.0d0)
             call newton_raphson(q0)
             if (t <= 0.25) then 
-                q(1,1-ibc,j) = max(q1(1) - aux(1,1-ibc,j), 0.0d0)
+                q(1,1-ibc,j) = max(q1(4) - aux(1,1-ibc,j), 0.0d0)
                 q(2,1-ibc,j) = q0(2) !initializing the momentum
                 q(3,1-ibc,j) = 0.0d0
             else
-                q(1,1-ibc,j) = max(h_0 - aux(1,1-ibc,j), 0.0d0)       
+                q(1,1-ibc,j) = max(b_0 - aux(1,1-ibc,j), 0.0d0)       
                 q(2,1-ibc,j) = 0.0d0
                 q(3,1-ibc,j) = 0.0d0    
             endif        
