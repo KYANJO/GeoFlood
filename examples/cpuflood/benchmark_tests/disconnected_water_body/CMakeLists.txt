@@ -1,7 +1,11 @@
+
 # Add boundary conditions as a library
 add_library(disconnected_water_body_f OBJECT
   fortran/fc2d_geoflood_bc2.f90
-  fortran/qinit.f90
+  ../../../../src/fc2d_geoclaw/hydrograph/hydrograh_module.f90
+  ../../../../src/fc2d_geoclaw/geolib_source/geoclaw_module.f90 
+  ../../../../src/fc2d_geoclaw/geolib_source/utility_module.f90
+  ../../../../src/fc2d_geoclaw/amrlib_source/amr_module.f90
 )
 
 add_executable(disconnected_water_body 
@@ -12,7 +16,8 @@ add_executable(disconnected_water_body
 )
 
 target_include_directories(disconnected_water_body PRIVATE 
-  ${CMAKE_CURRENT_SOURCE_DIR} 
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_BINARY_DIR}/src/fc2d_geoclaw/include
 )
 
 target_link_libraries(disconnected_water_body PRIVATE 

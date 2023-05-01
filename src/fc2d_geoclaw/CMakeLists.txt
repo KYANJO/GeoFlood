@@ -12,6 +12,7 @@ add_library(geoflood_f OBJECT
     geolib_source/surge/data_storm_module.f90 
     geolib_source/surge/storm_module.f90 
     geolib_source/friction_module.f90 
+    hydrograph/hydrograh_module.f90
     riemann_source/rpn2_geoclaw.f 
     riemann_source/rpt2_geoclaw.f 
     riemann_source/geoclaw_riemann_utils.f 
@@ -88,6 +89,7 @@ install(FILES
 )
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/include/geoclaw_module.mod
+  # ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
   DESTINATION include
 )
 

@@ -8,7 +8,7 @@
 
 # Importing required libraries
 from configparser import ConfigParser
- 
+
 class GeoFlooddata(object):
     # Several geoflood attributes (ignore for now)
 
@@ -41,8 +41,6 @@ class GeoFlooddata(object):
         self.mj = 1
 
         #things we didnt set in fclaw options and geoflood.py
-        
-
 
     def write(self,rundata):
         geoflood = ConfigParser(allow_no_value=True)
@@ -235,7 +233,6 @@ class GeoFlooddata(object):
         #print(clawdata.output_format)
         #print(ascii_out)
 
-
         geoflood['geoclaw'] = {
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
@@ -287,3 +284,90 @@ class GeoFlooddata(object):
             
         with open('geoflood.ini','w') as geofloodfile:
             geoflood.write(geofloodfile)
+
+
+class Hydrographdata(object):
+
+    def __init__(self):
+        #  either read from file or set in setrun.py
+        self.read_data = False # if true, read from file instead of setrun.py
+        self.hydrograph_filename = 'filename' # name of file to read from
+        self.hydrograph_type = 'discharge' # 'discharge' or 'elevation'
+        self.hydrograph_variables = ['time','discharge'] # 'time','discharge','elevation'
+        self.hydrograph_numrows = 0
+
+        # hydrograph data
+        self.time = []
+        self.discharge = []
+        self.elevation = []
+
+        # channel data
+        self.channel_width = 0.01
+        self.depth = 0.1
+        self.area = 0.0
+        self.wetted_perimeter = 0.1
+        self.friction_slope = 0.01
+        self.bed_slope = 0.01
+        self.froude = 1.0
+        
+        # initial conditions
+        self.intial_velocity = 0.0
+        self.initial_elevation = 0.0
+        self.initial_discharge = 0.0
+        self.initial_depth = 0.1
+
+    def write(self): 
+        
+        # write and intial condition and hydrograph data to file
+        hydrograph = open('hydrograph.data','w')
+       
+        # hydrograph.write('# initial condition\n')
+        # hydrograph.write('# discharge (m^3/s) elevation (m) velocity (m/s)\n')
+        hydrograph.write('%f %f %f %f\n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.intial_velocity,self.initial_depth))
+
+        # hydrograph.write('\n# channel width\n')
+        # hydrograph.write('%f\n' % self.channel_width)
+
+        # hydrograph.write('\n# hydrograph data\n')
+        # check if hydrograph file is provided or set in setrun.py
+        if self.read_data == False:
+            hydrograph.write('False\n')
+            if self.hydrograph_type == 'discharge':
+                hydrograph.write('discharge\n')
+                hydrograph.write('%d\n' % len(self.time))
+                # hydrograph.write('# time (s) discharge (m^3/s)\n')
+                for i in range(len(self.time)):
+                    hydrograph.write('%f %f\n' % (self.time[i],self.discharge[i]/max(self.channel_width,1e-8)))
+            else:
+                hydrograph.write('elevation\n')
+                hydrograph.write('%d\n' % len(self.time))
+                # hydrograph.write('# time (s) elevation (m)\n')                
+                for i in range(len(self.time)):
+                    hydrograph.write('%f %f\n' % (self.time[i],self.elevation[i]))
+        else:
+            hydrograph.write('True\n')
+            if self.hydrograph_type == 'discharge':
+                hydrograph.write('discharge\n')
+                with open(self.hydrograph_filename,'r') as hydrographfile:
+                    data = [line.split() for line in hydrographfile]
+                    hydrograph.write('%d\n' % len(data))
+                    # hydrograph.write('# time (s) hu (m^2/s) discharge (m^3/s)\n')
+                    for d in data:
+                        hydrograph.write('%f %f %f\n' % (float(d[0]),float(d[1])/max(self.channel_width,1e-8),float(d[1]))) #h,hu,eta
+
+            else:
+                hydrograph.write('elevation\n')
+                with open(self.hydrograph_filename,'r') as hydrographfile:
+                    data = [line.split() for line in hydrographfile]
+                    hydrograph.write('%d\n' % len(data))
+                    # hydrograph.write('# time (s) elevation (m)\n')
+                    for d in data:
+                        hydrograph.write('%f %f\n' % (float(d[0]),float(d[1])))
+
+        hydrograph.close()
+
+        
+    
+ 
+
+        

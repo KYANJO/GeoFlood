@@ -28,7 +28,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 20  # Initial time step
+initial_dt = 60  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -60,8 +60,8 @@ my = 10
 mi = 7  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 1  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 2
-maxlevel = 3 #resolution based on levels 
+minlevel = 1
+maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -405,6 +405,23 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.verbosity = 'production'
 
     # -----------------------------------------------
+    # Hydrograph data:
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
+    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_discharge = 0.0
+    hydrographdata.initial_elevation = 9.7
+    hydrographdata.initial_depth = 0.0
+    hydrographdata.channel_width = 100
+    hydrographdata.hydrograph_type = 'elevation' # 'elevation' or 'discharge'
+    hydrographdata.time = [0.0, 300, 3600, 39600, 43200, 72000]
+    hydrographdata.discharge = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    hydrographdata.elevation = [9.7, 9.7, 10.35, 10.35, 9.7, 9.7]
+    
+    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
+
+    # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
     amrdata = rundata.amrdata
@@ -469,7 +486,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata,geoflooddata
+    return rundata,geoflooddata, hydrographdata
     # end of function setrun
     # ----------------------
 
@@ -497,7 +514,7 @@ def setgeo(rundata):
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
-    geo_data.dry_tolerance = 1.e-3
+    geo_data.dry_tolerance = 1.e-2
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
@@ -537,9 +554,8 @@ def setgeo(rundata):
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    rundata,geoflooddata = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-
-    # generate_bathymetry(rundata, 'bathy.topotype2')
+    hydrographdata.write()  # writes a geoflood hydrograph file
