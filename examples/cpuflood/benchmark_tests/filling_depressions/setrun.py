@@ -28,7 +28,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 5  # Initial time step
+initial_dt = 100  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -41,7 +41,7 @@ if output_style == 1:
     # n_hours = 1.0              # Total number of hours in simulation
     
 
-    frames_per_minute = 8/60   # (1 frame every 25 mins)
+    frames_per_minute = 60/500   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -61,11 +61,10 @@ mi = 5  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 5  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
 minlevel = 1
-maxlevel = 3 #resolution based on levels 
-maxlevel_ = 5
-ratios_x = [2]*(maxlevel_-1)
-ratios_y = [2]*(maxlevel_-1)
-ratios_t = [2]*(maxlevel_-1)
+maxlevel = 2 #resolution based on levels 
+ratios_x = [2]*(maxlevel)
+ratios_y = [2]*(maxlevel)
+ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.03
@@ -405,6 +404,23 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.verbosity = 'production'
 
     # -----------------------------------------------
+    # Hydrograph data:
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
+    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_discharge = 0.0
+    hydrographdata.initial_elevation = 0.0
+    hydrographdata.initial_depth = 0.0
+    hydrographdata.channel_width = 100
+    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
+    hydrographdata.time = [0.0, 300, 600, 5160, 172800]
+    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0, 0.0]
+    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0,0.0, 0.0]
+    
+    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
+
+    # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
     amrdata = rundata.amrdata
@@ -439,7 +455,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,10,1900,2000]) # left wall
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,1,1900,2000]) # left wall
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -466,7 +482,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata,geoflooddata
+    return rundata, geoflooddata, hydrographdata
     # end of function setrun
     # ----------------------
 
@@ -534,9 +550,9 @@ def setgeo(rundata):
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    rundata,geoflooddata = setrun(*sys.argv[1:])
+    rundata,geoflooddata,hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
 
-    # generate_bathymetry(rundata, 'bathy.topotype2')
+    hydrographdata.write()  # writes a geoflood hydrograph file
