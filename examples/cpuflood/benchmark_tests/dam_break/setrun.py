@@ -545,17 +545,16 @@ def generate_qinit():
     """
     Generate topo file for the current run
     """
-    nxpoints = 550
-    nypoints = 1050
-    xlower = -40
-    xupper = 1100
-    yupper = 2100
-    ylower = -40
+    nxpoints = 2021
+    nypoints = 112
+    xlower = -8.575
+    xupper = 2.6
+    yupper = 91
+    ylower = -7.31
     outfile= "init.xyz"   
 
-    z = 1000
-    qinitA = lambda x,y: (x**2 + y**2)*z
-    qinitB = lambda x,y: (x**2 + y**2)*z
+    qinitA = lambda x,y: np.where(x<0, 0.4, 0.02)
+    qinitB = lambda x,y: np.where(x<0, 8, 0.4)
 
     topography = Topography(topo_func=qinitA)
     topography.x = np.linspace(xlower,xupper,nxpoints)
