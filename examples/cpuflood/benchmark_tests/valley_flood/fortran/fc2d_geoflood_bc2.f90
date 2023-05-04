@@ -17,6 +17,8 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
+    use hydrograph_module, only: inflow_interpolate
+
     implicit none
 
     integer, intent(in) :: meqn, mbc, mx, my, maux, mthbc(4)
@@ -27,12 +29,13 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 
     integer :: m, i, j, ibc, jbc
 
+    real(kind=8) ::  y
+    real(kind=8), dimension(4) :: q0
+
+
     real(kind=8) :: h_, hu_ 
 
-    real(kind=8) :: h1 = 0.1d0, u_1=0.1d0
-
-
-    real(kind=8) :: flow_depth, inflow_interp, y
+    real(kind=8) :: h1 = 0.01d0, u_1=0.01d0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -44,15 +47,18 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
     100 continue
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
+    ! call inflow_interpolate(t,q0)
+    ! write(*,*) 't = ', t, ' q0(1) = ', q0(1), ' q0(2) = ', q0(2),'q1(1) = ', q1(1), ' u1 = ', u1
     call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1)
+    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
+    ! call inflow_interpolate(t,q0)
     do j = 1-mbc,my+mbc
-            !  apply only at the middle of the western side of the floodplain
-        y  = ylower + (j-0.5d0)*dy
-        if (abs(y-1000) <= 10) then
+        y = ylower + (j-0.5d0)*dy
+        if (abs(y-1900) < 100) then
             do ibc=1,mbc
-                q(1,1-ibc,j) = h_         ! h
-                q(2,1-ibc,j) = hu_ ! hu = flow_interp/base_width
-                q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
+                q(1,1-ibc,j) = h_   ! h               
+                q(2,1-ibc,j) = hu_             
+                q(3,1-ibc,j) = 0.0              ! hv vertical velocity = 0
             end do
         else
             do ibc=1,mbc
@@ -236,7 +242,7 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
     ! declare variables
     character(len=*), intent(in) :: file_name
     real(kind=8), dimension(:), allocatable :: time,z
-    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0,slope = 0.0001
+    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0,slope
     character(len=100) :: line
 
     integer :: i,j,num_rows
@@ -291,10 +297,8 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    hu0 = zinterp/20
-
+    hu0 = zinterp/100
     call newton_raphson(h0,hu0,h1,u1)
-
     ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'h0 = ', h0, 'T = ', t
     ! stop
     ! free up memory
@@ -370,4 +374,5 @@ real(kind=8) function dfunc_hu0(hu0,h0,h1,u1)
     dfunc_hu0 = 1/h0
 
 end function dfunc_hu0
+
 
