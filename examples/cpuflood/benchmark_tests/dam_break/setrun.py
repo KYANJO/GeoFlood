@@ -540,10 +540,10 @@ def generate_qinit():
     """
     nxpoints = 2021
     nypoints = 112
-    xlower = -128    #<-- -8.575 for test 6A and -146 for test 6B
+    xlower = -128    #<-- -6.575 for test 6A and -128 for test 6B
     xupper =  0   #<-- 0 for test 6A and 0 for test 6B
-    yupper = 53      #<-- 5.4 for test 6A and 53 for test 6B
-    ylower = -55     #<-- -7.31 for test 6A and -55 for test 6B
+    yupper = 35      #<-- 5.4 for test 6A and 53 for test 6B
+    ylower = -37     #<-- -7.31 for test 6A and -55 for test 6B
     outfile= "init.xyz"   
 
     qinitA = lambda x,y: np.where(x<0, 0.4, 0.02)
