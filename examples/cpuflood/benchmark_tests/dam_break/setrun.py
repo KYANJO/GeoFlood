@@ -43,9 +43,9 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 2/60          #<-- 2 minutes for test 6A and 30 minutes for test 6B
+    n_hours = 30/60          #<-- 2 minutes for test 6A and 30 minutes for test 6B
     
-    frames_per_minute = 60/0.5   # (1 frame every 30 seconds)
+    frames_per_minute = 60/3   # (1 frame every 30 seconds)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -58,11 +58,11 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 18 #<--- 18 for test 6A and 55 for test 6B
-my = 18 #<--- 18 for test 6A and 2 for test 6B
+mx = 18  #<--- 18 for test 6A and 55 for test 6B
+my = 18  #<--- 18 for test 6A and 2 for test 6B
 
-mi = 55  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
-mj = 2  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
+mi = 55  #<--- 54 for test 6A and 55 for test 6B
+mj = 3   #<--- 3 for test 6A and 3 for test 6B
 
 minlevel = 1 
 maxlevel = 2 #resolution based on levels 
@@ -71,19 +71,19 @@ ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
-manning_coefficient = 0.01 # <-- 0.01 for test 6A and 0.05 for test 6B
+manning_coefficient = 0.05 # <-- 0.01 for test 6A and 0.05 for test 6B
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
 
 
 # --------------------- guage data -----------------------------------------------
-gauge_loc = "./scratch/gauge_locA.csv" # <-- for test 6A
-# gauge_loc = "./scratch/gauge_locB.csv" # <-- for test 6B
+# gauge_loc = "./scratch/gauge_locA.csv" # <-- for test 6A
+gauge_loc = "./scratch/gauge_locB.csv" # <-- for test 6B
 
 
-topo_file = './scratch/Test6ADEM.asc' # <-- for test 6A
-# topo_file = './scratch/Test6BDEM.asc' # <-- for test 6B
+# topo_file = './scratch/Test6ADEM.asc' # <-- for test 6A
+topo_file = './scratch/Test6BDEM.asc' # <-- for test 6B
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -410,20 +410,7 @@ def setrun(claw_pkg='geoclaw'):
     # Hydrograph data:
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
-    hydrographdata.initial_velocity = 0.0
-    hydrographdata.initial_discharge = 0.0
-    hydrographdata.initial_elevation = 0.0
-    hydrographdata.initial_depth = 0.0
-    hydrographdata.channel_width = 20
-    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
-    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
-    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
-    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
-    
-    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
-
-
+   
     # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
@@ -553,16 +540,17 @@ def generate_qinit():
     """
     nxpoints = 2021
     nypoints = 112
-    xlower = -8.575
-    xupper = 2.6
-    yupper = 91
-    ylower = -7.31
+    xlower = -146    #<-- -8.575 for test 6A and -146 for test 6B
+    xupper = 1823    #<-- 98 for test 6A and 1823 for test 6B
+    yupper = 53      #<-- 5.4 for test 6A and 53 for test 6B
+    ylower = -55     #<-- -7.31 for test 6A and -55 for test 6B
     outfile= "init.xyz"   
 
     qinitA = lambda x,y: np.where(x<0, 0.4, 0.02)
     qinitB = lambda x,y: np.where(x<0, 8, 0.4)
 
-    topography = Topography(topo_func=qinitA)
+    # topography = Topography(topo_func=qinitA) #<-- Change to this for Test6A
+    topography = Topography(topo_func=qinitB)   #<--  Change to this for Test6A
     topography.x = np.linspace(xlower,xupper,nxpoints)
     topography.y = np.linspace(ylower,yupper,nypoints)
     topography.write(outfile, topo_type=1)
