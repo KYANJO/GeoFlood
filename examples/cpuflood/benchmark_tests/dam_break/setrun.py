@@ -2,9 +2,14 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
-# @version: 1.0
+# @version: 1.0 
 # ------------------------------------------------
 
+'''
+Test 6A: is the original test proposed in Soares-Frazao and Zech 2002, where the physical dimensions are those of the laboratory model.
+
+Test 6B: is identical to Test 6A although all physical dimensions have been multiplied by 20 to reflect realistic dimensions encountered in practical flood inundation modelling applications.
+'''
 import os
 import sys
 import numpy as np
@@ -38,10 +43,9 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 5.0              # Total number of hours in simulation     
+    n_hours = 2/60          #<-- 2 minutes for test 6A and 30 minutes for test 6B
     
-
-    frames_per_minute = 4/60   # (1 frame every 25 mins)
+    frames_per_minute = 60/0.5   # (1 frame every 30 seconds)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -54,20 +58,20 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 20
-my = 20
+mx = 18 #<--- 18 for test 6A and 55 for test 6B
+my = 18 #<--- 18 for test 6A and 2 for test 6B
 
-mi = 10  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
-mj = 20  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
+mi = 55  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
+mj = 2  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 0 
-maxlevel = 1 #resolution based on levels 
+minlevel = 1 
+maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
-manning_coefficient = 0.05
+manning_coefficient = 0.01 # <-- 0.01 for test 6A and 0.05 for test 6B
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
@@ -526,20 +530,22 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'bathy2.topotype2'])
+    topo_data.topofiles.append([3, minlevel, maxlevel, 0, 1e10, topo_file])
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 0
+    rundata.qinit_data.qinit_type = 4
     rundata.qinit_data.qinitfiles = []
     rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
 
+    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'init.xyz'])
+
     return rundata
     # end of function setgeo
     # ---------------------
 
-#------------------- generate topo file -------------------
+#------------------- generate qinit file -------------------
 def generate_qinit():
 #-------------------
     """
