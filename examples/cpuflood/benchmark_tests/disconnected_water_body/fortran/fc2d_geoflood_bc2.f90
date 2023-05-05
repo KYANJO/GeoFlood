@@ -43,12 +43,11 @@ subroutine disconnected_water_body_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
     !  and then using the newton_raphson subroutine to compute the corresponding values of the momentum
-   
+    call inflow_interpolate(t,q0)
+    b_0 = q0(4)
     do j = 1-mbc,my+mbc
         do ibc=1,mbc
             ! aux(1,1-ibc,j) = aux(1,ibc,j)
-            call inflow_interpolate(t,q0)
-            b_0 = q0(4)
             q0(1) = max(q0(4) - aux(1,1-ibc,j), 0.0d0)
             call newton_raphson(q0)
             if (t <= 0.25) then 

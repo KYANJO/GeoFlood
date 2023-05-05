@@ -2,14 +2,20 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
-# @version: 1.0
+# @version: 1.0 
 # ------------------------------------------------
 
+'''
+Test 6A: is the original test proposed in Soares-Frazao and Zech 2002, where the physical dimensions are those of the laboratory model.
+
+Test 6B: is identical to Test 6A although all physical dimensions have been multiplied by 20 to reflect realistic dimensions encountered in practical flood inundation modelling applications.
+'''
 import os
 import sys
 import numpy as np
 from pdb import *
-import clawpack.geoclaw.topotools as tt
+from clawpack.geoclaw.topotools import Topography
+
 
 import tools
 
@@ -28,7 +34,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 100  # Initial time step
+initial_dt = 1  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -37,11 +43,9 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 48.0              # Total number of hours in simulation     
-    # n_hours = 1.0              # Total number of hours in simulation
+    n_hours = 30/60          #<-- 2 minutes for test 6A and 30 minutes for test 6B
     
-
-    frames_per_minute = 60/500   # (1 frame every 25 mins)
+    frames_per_minute = 60/3   # (1 frame every 30 seconds)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -51,33 +55,35 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-# grid_resolution = 20  # meters ~ 80000 nodes
+# grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 20
-my = 20
+mx = 18  #<--- 18 for test 6A and 55 for test 6B
+my = 18  #<--- 18 for test 6A and 2 for test 6B
 
-mi = 5  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
-mj = 5  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
+mi = 55  #<--- 54 for test 6A and 55 for test 6B
+mj = 3   #<--- 3 for test 6A and 3 for test 6B
 
-minlevel = 1
+minlevel = 1 
 maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
-manning_coefficient = 0.03
+manning_coefficient = 0.05 # <-- 0.01 for test 6A and 0.05 for test 6B
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
 
 
 # --------------------- guage data -----------------------------------------------
-gauge_loc = "./scratch/gauge_loc.csv"
+# gauge_loc = "./scratch/gauge_locA.csv" # <-- for test 6A
+gauge_loc = "./scratch/gauge_locB.csv" # <-- for test 6B
 
-# --------------------- topograpy data -----------------------------------------------
-topo_file = "./scratch/test2DEM.asc"
+
+# topo_file = './scratch/Test6ADEM.asc' # <-- for test 6A
+topo_file = './scratch/Test6BDEM.asc' # <-- for test 6B
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -125,45 +131,42 @@ def setrun(claw_pkg='geoclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
     
-    # clawdata.lower = np.array([0, 0])
-    # clawdata.upper = np.array([700,100])
-
     def get_topo(topofile):
-        m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
+            m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
 
-        # Derived info from the topo map
-        mx_topo = m_topo - 1
-        my_topo = n_topo - 1
-        xurcorner = xllcorner + cellsize*mx_topo
-        yurcorner = yllcorner + cellsize*my_topo
+            # Derived info from the topo map
+            mx_topo = m_topo - 1
+            my_topo = n_topo - 1
+            xurcorner = xllcorner + cellsize*mx_topo
+            yurcorner = yllcorner + cellsize*my_topo
 
-        ll_topo = np.array([xllcorner, yllcorner])
-        ur_topo = np.array([xurcorner, yurcorner])
+            ll_topo = np.array([xllcorner, yllcorner])
+            ur_topo = np.array([xurcorner, yurcorner])
 
-        # ll_topo = np.array([957738.41,  1844520.8])
-        # ur_topo = np.array([957987.1, 1844566.5])
+            # ll_topo = np.array([957738.41,  1844520.8])
+            # ur_topo = np.array([957987.1, 1844566.5])
 
-       
-        print("")
-        print("Topo domain for %s:" % topofile)
-        print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
-        print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
-        print("")
+        
+            print("")
+            print("Topo domain for %s:" % topofile)
+            print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
+            print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
+            print("")
 
-        # dims_topo = ur_topo - ll_topo
+            # dims_topo = ur_topo - ll_topo
 
-        dim_topo = ur_topo - ll_topo
-        mdpt_topo = ll_topo + 0.5*dim_topo
+            dim_topo = ur_topo - ll_topo
+            mdpt_topo = ll_topo + 0.5*dim_topo
 
-        dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+            dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
 
-        clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
-        clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+            clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
+            clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
 
-        clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
-        clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+            clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+            clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
 
-        return dim_topo, clawdata.lower,clawdata.upper
+            return dim_topo, clawdata.lower,clawdata.upper
 
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topo_file)
 
@@ -331,7 +334,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'user'
+    clawdata.bc_lower[0] = 'wall'
     clawdata.bc_upper[0] = 'wall'
 
     clawdata.bc_lower[1] = 'wall'
@@ -407,19 +410,7 @@ def setrun(claw_pkg='geoclaw'):
     # Hydrograph data:
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
-    hydrographdata.initial_velocity = 0.0
-    hydrographdata.initial_discharge = 0.0
-    hydrographdata.initial_elevation = 0.0
-    hydrographdata.initial_depth = 0.0
-    hydrographdata.channel_width = 100
-    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
-    hydrographdata.time = [0.0, 300, 600, 5160, 172800]
-    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0, 0.0]
-    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0,0.0, 0.0]
-    
-    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
-
+   
     # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
@@ -455,7 +446,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,1,1900,2000]) # left wall
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,20,980,1020]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -464,7 +455,6 @@ def setrun(claw_pkg='geoclaw'):
     for i in range(gaugeno):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
-
     #
     # -------------------------------------------------------
     # For developers
@@ -509,7 +499,7 @@ def setgeo(rundata):
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 0
+    geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
@@ -519,7 +509,7 @@ def setgeo(rundata):
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
     refinement_data.speed_tolerance = [1.e-1]*6
-    refinement_data.deep_depth = 15.0
+    refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = True
 
@@ -530,29 +520,47 @@ def setgeo(rundata):
     topo_data.topofiles.append([3, minlevel, maxlevel, 0, 1e10, topo_file])
 
     # == setqinit.data values ==
-    # 1: perturbation to depth, h.
-    # 2: perturbation to momentum, hu.
-    # 3: perturbation to momentum, hv.
-    # 4: surface elevation eta is defined by the file and results in depth h=max(eta-b,0)
-    rundata.qinit_data.qinit_type = 0
+    rundata.qinit_data.qinit_type = 4
     rundata.qinit_data.qinitfiles = []
     rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
-   
-    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'ic.topotype1'])
+
+    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'init.xyz'])
 
     return rundata
     # end of function setgeo
-    # ----------------------
+    # ---------------------
 
+#------------------- generate qinit file -------------------
+def generate_qinit():
+#-------------------
+    """
+    Generate topo file for the current run
+    """
+    nxpoints = 2021
+    nypoints = 112
+    xlower = -146    #<-- -8.575 for test 6A and -146 for test 6B
+    xupper = 1823    #<-- 98 for test 6A and 1823 for test 6B
+    yupper = 53      #<-- 5.4 for test 6A and 53 for test 6B
+    ylower = -55     #<-- -7.31 for test 6A and -55 for test 6B
+    outfile= "init.xyz"   
 
+    qinitA = lambda x,y: np.where(x<0, 0.4, 0.02)
+    qinitB = lambda x,y: np.where(x<0, 8, 0.4)
+
+    # topography = Topography(topo_func=qinitA) #<-- Change to this for Test6A
+    topography = Topography(topo_func=qinitB)   #<--  Change to this for Test6A
+    topography.x = np.linspace(xlower,xupper,nxpoints)
+    topography.y = np.linspace(ylower,yupper,nypoints)
+    topography.write(outfile, topo_type=1)
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    rundata,geoflooddata,hydrographdata = setrun(*sys.argv[1:])
+    generate_qinit()         # generate topo file (generated before running setrun.py)
+    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-
-    hydrographdata.write()  # writes a geoflood hydrograph file
+    hydrographdata.write()       # writes a geoflood hydrograph file
+    

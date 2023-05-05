@@ -17,6 +17,9 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
+    ! use hydrograph_module, only: q0,q1,time,eta,hu,hydrograph_type
+    ! use hydrograph_module, only: inflow_interpolate, newton_raphson
+
     implicit none
 
     integer, intent(in) :: meqn, mbc, mx, my, maux, mthbc(4)
@@ -29,7 +32,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 
     real(kind=8) :: h, hu, y
 
-    real(kind=8) :: h1 = 0.0d0, u1=0.0d0
+    real(kind=8) :: h1 = 0.01d0, u1=0.01d0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -44,13 +47,13 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
     call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1)
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
-        if (abs(y-1900) < 100) then
-        
-            ! write (*,*) 'flow_depth = ', flow_depth, ' inflow_interp = ', inflow_interp
+        if (abs(y-1900) <= 100) then
             do ibc=1,mbc
+                ! aux(1,1-ibc,j) = aux(1,ibc,j)
                 q(1,1-ibc,j) = h        
                 q(2,1-ibc,j) = hu 
                 q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
+                ! write (*,*) 'h = ', h, 'hu = ', hu, 'aux = ', aux(1,1-ibc,j)
             end do
         else
             do ibc=1,mbc
@@ -58,10 +61,6 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                 do m=1,meqn
                     q(m,1-ibc,j) = q(m,ibc,j)
                 enddo
-            enddo
-            ! c     # negate the normal velocity:
-            do  ibc=1,mbc
-                q(2,1-ibc,j) = -q(2,ibc,j)
             enddo
         end if
     end do
@@ -231,14 +230,14 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 end subroutine filling_depressions_bc2
 
 
-subroutine read_file_interpolate(file_name, t, h0, zinterp, h1, u1)
+subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
 
     implicit none
 
     ! declare variables
     character(len=*), intent(in) :: file_name
     real(kind=8), dimension(:), allocatable :: time,z
-    real(kind=8) :: t, zinterp, h0, h1 , u1
+    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0
     character(len=100) :: line
 
     integer :: i,j,num_rows
@@ -293,12 +292,85 @@ subroutine read_file_interpolate(file_name, t, h0, zinterp, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    call Riemann_invariants(h0,zinterp,h1,u1)
-    ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'T = ', t
-
+    hu0 = zinterp/100
+    ! call Riemann_invariants(h0,hu0,h1,u1)
+    call newton_raphson(h0,hu0,h1,u1)
+    ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'h0 = ', h0, 'T = ', t
+    ! stop
     ! free up memory
     deallocate(time,z)
 end subroutine read_file_interpolate
+
+subroutine newton_raphson(h0,hu0,h1,u1)
+
+    implicit none
+
+    ! declare variables
+    real(kind=8) :: h0,h1,u1,x0,xn,tol,hu0
+    real(kind=8) :: func,fxn,dfxn,dfunc_hu0,dfunc_h0
+
+    integer :: i, max_iter
+
+    ! initialize variables
+    tol = 1.0e-6 ! tolerance for convergence
+    max_iter = 100 ! maximum number of iterations
+    x0 = 0.001d0 ! initial guess for the inflow discharge
+
+    ! solve Riemann invariants
+    ! if (hu0 == 0.0) then
+    !     h0 = 0.01
+    ! else
+        xn = x0
+        do i = 1, max_iter
+            fxn = func(hu0,xn,h1,u1)
+            if (abs(fxn) < tol) then
+                h0 = xn
+                return 
+            end if
+            ! dfxn = dfunc_hu0(xn,h0,h1,u1)
+            dfxn = dfunc_h0(hu0,xn,h1,u1)
+            xn = xn - fxn/dfxn
+        end do
+        write(*,*) 'Newton-Raphson did not converge'
+        xn = 0.0
+    ! endif
+end subroutine newton_raphson
+
+real(kind=8) function func(hu0,h0,h1,u1)
+    implicit none
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: g
+    
+    g = 9.81d0 ! gravitational acceleration
+
+    func = hu0/h0 - 2*sqrt(g*h0) - u1 + 2*sqrt(g*h1)
+
+end function func
+
+!  given hu0
+real(kind=8) function dfunc_h0(hu0,h0,h1,u1)
+    implicit none
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: g
+    
+    g = 9.81d0 ! gravitational acceleration
+
+    dfunc_h0 = -hu0/(h0**2) - sqrt(g/h0)
+
+end function dfunc_h0
+
+! given h0
+real(kind=8) function dfunc_hu0(hu0,h0,h1,u1)
+    implicit none
+    real(kind=8) :: hu0,h0,h1,u1
+    real(kind=8) :: g
+    
+    g = 9.81d0 ! gravitational acceleration
+
+    dfunc_hu0 = 1/h0
+
+end function dfunc_hu0
+
 
 ! NRM  routine to solve Riemann invariants
 subroutine Riemann_invariants(h0,hu0,h1,u1)
