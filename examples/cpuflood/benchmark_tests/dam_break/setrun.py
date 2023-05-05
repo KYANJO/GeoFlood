@@ -541,7 +541,7 @@ def generate_qinit():
     nxpoints = 2021
     nypoints = 112
     xlower = -146    #<-- -8.575 for test 6A and -146 for test 6B
-    xupper = 1823    #<-- 98 for test 6A and 1823 for test 6B
+    xupper = 99    #<-- 98 for test 6A and 1823 for test 6B
     yupper = 53      #<-- 5.4 for test 6A and 53 for test 6B
     ylower = -55     #<-- -7.31 for test 6A and -55 for test 6B
     outfile= "init.xyz"   
