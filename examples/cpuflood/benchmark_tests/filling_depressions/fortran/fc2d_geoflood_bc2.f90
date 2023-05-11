@@ -17,8 +17,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
-    ! use hydrograph_module, only: q0,q1,time,eta,hu,hydrograph_type
-    ! use hydrograph_module, only: inflow_interpolate, newton_raphson
+    use hydrograph_module, only: inflow_interpolate
 
     implicit none
 
@@ -30,9 +29,13 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 
     integer :: m, i, j, ibc, jbc
 
-    real(kind=8) :: h, hu, y
+    real(kind=8) ::  y
+    real(kind=8), dimension(4) :: q0
 
-    real(kind=8) :: h1 = 0.01d0, u1=0.01d0
+
+    real(kind=8) :: h_, hu_ 
+
+    real(kind=8) :: h1 = 0.01d0, u_1=0.01d0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -44,16 +47,19 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
     100 continue
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
-    call read_file_interpolate('fortran/bc.txt', t, h, hu, h1, u1)
+    ! call inflow_interpolate(t,q0)
+    ! write(*,*) 't = ', t, ' q0(1) = ', q0(1), ' q0(2) = ', q0(2),'q1(1) = ', q1(1), ' u1 = ', u1
+    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1,dx,dy,dt)
+    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
+    ! call inflow_interpolate(t,q0)
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
-        if (abs(y-1900) <= 100) then
+        if (abs(y-1900) < 100) then
             do ibc=1,mbc
-                ! aux(1,1-ibc,j) = aux(1,ibc,j)
-                q(1,1-ibc,j) = h        
-                q(2,1-ibc,j) = hu 
-                q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
-                ! write (*,*) 'h = ', h, 'hu = ', hu, 'aux = ', aux(1,1-ibc,j)
+                aux(1,1-ibc,j) = aux(1,1,j)
+                q(1,1-ibc,j) = h_  ! h               
+                q(2,1-ibc,j) = hu_             
+                q(3,1-ibc,j) = 0.0              ! hv vertical velocity = 0
             end do
         else
             do ibc=1,mbc
@@ -230,14 +236,14 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 end subroutine filling_depressions_bc2
 
 
-subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
+subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx,dy,dt)
 
     implicit none
 
     ! declare variables
     character(len=*), intent(in) :: file_name
     real(kind=8), dimension(:), allocatable :: time,z
-    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0
+    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0, h,dx,dt,dy
     character(len=100) :: line
 
     integer :: i,j,num_rows
@@ -282,7 +288,7 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
     else
         do i = 1,size(time)-1
             if (t >= time(i) .and. t <= time(i+1)) then
-                zinterp = z(i) + (z(i+1) - z(i)) / (time(i+1) - time(i)) * (t - time(i))
+                zinterp = z(i) + (((z(i+1) - z(i)) / (time(i+1) - time(i))) * (t - time(i)))
                 exit
             end if
         end do
@@ -292,10 +298,14 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    hu0 = zinterp/100
-    ! call Riemann_invariants(h0,hu0,h1,u1)
+    hu0 = zinterp/(100 + 2*dy)
     call newton_raphson(h0,hu0,h1,u1)
-    ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'h0 = ', h0, 'T = ', t
+
+    !  trying the triton approach of computing flow
+    ! h0 = 1e-16
+    ! h = (hu0 * dt) / (dx * dx)
+    ! h0 = h0 + h
+    ! write(*,*) 'h0 = ' , h0, 'h = ', h
     ! stop
     ! free up memory
     deallocate(time,z)
@@ -372,38 +382,3 @@ real(kind=8) function dfunc_hu0(hu0,h0,h1,u1)
 end function dfunc_hu0
 
 
-! NRM  routine to solve Riemann invariants
-subroutine Riemann_invariants(h0,hu0,h1,u1)
-
-implicit none
-
-! declare variables
-real(kind=8) :: hu0,h0,h1,u1
-real(kind=8) :: g,func,dfunc,tol
-
-integer :: i, max_iter
-
-! initialize variables
-g = 9.81 ! gravitational acceleration
-tol = 1.0e-6 ! tolerance for convergence
-max_iter = 100 ! maximum number of iterations
-h0 = 0.1 ! initial guess for the inflow discharge
-
-! solve Riemann invariants
-if (hu0 == 0.0) then
-! if (h0 == 0.0) then
-    h0 = 0.0
-else
-    do i = 1,max_iter
-        func = hu0/h0 - 2*sqrt(g*h0) - u1 +2*sqrt(g*h1) ! function to be solved
-
-        dfunc = -hu0/(h0**2) - sqrt(g/h0)   ! when hu0 is provided
-        ! dfunc = 1.d0/h0 ! when hu0 is not provided, i.e. h0 is provided
-
-        h0 = h0 - func/dfunc ! update the flow depth
-
-        if (abs(func) < tol) exit ! check for convergence
-    end do
-end if
-
-end subroutine Riemann_invariants

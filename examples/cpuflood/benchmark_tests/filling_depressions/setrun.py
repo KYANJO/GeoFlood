@@ -28,7 +28,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 100  # Initial time step
+initial_dt = 5  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -60,8 +60,8 @@ my = 20
 mi = 5  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 5  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 1
-maxlevel = 2 #resolution based on levels 
+minlevel = 0
+maxlevel = 1 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -408,10 +408,10 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
     hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
-    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_velocity = 0.01
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
-    hydrographdata.initial_depth = 0.0
+    hydrographdata.initial_depth = 0.01         # Initial depth of water (!needed to initialize the flow)
     hydrographdata.channel_width = 100
     hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 600, 5160, 172800]
@@ -510,7 +510,7 @@ def setgeo(rundata):
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0
-    geo_data.dry_tolerance = 1.e-3
+    geo_data.dry_tolerance = 1.e-4
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
