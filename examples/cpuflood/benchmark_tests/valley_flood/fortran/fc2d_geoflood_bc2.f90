@@ -29,7 +29,7 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 
     integer :: m, i, j, ibc, jbc
 
-    real(kind=8) ::  y
+    real(kind=8) ::  y,x
     real(kind=8), dimension(4) :: q0
 
 
@@ -54,7 +54,7 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
     ! call inflow_interpolate(t,q0)
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
-        if (abs(y-1900) < 100) then
+        if (abs(y-830480) < 260) then
             do ibc=1,mbc
                 q(1,1-ibc,j) = h_   ! h               
                 q(2,1-ibc,j) = hu_             
@@ -153,8 +153,25 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 ! c
 300 continue
 ! c     # user-specified boundary conditions go here in place of error output
-    write(6,*) '*** ERROR *** mthbc(3)=0 and no BCs specified in bc2'
-    stop
+    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1)
+    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
+    ! call inflow_interpolate(t,q0)
+    do jbc=1,mbc
+        do  i = 1-mbc, mx+mbc
+            x = xlower + (i-0.5d0)*dx
+            if (abs(x-232595) <= 260) then
+                ! aux(1,i,1-jbc) = aux(1,i,1)
+                q(1,i,1-jbc) = h_   ! h               
+                q(2,i,1-jbc) = hu_             
+                q(3,i,1-jbc) = 0.0             ! hv vertical velocity = 0
+            else
+                aux(1,i,1-jbc) = aux(1,i,jbc)
+                do  m=1,meqn
+                    q(m,i,1-jbc) = q(m,i,jbc)
+                enddo
+            end if
+        enddo
+    end do
     go to 399
 ! c
 310 continue
@@ -198,7 +215,7 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
     !  # user-specified boundary conditions go here in place of error output
     write(6,*) '*** ERROR *** mthbc(4)=0 and no BCs specified in bc2'
     stop
-    go to 499
+      go to 499
 
 410 continue
 !     # zero-order extrapolation:
@@ -297,7 +314,7 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    hu0 = zinterp/100
+    hu0 = zinterp/260
     call newton_raphson(h0,hu0,h1,u1)
     ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'h0 = ', h0, 'T = ', t
     ! stop
