@@ -14,8 +14,7 @@ from matplotlib import image
 from clawpack.geoclaw import topotools
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
-malpasset_loc = "./malpasset_locs.txt"
-
+gauge_loc = "./scratch/gauge_loc.csv"
 
 #--------------------------
 def setplot(plotdata):
@@ -41,11 +40,11 @@ def setplot(plotdata):
     #-----------------------------------------
     # Some global kml flags
     #-----------------------------------------
-    plotdata.kml_name = "Malpasset Dam"
+    plotdata.kml_name = "Benchmark test"
     plotdata.kml_starttime = [1959,12,2,5,14,0]  # Date/time of event in UTC [None]
     plotdata.kml_tz_offset = 1    # Time zone offset (in hours) of event. [None]
 
-    plotdata.kml_index_fname = "MalpassetDam"  # name for .kmz and .kml files ["_GoogleEarth"]
+    plotdata.kml_index_fname = "Benchmark test"  # name for .kmz and .kml files ["_GoogleEarth"]
 
     # Set to a URL where KMZ file will be published.
     # plotdata.kml_publish = 'http://math.boisestate.edu/~calhoun/visclaw/GoogleEarth/kmz'
@@ -56,16 +55,15 @@ def setplot(plotdata):
 
     # Cells used in setrun.py (original)
     num_cells = [54,19]
-    lower = [953236.00000000, 1832407.25000000]
-    upper = [959554.00000000, 1848572.75000000]
+    lower = [0,0]
+    upper = [1000, 2000]
 
-    # lower = [6.69262004,  43.40252126]
-    # upper = [6.78171094,  43.55083988 ]
+
     #-----------------------------------------------------------
     # Figure for KML files (large view)
     # This under-resolves the finest level.
     #----------------------------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Malpasset Dam',figno=1)
+    plotfigure = plotdata.new_plotfigure(name='Benchmark test',figno=1)
     plotfigure.show = True
 
     plotfigure.use_for_kml = True
@@ -109,8 +107,8 @@ def setplot(plotdata):
     # Water
     plotaxes = plotfigure.new_plotaxes('kml')
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    # plotitem.plot_var = geoplot.depth   # Plot height field h.
-    plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
+    plotitem.plot_var = geoplot.depth   # Plot height field h.
+    # plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
     plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
@@ -178,51 +176,6 @@ def setplot(plotdata):
     # plotitem.pcolor_cmap = geoplot.googleearth_flooding
     # plotitem.pcolor_cmin = cmin
     # plotitem.pcolor_cmax = cmax
-
-    # plot point locations 
-    police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
-    
-    # Physical model points locations (Gauges)
-    gauge_points = ['P6','P7','P8','P9','P10','P11','P12','P13','P14']
-    gauge_loc = []
-    for i in range(len(gauges[0])):
-        gauge_loc.append([gauges[1][i],gauges[2][i]])   
-
-    # Physical model points locations (Transformers)
-    transformer_points = ['A','B','c']
-    transformer_loc = []
-    for i in range(len(transformers[0])):
-        transformer_loc.append([transformers[1][i],transformers[2][i]])
-
-    # Physical model points locations (Police)
-    police_points = ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15','S16','S17']
-    police_loc = []
-    for i in range(len(police[0])):
-        police_loc.append([police[1][i],police[2][i]])
-
-    point_labels = transformer_points + gauge_points + police_points
-    point_list = [transformer_loc, gauge_loc, police_loc]
-    point_list = [item for sublist in point_list for item in sublist]
-    
-    # # Plot and overlay points on the plotted image
-    # plt.style.use('default')
-    # # im = image.imread("_plots/temp/fig1/frame0098fig1/frame0098fig1.png")
-    
-    # for i,pt in enumerate(point_list):
-    #     lab = point_labels[i]
-    #     if i>2 and i<=11:
-    #         plt.plot(pt[0],pt[1],'k*',markersize=4)
-    #         plt.annotate(lab, xy=pt, xytext=(pt[0]-50,pt[1]-350))
-    #     elif i>11:
-    #         plt.plot(pt[0],pt[1],'k*',markersize=4)
-    #         plt.annotate(lab, xy=pt, xytext=(pt[0]-25,pt[1]+100))
-    #     else:
-    #         plt.plot(pt[0],pt[1],'r*',markersize=4)
-    #         plt.annotate(lab, xy=pt, xytext=(pt[0]-5,pt[1]+100))
-    
-    # # plt.imshow(im)
-    # plt.savefig('malpasset_points.png',dpi=300)
-    
     
     #-----------------------------------------
 
@@ -262,10 +215,10 @@ def setplot(plotdata):
         t = current_data.t
         gaugeno = current_data.gaugeno
         # locations points
-        guage_labels = police_points + transformer_points + gauge_points
-        for n,pt in enumerate(guage_labels):
-            if gaugeno == n:
-                title(pt)
+        gaugeno,x,y = tools.read_locations_data(gauge_loc)
+        for i in range(gaugeno):
+            if gaugeno == i:
+                title('+')
 
         # plot(t, 0*t, 'k')
         n = int(floor(t.max()/3600.) + 2)

@@ -36,7 +36,7 @@ output_style = 1 #changed 10.21
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 0.5              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    n_hours = 15              # Total number of hours in simulation, changed 10.14.2020  should be 5      
     
 
     frames_per_minute = 1/30   # Frames every 1/2 hour
@@ -49,11 +49,11 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 54
-my = 54
+mx = 32
+my = 32
 
-minlevel = 0
-maxlevel = 4 #resolution based on levels
+minlevel = 2
+maxlevel = 5 #resolution based on levels
 ratios_x = [2,4,4,4]
 ratios_y = [2,4,4,4]
 ratios_t = [2,4,4,4] #should this be 0,0,0,0?
@@ -65,7 +65,8 @@ manning_coefficient = 0.06
 num_dim = 2
 
 # --------------------- Topography file -----------------------------------------------
-topofile = 'topos/TetonLarge.topo'
+# topofile = 'topos/TetonLarge.topo'
+topofile = 'topos/TetonDamLatLong.topo'
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -365,7 +366,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
-    geoflooddata.regrid_interval = 1
+    geoflooddata.regrid_interval = 3
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
 
@@ -444,11 +445,11 @@ def setrun(claw_pkg='geoclaw'):
                                                     clawdata.lower,
                                                     clawdata.upper)
 
-    regions.append([maxlevel,maxlevel,0, 1e10, region_lower[0],region_upper[0],
+    regions.append([maxlevel-1,maxlevel-1,0, 1e10, region_lower[0],region_upper[0],
                     region_lower[1],region_upper[1]])
 
     # Computational domain.  With exception of region above, don't go beyond level 4
-    regions.append([0,maxlevel-1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
+    regions.append([minlevel-1,minlevel+1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
                     clawdata.lower[1],clawdata.upper[1]])
 
     # -------------------------------------------------------

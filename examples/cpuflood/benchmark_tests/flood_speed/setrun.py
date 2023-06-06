@@ -9,6 +9,7 @@ import os
 import sys
 import numpy as np
 from pdb import *
+import clawpack.geoclaw.topotools as tt
 
 import tools
 
@@ -49,17 +50,20 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
-my = 16
+# grid_resolution = 5  # meters ~ 80000 nodes
+# mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
+# my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
+mx = 20
+my = 20
 
-mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
-mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
+mi = 10  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
+mj = 20  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
-minlevel = 2 
-maxlevel = 5 #resolution based on levels 
-ratios_x = [2]*(maxlevel-1)
-ratios_y = [2]*(maxlevel-1)
-ratios_t = [2]*(maxlevel-1)
+minlevel = 0 
+maxlevel = 1 #resolution based on levels 
+ratios_x = [2]*(maxlevel)
+ratios_y = [2]*(maxlevel)
+ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
@@ -68,9 +72,10 @@ manning_coefficient = 0.05
 num_dim = 2
 
 
-# --------------------- Police, transformer and guage data -----------------------------------------------
+# --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
 
+topo_file = 'bathy2.topotype2'
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
 #------------------------------
@@ -117,8 +122,44 @@ def setrun(claw_pkg='geoclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
     
-    clawdata.lower = np.array([0, 1000])
-    clawdata.upper = np.array([0,2000])
+    def get_topo(topofile):
+            m_topo,n_topo,xllcorner,yllcorner,cellsize = tools.read_topo_data(topofile)
+
+            # Derived info from the topo map
+            mx_topo = m_topo - 1
+            my_topo = n_topo - 1
+            xurcorner = xllcorner + cellsize*mx_topo
+            yurcorner = yllcorner + cellsize*my_topo
+
+            ll_topo = np.array([xllcorner, yllcorner])
+            ur_topo = np.array([xurcorner, yurcorner])
+
+            # ll_topo = np.array([957738.41,  1844520.8])
+            # ur_topo = np.array([957987.1, 1844566.5])
+
+        
+            print("")
+            print("Topo domain for %s:" % topofile)
+            print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
+            print("%-12s (%14.8f, %12.8f)" % ("Upper right",ur_topo[0],ur_topo[1]))
+            print("")
+
+            # dims_topo = ur_topo - ll_topo
+
+            dim_topo = ur_topo - ll_topo
+            mdpt_topo = ll_topo + 0.5*dim_topo
+
+            dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+
+            clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
+            clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+
+            clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+            clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+
+            return dim_topo, clawdata.lower,clawdata.upper
+
+    dims_topo, clawdata.lower, clawdata.upper = get_topo(topo_file)
 
     clawdata.num_cells[0] = mx
     clawdata.num_cells[1] = my
@@ -227,7 +268,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.75
+    clawdata.cfl_desired = 0.8
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
@@ -284,7 +325,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'extrap'
+    clawdata.bc_lower[0] = 'user'
     clawdata.bc_upper[0] = 'extrap'
 
     clawdata.bc_lower[1] = 'extrap'
@@ -331,7 +372,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.subcycle = True
     geoflooddata.output = True
-    geoflooddata.output_gauges = False
+    geoflooddata.output_gauges = True
 
 
     # Block dimensions for non-square domains
@@ -346,7 +387,7 @@ def setrun(claw_pkg='geoclaw'):
     # difference  : difference (e.g. dqx = q(i+1,j)-q(i-1,j)) exceeds threshold
     # gradient    : gradient exceeds threshold
     # user        : User defined criteria     
-    geoflooddata.refinement_criteria = 'value' 
+    geoflooddata.refinement_criteria = 'minmax' 
 
     # geoflood verbosity choices : 
     # 0 or 'silent'      : No output to the terminal
@@ -355,6 +396,24 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
+
+    # -----------------------------------------------
+    # Hydrograph data:
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
+    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_discharge = 0.0
+    hydrographdata.initial_elevation = 0.0
+    hydrographdata.initial_depth = 0.0
+    hydrographdata.channel_width = 20
+    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
+    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
+    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
+    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
+    
+    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
+
 
     # -----------------------------------------------
     # AMR parameters:
@@ -391,7 +450,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,10,990,1010])
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,20,980,1020]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -417,7 +476,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata,geoflooddata
+    return rundata, geoflooddata, hydrographdata
     # end of function setrun
     # ----------------------
 
@@ -462,7 +521,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    # topo_data.topofiles.append([1, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_topo.xyz'])
+    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'bathy2.topotype2'])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
@@ -473,11 +532,12 @@ def setgeo(rundata):
 
     return rundata
     # end of function setgeo
-    # ----------------------
+    # ---------------------
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    rundata,geoflooddata = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
+    hydrographdata.write()  # writes a geoflood hydrograph file

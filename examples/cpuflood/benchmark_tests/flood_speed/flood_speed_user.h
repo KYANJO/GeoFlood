@@ -39,12 +39,16 @@ extern "C"
 
 void flood_speed_link_solvers(fclaw2d_global_t *glob);
 
-// #define FLOOD_SPEED_QINIT   FCLAW_F77_FUNC(FLOOD_SPEED_qinit,FLOOD_SPEED_QINIT)
-// void FLOOD_SPEED_QINIT(const int* meqn,const int* mbc,
-//                  const int* mx, const int* my,
-//                  const double* xlower, const double* ylower,
-//                  const double* dx, const double* dy,
-//                  double q[], const int* maux, double aux[]);
+//  BC (Fortran to c)
+#define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
+
+void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    const double q[], const int* maux,
+                    const double aux[], const double* t,
+                    const double* dt, const int mthbc[]);
 
 
 /* Mappings */

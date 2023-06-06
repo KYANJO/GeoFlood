@@ -91,13 +91,13 @@ def setplot(plotdata):
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
     mx = 16
-    mi = 1
-    mj = 1
-    minlevel = 0
-    maxlevel = 4
+    mi = 2
+    mj = 5
+    minlevel = 3
+    maxlevel = 6
     p = 1
-    plotfigure.kml_figsize = [32,32]  #[mx*2**p*mi,mx*2**p*mj]
-    plotfigure.kml_dpi = 64
+    plotfigure.kml_figsize = [2,5]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2  
 
     # --------------------------------------------------
 
@@ -109,13 +109,13 @@ def setplot(plotdata):
     # Water
     plotaxes = plotfigure.new_plotaxes('kml')
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    # plotitem.plot_var = geoplot.depth   # Plot height field h.
-    plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
+    plotitem.plot_var = geoplot.depth   # Plot height field h.
+    # plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
     plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     # plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = True       # Show patch edges
+    plotitem.patchedges_show = False       # Show patch edges
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)
@@ -281,7 +281,7 @@ def setplot(plotdata):
 
     plotdata.parallel = False
     plotdata.print_format = 'png'           # file format
-    plotdata.print_framenos = range(0,100,2)         # list of frames to print
+    plotdata.print_framenos = range(0,100,25)         # list of frames to print
     plotdata.print_gaugenos = 'all'         # list of gauges to print
     plotdata.print_fignos = [1,300]         # list of figures to print
 
