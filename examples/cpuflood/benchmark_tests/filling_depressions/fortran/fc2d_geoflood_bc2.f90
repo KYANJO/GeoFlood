@@ -54,21 +54,23 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
     ! call inflow_interpolate(t,q0)
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
-        if (abs(y-1900) < 100) then
-            do ibc=1,mbc
+        do ibc=1,mbc
+            if (abs(y-1900.0d0) <= 100.0d0) then
+            
                 aux(1,1-ibc,j) = aux(1,1,j)
                 q(1,1-ibc,j) = h_  ! h               
                 q(2,1-ibc,j) = hu_             
-                q(3,1-ibc,j) = 0.0              ! hv vertical velocity = 0
-            end do
-        else
-            do ibc=1,mbc
+                q(3,1-ibc,j) = 0.0d0             ! hv vertical velocity = 0
+            
+            else
+
                 aux(1,1-ibc,j) = aux(1,ibc,j)
                 do m=1,meqn
                     q(m,1-ibc,j) = q(m,ibc,j)
                 enddo
-            enddo
-        end if
+             
+            end if
+        enddo
     end do
     goto 199
 
@@ -245,7 +247,7 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx,dy,dt)
     real(kind=8), dimension(:), allocatable :: time,z
     real(kind=8) :: t, zinterp, h0, h1 , u1,hu0, h,dx,dt,dy
     character(len=100) :: line
-
+    real(kind=8) :: slope,b,n,Trap,prec,ptrap
     integer :: i,j,num_rows
 
     ! ----- read time and z from a file -----------------------
@@ -278,7 +280,7 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx,dy,dt)
     ! ------ Linear interpolation -----------------------------
 
     ! initialize zinterp to zero
-    zinterp = 0.0
+    zinterp = 0.0d0
 
     ! check if t is within the time range and set the value of zinterp
     if (t < time(1)) then
@@ -298,9 +300,23 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx,dy,dt)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    hu0 = zinterp/(100 + 2*dy)
+    Trap = 100.0d0 + dx*(2.5d0 + 2.5d0)
+    ! hu0 = zinterp/(100.0d0 + 2.5d0*dx)
+    b = 100.0d0
+    prec = b + 2.0d0*(0.5d0+dx)
+    ! ptrap = b + dx*(sqrt(1+2.5d0**2) + sqrt(1+2.5d0**2))
+    ptrap = b + dx*(sqrt(1 + (2.5d0**2)) )
+    ! hu0 = zinterp/((b + Trap)/2.0d0) !<--- works for the first 2 rows
+    hu0 = zinterp/prec
     call newton_raphson(h0,hu0,h1,u1)
-
+    ! write(*,*) 'h_0 = ', h0, 'h_u0 = ', hu0
+    ! slope = 1/3000.0d0
+    ! slope = 0.001d0
+    ! b = 100.0d0
+    ! n = 0.03d0
+    ! call comput_flow(zinterp,h0,hu0,slope,b,n,h1,u1)
+    
+    
     !  trying the triton approach of computing flow
     ! h0 = 1e-16
     ! h = (hu0 * dt) / (dx * dx)
@@ -310,6 +326,71 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx,dy,dt)
     ! free up memory
     deallocate(time,z)
 end subroutine read_file_interpolate
+
+! subroutine to back computes flow depth based on Manning's equation
+! Q : flow rate (m^3/s)
+! h0 : flow depth (m)
+! slope : bed slope
+! b : channel width (m)
+! n : Manning's roughness coefficient
+subroutine comput_flow(Q,h0,hu0,slope,b,n, h1,u1)
+
+    implicit none
+
+    ! declare variables
+    real(kind=8), intent(in) :: Q,slope,b,n,hu0,h1,u1
+    real(kind=8), intent(out) :: h0
+    real(kind=8) :: R,A,P,func,dfunc
+    real(kind=8) :: tol = 1e-6
+    real(kind=8) :: coef,nume1,deno1,nume2
+
+    integer :: i,max_iter = 100
+
+    ! Newton-Raphson method
+    ! if (Q == 0.0d0) then
+    !     call newton_raphson(h0,hu0,h1,u1)
+    ! else
+        do i = 1,max_iter
+            ! Assuming a rectangular channel
+            ! Cross-sectional area
+            A = b * h0
+            ! Wetted perimeter
+            P = b + (2.0d0 * h0)
+            ! Hydraulic radius
+            R = A / P
+            
+            ! Manning's equation
+            func = Q - (1/n) * A * R**(2.0d0/3.0d0) * (slope**(0.5d0))
+            ! write(*,*) 'Q = ', Q, 'func = ', func, 'h0 = ', h0
+            ! derivative of Manning's equation with respect to h0
+            coef = 2*b*h0*sqrt(slope)
+            nume1 = (b/(b+(2*h0))) - ((2*b*h0)/(b+(2*h0))**2)
+            deno1 = (3*n)*((b*h0)/(b+(2*h0)))**(1/3.0d0)
+            nume2 = (b*sqrt(slope))*(((b*h0)/(b+(2*h0)))**(2.0d0/3.0d0))
+
+            dfunc = - coef*(nume1/deno1) - (nume2/n)
+
+            ! check if dfunc is zero
+            if (dfunc == 0.0d0) then
+                write(*,*) 'dfunc is zero'
+                stop
+            end if
+
+            ! update h0
+            h0 = h0 - (func/dfunc)
+            write(*,*) 'h_0 = ', h0, 'func = ', func, 'dfunc = ', dfunc
+            stop
+            ! check for convergence
+            if (abs(func) < tol) then
+                write(*,*) 'h0 = ', h0, 'hu0 = ', hu0
+                stop
+                return
+            end if
+        enddo
+    ! end if
+    
+end subroutine comput_flow
+
 
 subroutine newton_raphson(h0,hu0,h1,u1)
 
