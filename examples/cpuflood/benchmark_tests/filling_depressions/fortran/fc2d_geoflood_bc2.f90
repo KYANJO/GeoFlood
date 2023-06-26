@@ -17,7 +17,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
-    use hydrograph_module, only: inflow_interpolate
+    ! use hydrograph_module, only: inflow_interpolate
 
     implicit none
 
@@ -49,7 +49,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
     ! call inflow_interpolate(t,q0)
     ! write(*,*) 't = ', t, ' q0(1) = ', q0(1), ' q0(2) = ', q0(2),'q1(1) = ', q1(1), ' u1 = ', u1
-    call read_file_interpolate('fortran/bc.txt', t,hu_0)
+    call read_file_interpolate('fortran/bc.txt', t,hu_0,dx)
     ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
     ! call inflow_interpolate(t,q0)
     ! if (t == 0) then
@@ -65,110 +65,48 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
    
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
-        if (abs(y-1900.0d0) <= 100.0d0) then
-                ! h1 = hu_0*dt/(dy)
+        if (abs(y-1950.0d0) <= 50.0d0) then
+        ! if 
+                ! dx = 20.0d0
+                ! h1 = hu_0*(1.0d0)/(dx)
+                ! ! write(*,*) 'h1 = ', h1, ' hu_0 = ', hu_0, ' dt = ', dt, ' dy = ', dy
+                ! ! stop
                 !  q(1,1,j) = q(1,1,j) + h1  ! h 
-                !  q(2,1,j) = 0
+                ! !  write(*,*) 'h1 = ', h1, ' hu_0 = ', hu_0, ' hu1 = ', q(2,1,j), ' dx = ', dx
+                !  q(2,1,j) = q(2,1,j) + hu_0  ! hu
             do ibc=1,mbc
-                if (q(1,1,j) == 0.0d0) then
-                    h_0 = 0.001d0
-                    hu_0 = 0.0d0
-                    ! h_0 = ((hu_0**2)/9.81d0)**(1.0d0/3.0d0) 
-                    q(1,1-ibc,j) = h_0
-                    q(2,1-ibc,j) = hu_0
-                    q(3,1-ibc,j) = 0.0d0
-                else !if (hu_0 .ne. 0.0d0) then
-                    u_1 = q(2,1,j)/q(1,1,j)
-                    ! write(*,*) 'q1 =',q(1,1,j), ' h1 = ', q(1,1,j)
-                    
-                    if (hu_0 .ne. 0.0d0) then
-                        call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
-                            !  call two_shock(h_0,hu_0,q(1,1,j),u_1)
+    
+                    if (q(1,1,j) < 1.d-4) then
+                        h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0) , 0.001d0)
                         q(1,1-ibc,j) = h_0
                         q(2,1-ibc,j) = hu_0
                         q(3,1-ibc,j) = 0.0d0
-                    else
-                        ! do ibc=1,mbc
-                            aux(1,1-ibc,j) = aux(1,ibc,j)
+                    else 
+
+                        u_1 = q(2,1,j)/q(1,1,j)
+                        
+                        if (hu_0 .ne. 0.0d0) then
+                            call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
+                            if (h_0 > q(1,1,j)) then
+                                call two_shock(h_0,hu_0,q(1,1,j),u_1)
+                            end if
+                            q(1,1-ibc,j) = h_0
+                            q(2,1-ibc,j) = hu_0
+                            q(3,1-ibc,j) = 0.0d0
+                
+                        else
+                           
+                            aux(1,1-ibc,j) = aux(1,1,j)
                             do m=1,meqn
-                                q(m,1-ibc,j) = q(m,ibc,j)
+                                q(m,1-ibc,j) = q(m,1,j)
                             enddo
 
-                            ! c     # negate the normal velocity:   
-                            q(2,1-ibc,j) = -q(2,ibc,j)
-                       
-                        ! enddo
+                        end if
                     endif
-                end if
             enddo
-            
-                
-        ! endif
-        ! if (t >= 5446) then
-        !     write(*,*) 'h0 =', q(1,1,j), ' hu0 = ', q(2,1,j), ' u0 = ', q(2,1,j)/q(1,1,j)
-        !     stop
-        ! endif
         else
-        do ibc=1,mbc
-                ! h1 = q(1,1,j)
-                !  write(*,*) q(1,1,j)
-                ! h1 = 0.001d0
-                ! if (h1 == 0.0d0) then
-                !     ! h0 = max((hu0/sqrt(9.81d0))**(2.0d0/3.0d0) - 0.001d0,0.1d0)
-                !     ! h_0 = ((hu_0**2)/9.81d0)**(1.0d0/3.0d0)
-                !     h_0 = 0.01d0
-                !     ! write(*,*) 't = ',t, 'h0 = ', h_0
-                ! else 
-                !     u_1 = q(2,1,j)/h1
-                !     ! call read_file_interpolate('fortran/bc.txt', t, q(2,1,j), h_0, hu_0, h1, u_1,dx,dt)
-                !     call newton_raphson(h_0,hu_0,h1,u_1)
-                    ! if (h_0 > h1) then
+            do ibc=1,mbc
                     
-                    ! h_0 = h1 - (q(2,1,j)/(u_1 + sqrt(9.81d0*h1))) + (hu_0*2*sqrt(9.81d0*h1)/(u_1**2 + 9.81d0*h1))
-                    ! write(*,*) 't = ',t, 'h0 = ', h_0, ' h1 = ', h1, ' u_1 = ', u_1, ' hu_0 = ', hu_0
-
-                    !     call two_shock(h_0,hu_0,h1,u_1)
-                    !     ! if ((hu_0/h_0)> sqrt(9.81d08*h_0)) then
-                    !     !     write(*,*) hu_0/h_0 - sqrt(9.81d08*h_0)
-                    !     ! else
-                    !     !     write(*,*) 'Not true'
-                    !     ! end if
-                    ! end if
-                     
-                    ! call two_shock(h_0,hu_0,h1,u_1)
-                ! end if
-
-                ! aux(1,1-ibc,j) = aux(1,1,j)
-                ! q(1,1-ibc,j) = q(1,1-ibc,j) + h_0  ! h               
-                ! q(2,1-ibc,j) = 0.0d0  ! hu           
-                ! q(3,1-ibc,j) = 0.0d0             ! hv vertical velocity = 0
-                              
-                ! q(2,1,j) = 0.0d0  ! hu           
-                ! q(3,1,j) = 0.0d0
-                ! if (abs(y-1900.0d0) <= 100.0d0) then
-                !     h1 = hu_0*dt/(dy)
-                !     q(1,1,j) = q(1,1,j) + h1  ! h 
-                !     ! q(1,1,j) = h1
-                !     q(2,1,j) = 0
-                    ! if (q(1,1,j) == 0.0d0) then
-                    !     h_0 = 0.001d0
-                    !     u_1 = 0.0d0
-                    ! else
-                
-                    !     u_1 = q(2,1,j)/q(1,1,j)
-                    !     ! write(*,*) 'q1 =',q(1,1,j), ' h1 = ', q(1,1,j)
-                    !     call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
-                    !     ! call two_shock(h_0,hu_0,q(1,1,j),u_1)
-                    ! end if
-                    ! q(1,1,j) = h_0
-                    ! q(2,1,j) = hu_0
-                    ! q(3,1,j) = 0.0d0
-                !     do m=1,meqn
-                !         q(m,1-ibc,j) = q(m,1,j)
-                !     enddo
-                
-                !  else
-
 
                         aux(1,1-ibc,j) = aux(1,ibc,j)
                         do m=1,meqn
@@ -178,7 +116,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                         ! c     # negate the normal velocity:   
                         q(2,1-ibc,j) = -q(2,ibc,j)
                 ! end if
-        enddo
+            enddo
         endif
     end do
     goto 199
@@ -347,7 +285,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 end subroutine filling_depressions_bc2
 
 
-subroutine read_file_interpolate(file_name, t, hu0)
+subroutine read_file_interpolate(file_name, t, hu0,dx)
 
     implicit none
 
@@ -476,42 +414,40 @@ subroutine bisection(h0, hu0, h1, u1)
 end subroutine bisection
 
 
-! subroutine newton_raphson(h0,hu0,h1,u1)
 subroutine newton_raphson(h0,hu0,h1,u1)
 
     implicit none
 
     ! declare variables
-    real(kind=8) :: h0,h1,u1,x0,xn,tol,hu0,epi
-    real(kind=8) :: func,fxn,dfxn,dfunc_hu0,dfunc_h0
+    real(kind=8) :: h0,h1,u1,x0,xn,tol,hu0
+    real(kind=8) :: func,fxn,dfxn,dfunc_h0,F,g
 
     integer :: i, max_iter
 
     ! initialize variables
-    tol = 1.0e-8 ! tolerance for convergence
+    tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
-    x0 = 0.0001d0 ! initial guess for the inflow depth
-    epi = 1.0e-11 ! tolerance for the derivative
-   
+    x0 = 0.01d0 ! initial guess for the inflow discharge
+    F = 5.0d0 ! Froude number
+    g = 9.81d0 ! gravitational acceleration
+
+    ! solve Riemann invariants
+    ! xn = (sqrt(g)*F/hu0)**(2.0d0/3.0d0)
     xn = x0
-    do i = 1, max_iter 
+    do i = 1, max_iter
         fxn = func(hu0,xn,h1,u1)
-        dfxn = dfunc_h0(hu0,xn,h1,u1)
-        if (abs(dfxn) < epi) stop
-
-        xn = x0 - fxn/dfxn
-
-        if (abs(xn-x0) <= tol) then
+        if (abs(fxn) < tol) then
             h0 = xn
-            return
+            return 
         end if
+        dfxn = dfunc_h0(hu0,xn,h1,u1)
+
+        xn = xn - fxn/dfxn
         
-        x0 = xn
-
     end do
-    write(*,*) 'Newton-Raphson did not converge for the Riemann invariants'
+    write(*,*) 'Newton-Raphson did not converge'
     xn = 0.0
-
+    
 end subroutine newton_raphson
 
 real(kind=8) function func(hu0,h0,h1,u1)
@@ -553,21 +489,27 @@ subroutine two_shock(h0,hu0,hr,ur)
     implicit none
     real(kind=8) :: hu0,h0,hr,ur
     real(kind=8) :: two_func,dtwo_func,tol
-    real(kind=8) :: fxn,dfxn,xn,x0,epi
+    real(kind=8) :: fxn,dfxn,xn,x0,epi,F,g
 
     integer :: i, max_iter
 
     ! initialize variables
     tol = 1.0e-8 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
-    x0 = 0.0001d0 ! initial guess for the inflow depth
-    epi = 1.0e-11 ! tolerance for the derivative
+    x0 = 0.1d0 ! initial guess for the inflow depth
+    epi = 1.0e-11 ! tolerance for the derivativeF = 0.50d ! Froude number
+    g = 9.81d0 ! gravitational acceleration
+    F = 0.50d0 ! Froude number
+
+    ! solve Riemann invariants
+    ! x0 = (sqrt(g)*F/hu0)**(2.0d0/3.0d0)
+    ! x0 = hr
 
     ! NRM
-    xn = x0
+    ! xn = x0
     do i = 1,max_iter
-        fxn = two_func(hu0,xn,hr,ur)
-        dfxn = dtwo_func(hu0,xn,hr,ur)
+        fxn = two_func(hu0,x0,hr,ur)
+        dfxn = dtwo_func(hu0,x0,hr,ur)
 
         if (abs(dfxn) < epi) stop
 
@@ -581,7 +523,7 @@ subroutine two_shock(h0,hu0,hr,ur)
         x0 = xn
     end do
     write (*,*) 'Newton-Raphson did not converge for two-shock solution'
-    xn = 0.0
+    ! xn = 0.0
 
 end subroutine two_shock
 
