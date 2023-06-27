@@ -18,6 +18,8 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
     ! use hydrograph_module, only: inflow_interpolate
+    USE geoclaw_module, ONLY: dry_tolerance
+    USE extract_dt, ONLY: dt_extract
 
     implicit none
 
@@ -62,22 +64,47 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
     !         end do
     !     enddo
     ! end if
+    ! write(*,*) 't = ', t, 'dt_extract = ', dt_extract
    
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
         if (abs(y-1000.0d0) <= 10.0d0) then
-        ! if 
-                ! dx = 20.0d0
-                ! h1 = hu_0*(1.0d0)/(dx)
-                ! ! write(*,*) 'h1 = ', h1, ' hu_0 = ', hu_0, ' dt = ', dt, ' dy = ', dy
-                ! ! stop
-                !  q(1,1,j) = q(1,1,j) + h1  ! h 
-                ! !  write(*,*) 'h1 = ', h1, ' hu_0 = ', hu_0, ' hu1 = ', q(2,1,j), ' dx = ', dx
-                !  q(2,1,j) = q(2,1,j) + hu_0  ! hu
+            ! h1 = hu_0*(1.0d0)/(dx)
+            
+            ! q(1,1,j) = q(1,1,j) + (dt_extract*hu_0/dx)  ! h 
+            ! !  q(2,1,j) = hu_0  ! hu
+            !  if (q(1,1,j) > dry_tolerance) then
+            !     call newton_raphson(h_0,hu_0,q(1,1,j),q(2,1,j)/q(1,1,j))
+            !     do ibc=1,mbc
+                
+            !         ! aux(1,1-ibc,j) = aux(1,1,j)
+            !         q(1,1-ibc,j) = h_0
+            !         q(2,1-ibc,j) = hu_0
+            !         q(3,1-ibc,j) = 0.0d0
+            !         ! do m=1,meqn
+            !         !     q(m,1-ibc,j) = q(m,1,j)
+            !         ! end do
+            !         ! c     # negate the normal velocity:   
+            !             ! q(2,1-ibc,j) = -q(2,ibc,j)
+            !     end do
+            ! else
+            !     do ibc=1,mbc
+            !         aux(1,1-ibc,j) = aux(1,1,j)
+            !         q(1,1-ibc,j) = q(1,1,j)
+            !         q(2,1-ibc,j) = q(2,1,j)
+            !         q(3,1-ibc,j) = q(3,1,j)
+            !     end do
+
+            ! endif
+
+        
+            ! --------- working solution -----------------
             do ibc=1,mbc
     
-                    if (q(1,1,j) < 1.d-4) then
+                    if (q(1,1,j) < dry_tolerance) then
                         h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0) - 0.01 , 0.001d0) 
+                        ! q(1,1,j) = q(1,1,j) + (dt_extract*hu_0/dx) 
+                        ! h_0 = q(1,1,j)
                         q(1,1-ibc,j) = h_0
                         q(2,1-ibc,j) = hu_0
                         q(3,1-ibc,j) = 0.0d0
@@ -104,6 +131,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
                         end if
                     endif
             enddo
+            ! ------------ end working solution -----------------
         else
             do ibc=1,mbc
                     
@@ -428,7 +456,7 @@ subroutine newton_raphson(h0,hu0,h1,u1)
     tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
     x0 = 0.01d0 ! initial guess for the inflow discharge
-    F = 0.10d0 ! Froude number
+    F = 1.0d0 ! Froude number
     g = 9.81d0 ! gravitational acceleration
 
     ! solve Riemann invariants
@@ -499,7 +527,7 @@ subroutine two_shock(h0,hu0,hr,ur)
     ! x0 = 0.1d0 ! initial guess for the inflow depth
     epi = 1.0e-11 ! tolerance for the derivativeF = 0.50d ! Froude number
     g = 9.81d0 ! gravitational acceleration
-    F = 0.10d0 ! Froude number
+    F = 1.0d0 ! Froude number
 
     ! solve Riemann invariants
     x0 = (hu0/sqrt(g)*F)**(2.0d0/3.0d0)

@@ -29,7 +29,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 30  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -269,7 +269,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.8
+    clawdata.cfl_desired = 0.45
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
@@ -541,13 +541,13 @@ def generate_topo_file():
     """
     Generate topo file for the current run
     """
-    nxpoints = 550
-    nypoints = 1050
+    nxpoints = 1200
+    nypoints = 1200
     xlower = -40
     xupper = 1100
     yupper = 2100
     ylower = -40
-    outfile= "bathy2.asc"   
+    outfile= "bathy2.topotype2"   
 
     z = 0.0 # Dry bed  
 
@@ -556,11 +556,11 @@ def generate_topo_file():
     topography = Topography(topo_func=topo)
     topography.x = np.linspace(xlower,xupper,nxpoints)
     topography.y = np.linspace(ylower,yupper,nypoints)
-    topography.write(outfile, topo_type=3, Z_format="%22.15e")
+    topography.write(outfile, topo_type=2, Z_format="%22.15e")
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    generate_topo_file()         # generate topo file (generated before running setrun.py)
+    # generate_topo_file()         # generate topo file (generated before running setrun.py)
     rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
