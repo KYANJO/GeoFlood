@@ -18,6 +18,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
     ! use hydrograph_module, only: inflow_interpolate
+    USE geoclaw_module, ONLY: dry_tolerance
 
     implicit none
 
@@ -50,18 +51,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
     ! call inflow_interpolate(t,q0)
     ! write(*,*) 't = ', t, ' q0(1) = ', q0(1), ' q0(2) = ', q0(2),'q1(1) = ', q1(1), ' u1 = ', u1
     call read_file_interpolate('fortran/bc.txt', t,hu_0,dx)
-    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
-    ! call inflow_interpolate(t,q0)
-    ! if (t == 0) then
-    !     do j = 1-mbc,my+mbc
-    !         y = ylower + (j-0.5d0)*dy
-    !         do ibc=1,mbc
-    !             if (abs(y-1900.0d0) <= 100.0d0) then
-    !                 q(1,1,j) = 0.01d0
-    !             end if
-    !         end do
-    !     enddo
-    ! end if
+    
    
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
@@ -73,11 +63,21 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                 ! ! stop
                 !  q(1,1,j) = q(1,1,j) + h1  ! h 
                 ! !  write(*,*) 'h1 = ', h1, ' hu_0 = ', hu_0, ' hu1 = ', q(2,1,j), ' dx = ', dx
-                !  q(2,1,j) = q(2,1,j) + hu_0  ! hu
+                ! !  q(2,1,j) = hu_0  ! hu
+                ! do ibc=1,mbc
+                !     aux(1,1-ibc,j) = aux(1,ibc,j)
+                !     do m=1,meqn
+                !         q(m,1-ibc,j) = q(m,ibc,j)
+                !     end do
+                !     ! c     # negate the normal velocity:   
+                !         q(2,1-ibc,j) = -q(2,ibc,j)
+                ! end do
+
+            !--- working bc -------
             do ibc=1,mbc
     
-                    if (q(1,1,j) < 1.d-4) then
-                        h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0) , 0.001d0)
+                    if (q(1,1,j) < dry_tolerance) then
+                        h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0), 0.001d0) 
                         q(1,1-ibc,j) = h_0
                         q(2,1-ibc,j) = hu_0
                         q(3,1-ibc,j) = 0.0d0
@@ -104,6 +104,7 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                         end if
                     endif
             enddo
+            ! ---------- end working bc -------------
         else
             do ibc=1,mbc
                     
@@ -428,12 +429,12 @@ subroutine newton_raphson(h0,hu0,h1,u1)
     tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
     x0 = 0.01d0 ! initial guess for the inflow discharge
-    F = 5.0d0 ! Froude number
+    F = 0.50d0 ! Froude number
     g = 9.81d0 ! gravitational acceleration
 
     ! solve Riemann invariants
-    ! xn = (sqrt(g)*F/hu0)**(2.0d0/3.0d0)
-    xn = x0
+    xn = (hu0/sqrt(g)*F)**(2.0d0/3.0d0)
+    ! xn = h1
     do i = 1, max_iter
         fxn = func(hu0,xn,h1,u1)
         if (abs(fxn) < tol) then
@@ -496,13 +497,13 @@ subroutine two_shock(h0,hu0,hr,ur)
     ! initialize variables
     tol = 1.0e-8 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
-    x0 = 0.1d0 ! initial guess for the inflow depth
+    ! x0 = 0.1d0 ! initial guess for the inflow depth
     epi = 1.0e-11 ! tolerance for the derivativeF = 0.50d ! Froude number
     g = 9.81d0 ! gravitational acceleration
     F = 0.50d0 ! Froude number
 
     ! solve Riemann invariants
-    ! x0 = (sqrt(g)*F/hu0)**(2.0d0/3.0d0)
+    x0 = (hu0/sqrt(g)*F)**(2.0d0/3.0d0)
     ! x0 = hr
 
     ! NRM
@@ -555,66 +556,3 @@ end function dtwo_func
 
 
 
-! subroutine to back computes flow depth based on Manning's equation
-! Q : flow rate (m^3/s)
-! h0 : flow depth (m)
-! slope : bed slope
-! b : channel width (m)
-! n : Manning's roughness coefficient
-subroutine comput_flow(Q,h0,hu0,slope,b,n, h1,u1)
-
-    implicit none
-
-    ! declare variables
-    real(kind=8), intent(in) :: Q,slope,b,n,hu0,h1,u1
-    real(kind=8), intent(out) :: h0
-    real(kind=8) :: R,A,P,func,dfunc
-    real(kind=8) :: tol = 1e-8
-    real(kind=8) :: coef,nume1,deno1,nume2
-
-    integer :: i,max_iter = 100
-
-    ! Newton-Raphson method
-    ! if (Q == 0.0d0) then
-    !     call newton_raphson(h0,hu0,h1,u1)
-    ! else
-        do i = 1,max_iter
-            ! Assuming a rectangular channel
-            ! Cross-sectional area
-            A = b * h0
-            ! Wetted perimeter
-            P = b + (2.0d0 * h0)
-            ! Hydraulic radius
-            R = A / P
-            
-            ! Manning's equation
-            func = Q - (1/n) * A * R**(2.0d0/3.0d0) * (slope**(0.5d0))
-            ! write(*,*) 'Q = ', Q, 'func = ', func, 'h0 = ', h0
-            ! derivative of Manning's equation with respect to h0
-            coef = 2*b*h0*sqrt(slope)
-            nume1 = (b/(b+(2*h0))) - ((2*b*h0)/(b+(2*h0))**2)
-            deno1 = (3*n)*((b*h0)/(b+(2*h0)))**(1/3.0d0)
-            nume2 = (b*sqrt(slope))*(((b*h0)/(b+(2*h0)))**(2.0d0/3.0d0))
-
-            dfunc = - coef*(nume1/deno1) - (nume2/n)
-
-            ! check if dfunc is zero
-            if (dfunc == 0.0d0) then
-                write(*,*) 'dfunc is zero'
-                stop
-            end if
-
-            ! update h0
-            h0 = h0 - (func/dfunc)
-            write(*,*) 'h_0 = ', h0, 'func = ', func, 'dfunc = ', dfunc
-            stop
-            ! check for convergence
-            if (abs(func) < tol) then
-                write(*,*) 'h0 = ', h0, 'hu0 = ', hu0
-                stop
-                return
-            end if
-        enddo
-    ! end if
-    
-end subroutine comput_flow
