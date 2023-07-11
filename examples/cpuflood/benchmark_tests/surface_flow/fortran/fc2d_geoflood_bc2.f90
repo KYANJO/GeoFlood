@@ -1,5 +1,5 @@
 ! ==================================================================
-subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mthbc)
+subroutine surface_flow_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mthbc)
 !  ==================================================================
 
 ! standard boundary condition choices
@@ -17,8 +17,6 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
 ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
-    use hydrograph_module, only: inflow_interpolate
-
     implicit none
 
     integer, intent(in) :: meqn, mbc, mx, my, maux, mthbc(4)
@@ -29,13 +27,12 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 
     integer :: m, i, j, ibc, jbc
 
-    real(kind=8) ::  y,x
-    real(kind=8), dimension(4) :: q0
-
-
     real(kind=8) :: h_, hu_ 
 
-    real(kind=8) :: h1 = 0.01d0, u_1=0.01d0
+    real(kind=8) :: h1 = 0.1d0, u_1=0.1d0
+
+
+    real(kind=8) :: flow_depth, inflow_interp, y
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -47,21 +44,19 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
     100 continue
     ! user-supplied BC's (must be inserted!)
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
-    ! call inflow_interpolate(t,q0)
-    ! write(*,*) 't = ', t, ' q0(1) = ', q0(1), ' q0(2) = ', q0(2),'q1(1) = ', q1(1), ' u1 = ', u1
-    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1)
-    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
-    ! call inflow_interpolate(t,q0)
+    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1,dx)
     do j = 1-mbc,my+mbc
-        y = ylower + (j-0.5d0)*dy
-        if (abs(y-830480) < 260) then
+            !  apply only at the middle of the western side of the floodplain
+        y  = ylower + (j-0.5d0)*dy
+        if (abs(y-1000) <= 10) then
             do ibc=1,mbc
-                q(1,1-ibc,j) = h_   ! h               
-                q(2,1-ibc,j) = hu_             
-                q(3,1-ibc,j) = 0.0              ! hv vertical velocity = 0
+                q(1,1-ibc,j) = h_         ! h
+                q(2,1-ibc,j) = hu_ ! hu = flow_interp/base_width
+                q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
             end do
         else
             do ibc=1,mbc
+                aux(1,1-ibc,j) = aux(1,1,j)
                 aux(1,1-ibc,j) = aux(1,ibc,j)
                 do m=1,meqn
                     q(m,1-ibc,j) = q(m,ibc,j)
@@ -153,25 +148,8 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 ! c
 300 continue
 ! c     # user-specified boundary conditions go here in place of error output
-    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1)
-    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
-    ! call inflow_interpolate(t,q0)
-    do jbc=1,mbc
-        do  i = 1-mbc, mx+mbc
-            x = xlower + (i-0.5d0)*dx
-            if (abs(x-232595) <= 260) then
-                ! aux(1,i,1-jbc) = aux(1,i,1)
-                q(1,i,1-jbc) = h_   ! h               
-                q(2,i,1-jbc) = hu_             
-                q(3,i,1-jbc) = 0.0             ! hv vertical velocity = 0
-            else
-                aux(1,i,1-jbc) = aux(1,i,jbc)
-                do  m=1,meqn
-                    q(m,i,1-jbc) = q(m,i,jbc)
-                enddo
-            end if
-        enddo
-    end do
+    write(6,*) '*** ERROR *** mthbc(3)=0 and no BCs specified in bc2'
+    stop
     go to 399
 ! c
 310 continue
@@ -215,7 +193,7 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
     !  # user-specified boundary conditions go here in place of error output
     write(6,*) '*** ERROR *** mthbc(4)=0 and no BCs specified in bc2'
     stop
-      go to 499
+    go to 499
 
 410 continue
 !     # zero-order extrapolation:
@@ -249,17 +227,17 @@ subroutine valley_flood_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 499 continue
 
       return
-end subroutine valley_flood_bc2
+end subroutine surface_flow_bc2
 
 
-subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
+subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx)
 
     implicit none
 
     ! declare variables
     character(len=*), intent(in) :: file_name
     real(kind=8), dimension(:), allocatable :: time,z
-    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0,slope
+    real(kind=8) :: t, zinterp, h0, h1 , u1,hu0,dx
     character(len=100) :: line
 
     integer :: i,j,num_rows
@@ -314,8 +292,10 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    hu0 = zinterp/260
+    hu0 = zinterp/(20 + 2*dx)
+
     call newton_raphson(h0,hu0,h1,u1)
+
     ! write(*,*) 'zinterp = ', zinterp, 'hu0 = ', hu0, 'h0 = ', h0, 'T = ', t
     ! stop
     ! free up memory
@@ -391,5 +371,4 @@ real(kind=8) function dfunc_hu0(hu0,h0,h1,u1)
     dfunc_hu0 = 1/h0
 
 end function dfunc_hu0
-
 
