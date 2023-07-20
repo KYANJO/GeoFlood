@@ -36,6 +36,7 @@ add_library(geoflood_f OBJECT
     fortran_source/geoclaw_step2_fort.f90 
     fortran_source/geoclaw_setaux_fort.f90 
     fortran_source/geoclaw_src2_fort.f90 
+    fortran_source/extract_dt.f90
     fortran_source/geoclaw_b4step2_fort.f90 
     fortran_source/geoclaw_qinit_fort.f90 
     fclaw2d_source/fc2d_geoclaw_copy_fort.f 

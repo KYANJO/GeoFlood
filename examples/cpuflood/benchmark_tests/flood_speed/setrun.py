@@ -41,7 +41,7 @@ if output_style == 1:
     n_hours = 5.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 60/100   # (1 frame every 25 mins)
+    frames_per_minute = 1/30   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -54,14 +54,14 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 20
-my = 20
+mx = 50
+my = 50
 
-mi = 10  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
-mj = 20  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
+mi = 4  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 0 
-maxlevel = 1 #resolution based on levels 
+maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -250,8 +250,6 @@ def setrun(claw_pkg='geoclaw'):
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
     clawdata.verbosity = 1
 
-
-
     # --------------
     # Time stepping:
     # --------------
@@ -269,7 +267,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.45
+    clawdata.cfl_desired = 0.8
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
@@ -365,7 +363,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
-    geoflooddata.smooth_refine = False
+    geoflooddata.smooth_refine = True
     geoflooddata.regrid_interval = 3
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
@@ -379,6 +377,15 @@ def setrun(claw_pkg='geoclaw'):
     # Block dimensions for non-square domains
     geoflooddata.mi = mi
     geoflooddata.mj = mj
+
+     # -----------------------------------------------
+    # Tikz output parameters:
+    # -----------------------------------------------
+    geoflooddata.tikz_out = True
+    geoflooddata.tikz_figsize = "4 8"
+    geoflooddata.tikz_plot_prefix = "flood"
+    geoflooddata.tikz_plot_suffix = "png"
+
 
     geoflooddata.user = {'example'     : 1}
 
@@ -451,7 +458,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,10,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, -86.28446115,-86.28446115,990,1010]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -522,7 +529,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'bathy2.topotype2'])
+    topo_data.topofiles.append([2, minlevel, minlevel, 0, 1e10, 'bathy2.topotype2'])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
@@ -541,12 +548,12 @@ def generate_topo_file():
     """
     Generate topo file for the current run
     """
-    nxpoints = 1200
-    nypoints = 1200
-    xlower = -40
+    nxpoints = 200
+    nypoints = 400
+    xlower = -100
     xupper = 1100
     yupper = 2100
-    ylower = -40
+    ylower = -100
     outfile= "bathy2.topotype2"   
 
     z = 0.0 # Dry bed  

@@ -35,9 +35,10 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
     real(kind=8), dimension(4) :: q0
 
 
-    real(kind=8) :: h_0, hu_0
+    real(kind=8) :: h_0, hu_0,u_0,g,h0
     real(kind=8) :: h1, u_1
     ! real(kind=8) :: h1 = 0.001d0, u_1=0.0001d0
+    g = 9.81d0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -48,90 +49,47 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
 
     100 continue
     ! user-supplied BC's (must be inserted!)
-    !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
-    ! call inflow_interpolate(t,q0)
-    ! write(*,*) 't = ', t, ' q0(1) = ', q0(1), ' q0(2) = ', q0(2),'q1(1) = ', q1(1), ' u1 = ', u1
+    !  in this case, we are using the inflow_interpolation subroutine to get the inflow data
     call read_file_interpolate('fortran/bc.txt', t,hu_0,dx)
-    ! write(*,*) 't = ', t, ' h_ = ', h_, ' hu_ = ', hu_, ' h1 = ', h1, ' u_1 = ', u_1
-    ! call inflow_interpolate(t,q0)
-    ! if (t == 0) then
-    !     do j = 1-mbc,my+mbc
-    !         y = ylower + (j-0.5d0)*dy
-    !         do ibc=1,mbc
-    !             if (abs(y-1900.0d0) <= 100.0d0) then
-    !                 q(1,1,j) = 0.01d0
-    !             end if
-    !         end do
-    !     enddo
-    ! end if
-    ! write(*,*) 't = ', t, 'dt_extract = ', dt_extract
-   
     do j = 1-mbc,my+mbc
         y = ylower + (j-0.5d0)*dy
-        if (abs(y-1000.0d0) <= 10.0d0) then
-            ! h1 = hu_0*(1.0d0)/(dx)
-            
-            ! q(1,1,j) = q(1,1,j) + (dt_extract*hu_0/dx)  ! h 
-            ! !  q(2,1,j) = hu_0  ! hu
-            !  if (q(1,1,j) > dry_tolerance) then
-            !     call newton_raphson(h_0,hu_0,q(1,1,j),q(2,1,j)/q(1,1,j))
-            !     do ibc=1,mbc
-                
-            !         ! aux(1,1-ibc,j) = aux(1,1,j)
-            !         q(1,1-ibc,j) = h_0
-            !         q(2,1-ibc,j) = hu_0
-            !         q(3,1-ibc,j) = 0.0d0
-            !         ! do m=1,meqn
-            !         !     q(m,1-ibc,j) = q(m,1,j)
-            !         ! end do
-            !         ! c     # negate the normal velocity:   
-            !             ! q(2,1-ibc,j) = -q(2,ibc,j)
-            !     end do
-            ! else
-            !     do ibc=1,mbc
-            !         aux(1,1-ibc,j) = aux(1,1,j)
-            !         q(1,1-ibc,j) = q(1,1,j)
-            !         q(2,1-ibc,j) = q(2,1,j)
-            !         q(3,1-ibc,j) = q(3,1,j)
-            !     end do
-
-            ! endif
-
         
-            ! --------- working solution -----------------
-            do ibc=1,mbc
-    
-                    if (q(1,1,j) < dry_tolerance) then
-                        h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0) - 0.01 , 0.001d0) 
-                        ! q(1,1,j) = q(1,1,j) + (dt_extract*hu_0/dx) 
-                        ! h_0 = q(1,1,j)
-                        q(1,1-ibc,j) = h_0
-                        q(2,1-ibc,j) = hu_0
-                        q(3,1-ibc,j) = 0.0d0
-                    else 
+        if (abs(y-1000.0d0) <= 10.0d0) then
+        
+            q(1,1,j) = max(q(1,1,j), 0.001d0)
 
-                        u_1 = q(2,1,j)/q(1,1,j)
-                        
-                        if (hu_0 .ne. 0.0d0) then
-                            call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
-                            if (h_0 > q(1,1,j)) then
-                                call two_shock(h_0,hu_0,q(1,1,j),u_1)
-                            end if
-                            q(1,1-ibc,j) = h_0
-                            q(2,1-ibc,j) = hu_0
-                            q(3,1-ibc,j) = 0.0d0
+            if (hu_0 .ge. 0.0d0) then 
                 
-                        else
-                           
-                            aux(1,1-ibc,j) = aux(1,1,j)
-                            do m=1,meqn
-                                q(m,1-ibc,j) = q(m,1,j)
-                            enddo
+                do ibc=1,mbc
 
+                    u_1 = q(2,1,j)/q(1,1,j)
+                    
+                    ! if (hu_0 .ne. 0.0d0) then
+                        ! call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
+                        ! if (h_0 > q(1,1,j)) then
+                        !     call two_shock(h_0,hu_0,q(1,1,j),u_1)
+                        ! end if
+                    h1 = q(1,1,j)
+                    u_0 = hu_0/h1
+                    do i = 1,100
+                        h_0 = ((u_0 - u_1 + 2*sqrt(g*h1))**2)/(4.0d0*g)
+                        if (h_0 .le. 0) then
+                            h_0 = 0
+                            u_0 = 0
+                        else
+                            if (abs((hu_0/h_0) - u_0) < 1.0d-6) exit
+                                u_0 = hu_0/h_0
                         end if
-                    endif
-            enddo
-            ! ------------ end working solution -----------------
+                    enddo
+
+                    q(1,1-ibc,j) = h_0
+                    q(2,1-ibc,j) = hu_0
+                    q(3,1-ibc,j) = 0.0d0
+            
+                enddo
+            end if
+
+        ! ---------- end working bc -------------
         else
             do ibc=1,mbc
                     

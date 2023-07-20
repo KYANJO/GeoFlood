@@ -5,6 +5,7 @@ add_library(dam_break_f OBJECT
   ../../../../src/fc2d_geoclaw/geolib_source/geoclaw_module.f90 
   ../../../../src/fc2d_geoclaw/geolib_source/utility_module.f90
   ../../../../src/fc2d_geoclaw/amrlib_source/amr_module.f90
+  qinit.f90
 )
 
 add_executable(dam_break 

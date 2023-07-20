@@ -49,18 +49,17 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
-my = 16
+mx = 32
+my = 32
 
-mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
-mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
+mi = 1  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
+mj = 2  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
 
-minlevel = 0
-maxlevel = 0 #resolution based on levels
-maxlevel_ = 1 
-ratios_x = [2]*(maxlevel_)
-ratios_y = [2]*(maxlevel_)
-ratios_t = [2]*(maxlevel_)
+minlevel = 1
+maxlevel = 5 #resolution based on levels
+ratios_x = [2]*(maxlevel)
+ratios_y = [2]*(maxlevel)
+ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.03333
@@ -398,8 +397,8 @@ def setrun(claw_pkg='geoclaw'):
     # Tikz output parameters:
     # -----------------------------------------------
     geoflooddata.tikz_out = True
-    geoflooddata.tikz_figsize = "2 5"
-    geoflooddata.tikz_plot_prefix = "plot"
+    geoflooddata.tikz_figsize = "2 4"
+    geoflooddata.tikz_plot_prefix = "mlp"
     geoflooddata.tikz_plot_suffix = "png"
 
     geoflooddata.user = {'example'     : 1}
@@ -502,6 +501,11 @@ def setrun(claw_pkg='geoclaw'):
     #     print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
     #     rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
 
+    # -----------------------------------------------
+    # Hydrograph data:
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+
     #
     # -------------------------------------------------------
     # For developers
@@ -518,8 +522,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.tprint = True      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-
-    return rundata,geoflooddata
+    return rundata,geoflooddata, hydrographdata
     # end of function setrun
     # ----------------------
 
@@ -590,7 +593,20 @@ def setgeo(rundata):
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    rundata,geoflooddata = setrun(*sys.argv[1:])
+    # generate_qinit()         # generate topo file (generated before running setrun.py)
+
+    rundata,geoflooddata,hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
+
+    hydrographdata.write()  # writes a geoflood hydrograph file
+
+# if __name__ == '__main__':
+#     # Set up run-time parameters and write all data files.
+#     rundata,geoflooddata = setrun(*sys.argv[1:])
+#     rundata.write()
+
+#     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
+
+#     hydrographdata.write()  # writes a geoflood hydrograph file
