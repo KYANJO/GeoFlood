@@ -23,6 +23,8 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
 
     USE amr_module, ONLY: NEEDS_TO_BE_SET
 
+    USE extract_dt, only: dt_extract
+
     !!USE storm_module, ONLY: set_storm_fields
 
     IMPLICIT NONE
@@ -43,6 +45,10 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
 
     double precision :: tau
 
+    !! Set dt_extract to dt, so that it is available to the user
+    dt_extract = dt
+
+    ! write(*,*) 'dt_extract = ', dt_extract
 
     !! Check for NaNs in the solution
     CALL check4nans(meqn,mbc,mx,my,q,t,1)

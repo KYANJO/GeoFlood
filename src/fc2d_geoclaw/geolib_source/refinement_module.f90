@@ -98,7 +98,8 @@ contains
         if (present(file_name)) then
             call opendatafile(iunit, file_name)
         else
-            call opendatafile(iunit, 'setflowgrades.data')
+            ! call opendatafile(iunit, 'setflowgrades.data')
+            open(iunit, file='setflowgrades.data', status='old', action='read')
         endif
         
         read(iunit,*) num_flowgrades

@@ -42,6 +42,7 @@ module geoclaw_module
     real(kind=8), dimension(:),allocatable :: manning_coefficient, manning_break
     integer :: num_manning
     real(kind=8) :: friction_depth
+    ! real(kind=8) :: deep_depth
     
     ! Method parameters    
     real(kind=8) :: dry_tolerance

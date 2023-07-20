@@ -43,27 +43,28 @@ subroutine surface_flow_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 
     100 continue
     ! user-supplied BC's (must be inserted!)
+    stop
     !  in this case, we are using the inflow_interpolation subroutine to compute the inflow boundary condition values
-    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1,dx)
-    do j = 1-mbc,my+mbc
-            !  apply only at the middle of the western side of the floodplain
-        y  = ylower + (j-0.5d0)*dy
-        if (abs(y-1000) <= 10) then
-            do ibc=1,mbc
-                q(1,1-ibc,j) = h_         ! h
-                q(2,1-ibc,j) = hu_ ! hu = flow_interp/base_width
-                q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
-            end do
-        else
-            do ibc=1,mbc
-                aux(1,1-ibc,j) = aux(1,1,j)
-                aux(1,1-ibc,j) = aux(1,ibc,j)
-                do m=1,meqn
-                    q(m,1-ibc,j) = q(m,ibc,j)
-                enddo
-            enddo
-        end if
-    end do
+    ! call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1,dx)
+    ! do j = 1-mbc,my+mbc
+    !         !  apply only at the middle of the western side of the floodplain
+    !     y  = ylower + (j-0.5d0)*dy
+    !     if (abs(y-1000) <= 10) then
+    !         do ibc=1,mbc
+    !             q(1,1-ibc,j) = h_         ! h
+    !             q(2,1-ibc,j) = hu_ ! hu = flow_interp/base_width
+    !             q(3,1-ibc,j) = 0.0d0              ! hv vertical velocity = 0
+    !         end do
+    !     else
+    !         do ibc=1,mbc
+    !             aux(1,1-ibc,j) = aux(1,1,j)
+    !             aux(1,1-ibc,j) = aux(1,ibc,j)
+    !             do m=1,meqn
+    !                 q(m,1-ibc,j) = q(m,ibc,j)
+    !             enddo
+    !         enddo
+    !     end if
+    ! end do
     goto 199
 
     110 continue
@@ -105,8 +106,25 @@ subroutine surface_flow_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 ! c
 200 continue
 ! c     # user-specified boundary conditions go here in place of error output
-    write(6,*) '*** ERROR *** mthbc(2)=0 and no BCs specified in bc2'
-    stop
+    ! write(6,*) '*** ERROR *** mthbc(2)=0 and no BCs specified in bc2'
+    ! stop
+    call read_file_interpolate('fortran/bc.txt', t, h_, hu_, h1, u_1,dx)
+    do j = 1-mbc,my+mbc
+            !  apply only at the middle of the western side of the floodplain
+        y  = ylower + (j-0.5d0)*dy
+        do ibc=1,mbc
+            if (abs(y - (664803 - 467)) <= 1) then
+                    q(1,mx+ibc,j) = h_         ! h
+                    q(2,mx+ibc,j) = hu_ ! hu = flow_interp/base_width
+                    q(3,mx+ibc,j) = 0.0d0              ! hv vertical velocity = 0
+            else
+                aux(1,mx+ibc,j) = aux(1,mx+1-ibc,j)
+                do m=1,meqn
+                    q(m,mx+ibc,j) = q(m,mx+1-ibc,j)
+                enddo
+            end if
+        enddo
+    end do
     go to 299
 
 210 continue
@@ -292,7 +310,7 @@ subroutine read_file_interpolate(file_name, t, h0, hu0, h1, u1,dx)
     ! ----- end of linear interpolation ------------------------
     !
     ! ----- call the Riemann invariant subroutine --------------
-    hu0 = zinterp/(20 + 2*dx)
+    hu0 = zinterp/(1 + 2*dx)
 
     call newton_raphson(h0,hu0,h1,u1)
 

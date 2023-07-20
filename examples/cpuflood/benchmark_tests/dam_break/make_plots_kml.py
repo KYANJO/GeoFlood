@@ -55,8 +55,13 @@ def setplot(plotdata):
 
     # Cells used in setrun.py (original)
     num_cells = [54,19]
-    lower = [-8.57500000,  -2.82500000]
-    upper = [92.42500000,   2.72500000]
+    # test 6A
+    # lower = [-7.31250000,  -2.75562500]
+    # upper = [91.16250000,   2.65562500]
+
+    # test 6B
+    lower = [-171.50000000, -56.50000000]
+    upper = [ 1848.50000000,  54.50000000]
 
 
     #-----------------------------------------------------------
@@ -88,14 +93,14 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 16
-    mi = 36
+    mx = 18
+    mi = 55
     mj = 2
-    minlevel = 2
-    maxlevel = 3
+    minlevel = 1
+    maxlevel = 2
     p = 1
-    plotfigure.kml_figsize = [36,2]  #[mx*2**p*mi,mx*2**p*mj]
-    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/36  
+    plotfigure.kml_figsize = [55,3]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/55  
 
     # --------------------------------------------------
 
@@ -234,7 +239,7 @@ def setplot(plotdata):
 
     plotdata.parallel = False
     plotdata.print_format = 'png'           # file format
-    plotdata.print_framenos = range(0,100,2)         # list of frames to print
+    plotdata.print_framenos = range(0,100,1)         # list of frames to print
     plotdata.print_gaugenos = 'all'         # list of gauges to print
     plotdata.print_fignos = [1,300]         # list of figures to print
 

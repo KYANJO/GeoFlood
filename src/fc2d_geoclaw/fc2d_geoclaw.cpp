@@ -215,7 +215,7 @@ void geoclaw_b4step2(fclaw2d_global_t *glob,
 
 {
     fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
-
+    
     if (geoclaw_vt->b4step2 != NULL)
     {
         int mx,my,mbc;
@@ -234,6 +234,7 @@ void geoclaw_b4step2(fclaw2d_global_t *glob,
         FC2D_GEOCLAW_SET_BLOCK(&blockno);
         geoclaw_vt->b4step2(&mbc,&mx,&my,&meqn,q,&xlower,&ylower,
                             &dx,&dy,&t,&dt,&maux,aux);
+                           
         FC2D_GEOCLAW_UNSET_BLOCK();
     }
 }

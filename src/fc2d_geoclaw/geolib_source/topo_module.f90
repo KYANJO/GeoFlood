@@ -20,6 +20,7 @@ module topo_module
     real(kind=8), allocatable :: dxtopo(:), dytopo(:)
     real(kind=8), allocatable :: topotime(:)
     integer, allocatable ::  mxtopo(:), mytopo(:)
+    ! integer, allocatable :: minleveltopo(:),maxleveltopo(:)
 
     integer, allocatable :: i0topo(:), mtopo(:), mtopoorder(:)
     integer, allocatable :: itopotype(:)
@@ -138,6 +139,7 @@ contains
                 allocate(tlowtopo(mtopofiles),xhitopo(mtopofiles),yhitopo(mtopofiles))
                 allocate(thitopo(mtopofiles),dxtopo(mtopofiles),dytopo(mtopofiles))
                 allocate(topofname(mtopofiles),itopotype(mtopofiles))
+                ! allocate(minleveltopo(mtopofiles),maxleveltopo(mtopofiles))
                 allocate(i0topo(mtopofiles),mtopo(mtopofiles),mtopoorder(mtopofiles))
                 allocate(topoID(mtopofiles),topotime(mtopofiles),topo0save(mtopofiles))
                 allocate(i0topo0(mtopofiles),topo0ID(mtopofiles))
@@ -145,10 +147,13 @@ contains
                 do i=1,mtopofiles - num_dtopo
                     read(iunit,*) topofname(i)
                     read(iunit,*) itopotype(i)
+                    ! read(iunit,*) minleveltopo(i),maxleveltopo(i)
 
                     write(GEO_PARM_UNIT,*) '   '
                     write(GEO_PARM_UNIT,*) '   ',topofname(i)
                     write(GEO_PARM_UNIT,*) '  itopotype = ', itopotype(i)
+                    ! write(GEO_PARM_UNIT,*) '  minlevel, maxlevel = ', minleveltopo(i), &
+                        ! maxleveltopo(i)
                     if (abs(itopotype(i)) == 1) then
                         print *, 'WARNING: topotype 1 has been deprecated'
                         print *, 'converting to topotype > 1 is encouraged'

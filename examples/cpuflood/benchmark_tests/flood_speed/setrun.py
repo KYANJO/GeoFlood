@@ -9,7 +9,8 @@ import os
 import sys
 import numpy as np
 from pdb import *
-import clawpack.geoclaw.topotools as tt
+from clawpack.geoclaw.topotools import Topography
+
 
 import tools
 
@@ -28,7 +29,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 30  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -40,7 +41,7 @@ if output_style == 1:
     n_hours = 5.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 4/60   # (1 frame every 25 mins)
+    frames_per_minute = 1/30   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -53,14 +54,14 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 20
-my = 20
+mx = 50
+my = 50
 
-mi = 10  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
-mj = 20  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
+mi = 4  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 0 
-maxlevel = 1 #resolution based on levels 
+maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -249,8 +250,6 @@ def setrun(claw_pkg='geoclaw'):
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
     clawdata.verbosity = 1
 
-
-
     # --------------
     # Time stepping:
     # --------------
@@ -326,10 +325,10 @@ def setrun(claw_pkg='geoclaw'):
     #   3 => solid wall for systems where q(2) is normal velocity
 
     clawdata.bc_lower[0] = 'user'
-    clawdata.bc_upper[0] = 'extrap'
+    clawdata.bc_upper[0] = 'wall'
 
-    clawdata.bc_lower[1] = 'extrap'
-    clawdata.bc_upper[1] = 'extrap'
+    clawdata.bc_lower[1] = 'wall'
+    clawdata.bc_upper[1] = 'wall'
 
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
@@ -364,7 +363,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
-    geoflooddata.smooth_refine = False
+    geoflooddata.smooth_refine = True
     geoflooddata.regrid_interval = 3
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
@@ -378,6 +377,15 @@ def setrun(claw_pkg='geoclaw'):
     # Block dimensions for non-square domains
     geoflooddata.mi = mi
     geoflooddata.mj = mj
+
+     # -----------------------------------------------
+    # Tikz output parameters:
+    # -----------------------------------------------
+    geoflooddata.tikz_out = True
+    geoflooddata.tikz_figsize = "4 8"
+    geoflooddata.tikz_plot_prefix = "flood"
+    geoflooddata.tikz_plot_suffix = "png"
+
 
     geoflooddata.user = {'example'     : 1}
 
@@ -450,7 +458,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,20,980,1020]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, -86.28446115,-86.28446115,990,1010]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -504,7 +512,7 @@ def setgeo(rundata):
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
-    geo_data.dry_tolerance = 1.e-3
+    geo_data.dry_tolerance = 1.e-4
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
@@ -521,7 +529,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'bathy2.topotype2'])
+    topo_data.topofiles.append([2, minlevel, minlevel, 0, 1e10, 'bathy2.topotype2'])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
@@ -534,10 +542,35 @@ def setgeo(rundata):
     # end of function setgeo
     # ---------------------
 
+#------------------- generate topo file -------------------
+def generate_topo_file():
+#-------------------
+    """
+    Generate topo file for the current run
+    """
+    nxpoints = 200
+    nypoints = 400
+    xlower = -100
+    xupper = 1100
+    yupper = 2100
+    ylower = -100
+    outfile= "bathy2.topotype2"   
+
+    z = 0.0 # Dry bed  
+
+    topo = lambda x,y: (x**2 + y**2)*z
+
+    topography = Topography(topo_func=topo)
+    topography.x = np.linspace(xlower,xupper,nxpoints)
+    topography.y = np.linspace(ylower,yupper,nypoints)
+    topography.write(outfile, topo_type=2, Z_format="%22.15e")
+
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
+    # generate_topo_file()         # generate topo file (generated before running setrun.py)
     rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-    hydrographdata.write()  # writes a geoflood hydrograph file
+    hydrographdata.write()       # writes a geoflood hydrograph file
+    
