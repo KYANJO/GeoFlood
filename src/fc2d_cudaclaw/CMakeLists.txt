@@ -8,6 +8,7 @@ add_library(cudaclaw_f OBJECT
 	fortran_source/cudaclaw_flux2fw.f
 	fortran_source/cudaclaw_step2.f
 	fortran_source/cudaclaw_step2_wrap.f
+	# fortran_source/fc2d_geoclaw_output_ascii_fort.f 
 )
 
 set_target_properties(cudaclaw_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -33,10 +34,11 @@ target_sources(cudaclaw PRIVATE
 	cuda_source/cudaclaw_flux2.cu
 	fc2d_cuda_profiler.cu
 	cuda_source/cudaclaw_store_patches.cu
+	# fc2d_geoclaw_output_ascii.c
   $<TARGET_OBJECTS:cudaclaw_f>
 )
 
-target_link_libraries(cudaclaw PUBLIC FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
+target_link_libraries(cudaclaw PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
 target_include_directories(cudaclaw
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

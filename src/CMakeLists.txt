@@ -1,2 +1,2 @@
-
 add_subdirectory(fc2d_geoclaw)
+add_subdirectory(fc2d_cudaclaw)

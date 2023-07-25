@@ -1,38 +1,41 @@
 /*
-  Copyright (c) 2012-2022 Carsten Burstedde, Donna Calhoun, Scott Aiton
-  All rights reserved.
+Copyright (c) 2012-2021 Carsten Burstedde, Donna Calhoun
+All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-  * Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+ * Redistributions of source code must retain the above copyright notice, this
+list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "teton_user.h"
+#include "bump_user.h"
 
 #include <fc2d_cuda_profiler.h>
 #include <fclaw2d_include_all.h>
 
-#include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
+#include <fclaw2d_clawpatch.h>
 
-#include <fc2d_geoclaw.h>
-#include <fc2d_geoclaw_options.h>
+#include <fc2d_clawpack46_options.h>
+#include <fc2d_clawpack5_options.h>
+
+#include <fc2d_clawpack46.h>
+#include <fc2d_clawpack5.h>
 
 static
 fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, 
@@ -42,70 +45,71 @@ fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm,
     /* Mapped, multi-block domain */
     p4est_connectivity_t     *conn = NULL;
     fclaw2d_domain_t         *domain;
-    fclaw2d_map_context_t    *cont = NULL, *brick = NULL;
+    fclaw2d_map_context_t    *cont = NULL;
 
-    int mi,mj,a,b;
-
-    mi = fclaw_opt->mi;
-    mj = fclaw_opt->mj;
-    a = 0; /* non-periodic */
-    b = 0;
-
-    /* Rectangular brick domain */
-    conn = p4est_connectivity_new_brick(mi,mj,a,b);
-    brick = fclaw2d_map_new_brick_conn(conn,mi,mj);
-    cont = fclaw2d_map_new_nomap_brick(brick);
+    if (user->cuda == 0)
+    {
+        switch (user->example)
+        {
+        case 0:
+            /* Use [ax,bx]x[ay,by] */
+            conn = p4est_connectivity_new_unitsquare();
+            cont = fclaw2d_map_new_nomap();
+            break;
+        default:
+            SC_ABORT_NOT_REACHED ();
+        }
+    }
+    else
+    {
+        /* Use [ax,bx]x[ay,by] */
+        conn = p4est_connectivity_new_unitsquare();
+        cont = fclaw2d_map_new_nomap();
+    }
 
     domain = fclaw2d_domain_new_conn_map (mpicomm, fclaw_opt->minlevel, conn, cont);
     fclaw2d_domain_list_levels(domain, FCLAW_VERBOSITY_ESSENTIAL);
-    fclaw2d_domain_list_neighbors(domain, FCLAW_VERBOSITY_DEBUG);
-
+    fclaw2d_domain_list_neighbors(domain, FCLAW_VERBOSITY_DEBUG);  
     return domain;
 }
-
-
 
 static
 void run_program(fclaw2d_global_t* glob)
 {
-     const user_options_t           *user_opt;
-
     /* ---------------------------------------------------------------
        Set domain data.
        --------------------------------------------------------------- */
     fclaw2d_domain_data_new(glob->domain);
 
-    user_opt = teton_get_options(glob); // under look
+    user_options_t* user_opt = bump_get_options(glob);
 
     /* Initialize virtual table for ForestClaw */
     fclaw2d_vtables_initialize(glob);
 
     if(user_opt->cuda != 0)
     {
+        /* Initialize virtual tables for solvers */
         fc2d_cudaclaw_options_t *clawopt = fc2d_cudaclaw_get_options(glob);
-    
+
         fc2d_cudaclaw_initialize_GPUs(glob);
-    
+
         /* this has to be done after GPUs have been initialized */
-        cudaclaw_set_method_parameters(clawopt->order, clawopt->mthlim, clawopt->mwaves,
+        cudaclaw_set_method_parameters(clawopt->order, 
+                                    clawopt->mthlim, 
+                                    clawopt->mwaves,
                                     clawopt->use_fwaves);
-                
         fc2d_cudaclaw_solver_initialize(glob);
     }
     else
     {
-        fc2d_geoclaw_solver_initialize(glob);
-    }
-    
+        fc2d_clawpack46_solver_initialize(glob);
+    }   
 
-    teton_link_solvers(glob);
-    
-
-    fc2d_geoclaw_module_setup(glob);
+    bump_link_solvers(glob);
 
 
     /* ---------------------------------------------------------------
-       Initialize, run and finalize
+       Run
        --------------------------------------------------------------- */
     if(user_opt->cuda != 0)
     {
@@ -121,8 +125,10 @@ void run_program(fclaw2d_global_t* glob)
         PROFILE_CUDA_GROUP("De-allocate GPU and GPU buffers",1);
         fc2d_cudaclaw_deallocate_buffers(glob);
     }
+    
     fclaw2d_finalize(glob);
 }
+
 
 int
 main (int argc, char **argv)
@@ -136,8 +142,9 @@ main (int argc, char **argv)
     user_options_t              *user_opt;
     fclaw_options_t             *fclaw_opt;
     fclaw2d_clawpatch_options_t *clawpatch_opt;
-    fc2d_geoclaw_options_t      *geoclaw_opt;
     fc2d_cudaclaw_options_t     *cuclaw_opt;
+    fc2d_clawpack46_options_t   *claw46_opt;
+
     fclaw2d_global_t            *glob;
     fclaw2d_domain_t            *domain;
     sc_MPI_Comm mpicomm;
@@ -147,12 +154,13 @@ main (int argc, char **argv)
     /* Initialize application */
     app = fclaw_app_new (&argc, &argv, NULL);
 
-    fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
-    clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
-    geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
-    cuclaw_opt =          fc2d_cudaclaw_options_register(app, "cudaclaw",  "fclaw_options.ini");
-    user_opt =                    teton_options_register(app,"fclaw_options.ini");  
-
+    /* Create new options packages */
+    fclaw_opt =                   fclaw_options_register(app, NULL,"fclaw_options.ini");
+    clawpatch_opt =   fclaw2d_clawpatch_options_register(app,"clawpatch","fclaw_options.ini");
+    cuclaw_opt =          fc2d_cudaclaw_options_register(app,"geoclaw","fclaw_options.ini");
+    claw46_opt =        fc2d_clawpack46_options_register(app,"cudaclaw","fclaw_options.ini");
+    user_opt =                bump_options_register(app,"fclaw_options.ini");  
+    
 
     /* Read configuration file(s) and command line, and process options */
     options = fclaw_app_get_options (app);
@@ -162,6 +170,8 @@ main (int argc, char **argv)
     /* Run the program */
     if (!retval & !vexit)
     {
+        /* Options have been checked and are valid */
+
         mpicomm = fclaw_app_get_mpi_size_rank (app, NULL, NULL);
         domain = create_domain(mpicomm, fclaw_opt,user_opt);
     
@@ -172,15 +182,17 @@ main (int argc, char **argv)
         /* Store option packages in glob */
         fclaw2d_options_store           (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
-        fc2d_geoclaw_options_store      (glob, geoclaw_opt);
         fc2d_cudaclaw_options_store     (glob, cuclaw_opt);
-        teton_options_store             (glob, user_opt);
+        fc2d_clawpack46_options_store   (glob, claw46_opt);
+        bump_options_store              (glob, user_opt);
+       
         run_program(glob);
         
         fclaw2d_global_destroy(glob);
     }
-
+    
     fclaw_app_destroy (app);
 
     return 0;
 }
+
