@@ -9,8 +9,16 @@ add_library(bump_cpu_f OBJECT
   rp/clawpack46_rpt2.f 
 )
 
+target_link_libraries(bump_cpu_f PRIVATE 
+  FORESTCLAW::CLAWPACK4.6
+)
+
 add_library(bump_cuda_f OBJECT 
   user_cuda/qinit.f 
+)
+
+target_link_libraries(bump_cuda_f PRIVATE 
+  GEOFLOOD::CUDACLAW
 )
 
 add_executable(bump_cuda 
@@ -24,7 +32,6 @@ add_executable(bump_cuda
 
 target_include_directories(bump_cuda PRIVATE 
   ${CMAKE_CURRENT_SOURCE_DIR} 
-  # ${rp}
 )
 
 target_link_libraries(bump_cuda PRIVATE 

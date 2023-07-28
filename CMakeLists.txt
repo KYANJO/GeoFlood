@@ -72,7 +72,7 @@ if(cudaflood)
   enable_language(CUDA)
   set(CMAKE_CUDA_STANDARD 14)
   find_package(CUDAToolkit REQUIRED)
-endif()
+endif(cudaflood)
  
 
   if(cudaflood)
