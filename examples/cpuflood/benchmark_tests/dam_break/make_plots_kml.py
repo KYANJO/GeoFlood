@@ -59,10 +59,14 @@ def setplot(plotdata):
     # lower = [-7.31250000,  -2.75562500]
     # upper = [91.16250000,   2.65562500]
 
-    # test 6B
-    lower = [-171.50000000, -56.50000000]
-    upper = [ 1848.50000000,  54.50000000]
+    # test 6B 
+    # Topo domain
+    # lower = [-171.50000000, -56.50000000]
+    # upper = [ 1848.50000000,  54.50000000]
 
+    # Computational domain
+    lower = [-146.25000000, -55.11250000]
+    upper = [ 1823.25000000,  53.11250000]
 
     #-----------------------------------------------------------
     # Figure for KML files (large view)
@@ -93,14 +97,14 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 18
-    mi = 55
-    mj = 2
+    mx = 54
+    mi = 18
+    mj = 1
     minlevel = 1
-    maxlevel = 2
+    maxlevel = 3
     p = 1
-    plotfigure.kml_figsize = [55,3]  #[mx*2**p*mi,mx*2**p*mj]
-    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/55  
+    plotfigure.kml_figsize = [36,1.9782]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/plotfigure.kml_figsize[0]  
 
     # --------------------------------------------------
 
@@ -118,7 +122,19 @@ def setplot(plotdata):
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     # plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = True       # Show patch edges
+    plotitem.add_colorbar = True
+    plotitem.colorbar_label = 'meters'
+    plotitem.patchedges_show = False       # Show patch edges
+    # plotitem.amr_patchedges_color = ['m','g','w'] #green background colour
+     # Land
+    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
+    #plotitem.show = False
+    plotitem.plot_var = geoplot.land
+    plotitem.pcolor_cmap = geoplot.land_flood_colormap
+    plotitem.pcolor_cmin = 0.0
+    plotitem.pcolor_cmax = 3
+    plotitem.add_colorbar = False
+    plotitem.amr_celledges_show = [0,0,0]
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)

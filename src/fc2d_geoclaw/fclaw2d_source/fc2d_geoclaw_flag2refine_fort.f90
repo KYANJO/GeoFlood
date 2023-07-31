@@ -75,6 +75,17 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
                 ENDIF
             ENDDO
 
+            DO m = 1,qinit_type
+                if (abs(t) .lt. 1.0d0) then
+                    ! check if we are in the region where initial perturbation is specified and need to force refinement
+                    if (level < 1 .and. x2 > x_low_qinit .and. x1 < x_hi_qinit .and. &
+                        y2 > y_low_qinit .and. y1 < y_hi_qinit) then
+                        fc2d_geoclaw_flag2refine = 1
+                        return
+                    endif
+                endif
+            ENDDO
+
             IF (allowflag(x,y,t,level)) THEN
                 
                 max_num_speeds = min(size(speed_tolerance),maxlevel)
@@ -83,8 +94,8 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
                 speed = momentum / depth
                 eta = depth + auxvec(1)
 
-                ! Check flow grade criteria are used
-                DO iflow=1,num_flowgrades
+                ! Check flow grade criteria are used (best for overland flows)
+                DO iflow=1,num_flowgrades 
                     if (iflowgradevariable(iflow) == 1) then
                         flowgradenorm = depth
                         flowgradegrad = depth
@@ -92,80 +103,131 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
                         flowgradenorm = momentum
                         flowgradegrad = momentum
                     elseif (iflowgradevariable(iflow) == 3) then
-                        flowgradenorm = dabs(eta)
-                        flowgradegrad = dabs(eta)
+                        if (depth > dry_tolerance) then
+                            flowgradenorm = dabs(eta)
+                            flowgradegrad = dabs(eta)
+                        else
+                            flowgradenorm = 0.0d0
+                            flowgradegrad = 0.0d0
+                        endif
                     endif
 
                     if (iflowgradetype(iflow) == 1) then
                         flowgrademeasure = flowgradenorm
                     else
+                        write(*,*) 'only flowgradetype = 1 is supported'
+                        stop
                         flowgrademeasure = flowgradegrad
+                        ! IF (depth > dry_tolerance) THEN
+                        !     ! IF (abs(eta - sea_level) > wave_tolerance) THEN
+                        !     ! fc2d_geoclaw_flag2refine = 1
+                        !     !     RETURN
+                        !     ! ENDIF
+
+                        !     DO m = 1,max_num_speeds
+                        !         IF (speed > speed_tolerance(m) .AND. level <= m) THEN
+                        !             fc2d_geoclaw_flag2refine = 1
+                        !             RETURN
+                        !         ENDIF
+                        !     ENDDO
+                        ! ENDIF
                     endif
 
                     if (flowgrademeasure .gt. flowgradevalue(iflow) .and. &
                         level .lt. iflowgrademinlevel(iflow)) then
                         fc2d_geoclaw_flag2refine = 1
                         RETURN
+                    else
+                        IF (depth > dry_tolerance) THEN
+                            ! IF (abs(eta - sea_level) > wave_tolerance) THEN
+                            ! fc2d_geoclaw_flag2refine = 1
+                            !     RETURN
+                            ! ENDIF
+
+                            DO m = 1,max_num_speeds
+                                IF (speed > speed_tolerance(m) .AND. level <= m) THEN
+                                    fc2d_geoclaw_flag2refine = 1
+                                    RETURN
+                                ENDIF
+                            ENDDO
+                        ENDIF
                     endif
+
                 ENDDO
 
                 IF (num_flowgrades .eq. 0) THEN
-                    th_factor = 1
-                    IF (is_coarsening) THEN
-                        !! Coarsening factor should be 0.5 refinement factor.
-                        th_factor = 0.5d0
-                    ENDIF
-
-                    ! flag_patch = 0
-                    IF (qvec(1) > dry_tolerance) THEN
-
-                        !! Check wave height criteria
-                        IF (abs(eta - sea_level) > th_factor*wave_tolerance) THEN
-                            IF (level .lt. maxlevel) THEN
-                                ! refine to this level in deep water
-                                fc2d_geoclaw_flag2refine = 1
-                                ! write(*,*) 'eta = ',eta
-                                RETURN
-                            ENDIF
-
-                            IF (dabs(auxvec(1)).lt. deep_depth ) THEN
-                                ! refine to this level in shallow water (shoreregion or river banks or flood edges) 
-                                fc2d_geoclaw_flag2refine = 1
-                                ! write(*,*) 'mx,my = ',mx1,my1
-                                RETURN
-                            ENDIF
-
-                            fc2d_geoclaw_flag2refine = 0
+                    IF (depth > dry_tolerance) THEN
+                        IF (abs(eta - sea_level) > wave_tolerance) THEN
+                           fc2d_geoclaw_flag2refine = 1
                             RETURN
                         ENDIF
 
-                        ! don't refine in deep water if already at maxlevel
-                        if (abs(auxvec(1))> deep_depth .and. speed < 0.01d0) then
-                            fc2d_geoclaw_flag2refine = 0
-                            RETURN
-                        endif
-
-                        ! refine at maximum velocity-depth product is 0.5 m/s
-                        if (speed/qvec(1) > 0.5d0) then
-                            fc2d_geoclaw_flag2refine = 1
-                            RETURN
-                        endif
-
-                        ! Check speed criteria
                         DO m = 1,max_num_speeds
-                            IF (speed > th_factor*speed_tolerance(m) .AND. level <= m) THEN
+                            IF (speed > speed_tolerance(m) .AND. level <= m) THEN
                             ! IF (speed > th_factor*speed_tolerance(m)) THEN
                                 fc2d_geoclaw_flag2refine = 1
                                 RETURN
                             ENDIF
                         ENDDO
                     ENDIF
-                ELSE
-                    !  It isn't clear what this means;  do we not refine the entire patch
-                    ! IF a single cell cannot be refined? 
-                    fc2d_geoclaw_flag2refine = 0
-                    RETURN
                 ENDIF
+                ! IF (num_flowgrades .eq. 0) THEN
+                !     th_factor = 1
+                !     IF (is_coarsening) THEN
+                !         !! Coarsening factor should be 0.5 refinement factor.
+                !         th_factor = 0.5d0
+                !     ENDIF
+
+                !     ! flag_patch = 0
+                !     IF (qvec(1) > dry_tolerance) THEN
+
+                !         !! Check wave height criteria
+                !         IF (abs(eta - sea_level) > th_factor*wave_tolerance) THEN
+                !             IF (level .lt. maxlevel) THEN
+                !                 ! refine to this level in deep water
+                !                 fc2d_geoclaw_flag2refine = 1
+                !                 ! write(*,*) 'eta = ',eta
+                !                 RETURN
+                !             ENDIF
+
+                !             IF (dabs(auxvec(1)).lt. deep_depth ) THEN
+                !                 ! refine to this level in shallow water (shoreregion or river banks or flood edges) 
+                !                 fc2d_geoclaw_flag2refine = 1
+                !                 ! write(*,*) 'mx,my = ',mx1,my1
+                !                 RETURN
+                !             ENDIF
+
+                !             fc2d_geoclaw_flag2refine = 0
+                !             RETURN
+                !         ENDIF
+
+                !         ! don't refine in deep water if already at maxlevel
+                !         if (abs(auxvec(1))> deep_depth .and. speed < 0.01d0) then
+                !             fc2d_geoclaw_flag2refine = 0
+                !             RETURN
+                !         endif
+
+                !         ! refine at maximum velocity-depth product is 0.5 m/s
+                !         if (speed/qvec(1) > 0.5d0) then
+                !             fc2d_geoclaw_flag2refine = 1
+                !             RETURN
+                !         endif
+
+                !         ! Check speed criteria
+                !         DO m = 1,max_num_speeds
+                !             IF (speed > th_factor*speed_tolerance(m) .AND. level <= m) THEN
+                !             ! IF (speed > th_factor*speed_tolerance(m)) THEN
+                !                 fc2d_geoclaw_flag2refine = 1
+                !                 RETURN
+                !             ENDIF
+                !         ENDDO
+                !     ENDIF
+                ! ELSE
+                !     !  It isn't clear what this means;  do we not refine the entire patch
+                !     ! IF a single cell cannot be refined? 
+                !     fc2d_geoclaw_flag2refine = 0
+                !     RETURN
+                ! ENDIF
             ENDIF
         ENDDO
     ENDDO
