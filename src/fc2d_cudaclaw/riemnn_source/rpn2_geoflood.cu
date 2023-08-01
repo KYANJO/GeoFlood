@@ -28,15 +28,41 @@ __constant__ double s_grav;
 
 
 
-__device__ void rpn2shallow(int idir, int meqn, int mwaves,
+__device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                             int maux, double ql[], double qr[],
                             double auxl[], double auxr[],
                             double wave[], double s[], 
                             double amdq[], double apdq[])
 {
+    // local variables
+    integer m,i,mw,maxiter,mu,mv;
+    double wall[2];
+    double fw[2][2];
+    double sw[2];
+
+    double hR,hR,huR,huL,uR,uL,hvR,hvL,vR,vL,phiR,phiL;
+    double bR,bL,sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat;
+    double s1m,s2m;
+    double hstar,hstartest,hstarHLL,sLtest,sRtest;
+    double tw,dxdc;
+
+    bool rare1, rare2;
+
     // set normal direction
-    int mu = 1+idir;
-    int mv = 2-idir;
+    mu = 1+idir;
+    mv = 2-idir;
 
 
+}
+
+__device__ cudaclaw_cuda_rpn2_t geoflood_rpn2 = cudaflood_rpn2;
+
+void geoflood_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
+{
+    cudaError_t ce = cudaMemcpyFromSymbol(rpn2, geoflood_rpn2, sizeof(cudaclaw_cuda_rpn2_t));
+    if(ce != cudaSuccess)
+    {
+        fclaw_global_essentialf("ERROR (cudaflood_rpn2): %s\n",cudaGetErrorString(ce));
+        exit(0);
+    }
 }
