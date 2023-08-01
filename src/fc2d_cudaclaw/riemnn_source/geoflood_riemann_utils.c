@@ -4,17 +4,62 @@
 @date: 30th July 2023
 @reference: Solver is described in J. Comput.Phys. (6): 3089-3113, March 2008 Augmented 
             Riemann Solvers for the swe with steady states and Inundation
-
-@note: - To use the original solver call with maxiter=1.
-       - This solver allows iteration when maxiter > 1. The iteration seems to help with instabilities that arise (with any solver) as flow becomes transcritical over variable topography due to loss of hyperbolicity.
 */
 
-// void riemann_aug_JCP(int maxiter, int meqn, )
+/* === Begin fuction riemann_aug_JCP======================================================== @description: - Solves swe give single left and right states
+@note: - To use the original solver call with maxiter=1.
+       - This solver allows iteration when maxiter > 1. The iteration seems to help  
+         with instabilities that arise (with any solver) as flow becomes transcritical 
+         over variable topography due to loss of hyperbolicity. 
+*/
+void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR, double huL, 
+                     double huR, double hvL, double hvR, double bL, double bR, double uL, 
+                     double uR, double vL, double vR, double phiL, double phiR, double sE1, double sE2, double drytol, double g, double sw[], double fw[][])
+{
+    // Local variables
+    integer m, mw, k, iter;
+    double A[3][3];
+    double r[3][3];
+    double lambda[3];
+    double del[3];
+    double beta[3];
 
-// === Begin fuction Riemann_fwaves========================================================
+    double delh,delhu,delphi,delb,delnorm;
+    double rare1st,rare2st,sdelta,raremin,raremax;
+    double criticaltol,convergencetol,raretol;
+    double s1s2bar,s1s2tilde,hbar,hLstar,hRstar,hustar;
+    double huRstar,huLstar,uRstar,uLstar,hstarHLL;
+    double deldelh,deldelphi;
+    double s1m,s2m,hm;
+    double det1,det2,det3,determinant;
+
+    bool rare1,rare2,rarecorrector,rarecorrectortest,sonic;
+
+    // determine del vectors
+    delh = hR - hL;
+    delhu = huR - huL;
+    delphi = phiR - phiL;
+    delb = bR - bL;
+    delnorm = delh*delh + delphi*delphi;
+
+    //  call riemanntype function
+    riemanntype(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2,0,drytol,g)
+
+    lambda[0] = fmin(sE1,s2m); // Modified Einfeldt speed
+    lambda[2] = fmax(sE2,s1m); // Modified Einfeldt speed
+    sE1 = lambda[0];
+    sE2 = lambda[2];
+    lambda[1] = 0.0 // Fix to avoid uninitialized value in loop on mw
+
+    hstarHLL = fmax((huL-huR+sE2*hR-sE1*hL)/(sE2-sE1),0.0); // middle state in a HLL solver
+
+    // determine the middle entropy corrector wave
 
 
-// === end function Riemann_fwaves ========================================================
+
+
+}// === end function riemann_aug_JCP ========================================================
+
 
 // === Begin fuction Riemann_ssqfwave========================================================
 // @description: - Solves swe give single left and right states
@@ -255,7 +300,7 @@ void riemann_fwaves(int meqn, int mwaves, double hL, double hR, double huL, doub
 
 
 // === Begin fuction Riemann type===========================================================
-// @description: Determines the Riemann structure (wave-typ in each family)
+// @description: Determines the Riemann structure (wave-type in each family)
 void riemanntype(double hL, double hR, double uL, double uR, double hm, 
                  double s1m, double s2m, bool rare1, bool rare2, int maxiter,
                  double drytol, double g)
