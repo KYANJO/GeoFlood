@@ -3,8 +3,7 @@
 ## ----------------------------------
 ## GeoFlood examples
 ## ----------------------------------
-if(cudaflood)
-    add_subdirectory(teton)
-    add_subdirectory(bump)
-    # add_subdirectory(triton)
-endif(cudaflood)
+# if(cudaflood)
+    # add_subdirectory(cudaflood/teton)
+    add_subdirectory(cudaflood/bump)
+# endif(cudaflood)
