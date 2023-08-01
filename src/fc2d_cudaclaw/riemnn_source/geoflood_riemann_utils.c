@@ -18,11 +18,11 @@ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR, do
 {
     // Local variables
     integer m, mw, k, iter;
-    double A[3][3];
-    double r[3][3];
-    double lambda[3];
-    double del[3];
-    double beta[3];
+    double A[2][2];
+    double r[2][2];
+    double lambda[2];
+    double del[2];
+    double beta[2];
 
     double delh,delhu,delphi,delb,delnorm;
     double rare1st,rare2st,sdelta,raremin,raremax;
@@ -54,10 +54,235 @@ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR, do
     hstarHLL = fmax((huL-huR+sE2*hR-sE1*hL)/(sE2-sE1),0.0); // middle state in a HLL solver
 
     // determine the middle entropy corrector wave
+    rarecorrectortest = false;
+    rarecorrector = false;
+    if (rarecorrectortest)
+    {
+        sdelta = lambda[2] - lambda[0];
+        raremin = 0.5;
+        raremax = 0.9;
+        if (rare1 && sE1*s1m < 0.0) raremin = 0.2;
+        if (rare2 && sE2*s2m < 0.0) raremin = 0.2;
+        if (rare1 || rare2)
+        {
+            // see which rarefaction is larger
+            rare1st = 3.0*(sqrt(g*hL) - sqrt(g*hm));
+            rare2st = 3.0*(sqrt(g*hR) - sqrt(g*hm));
+            if (fmax(rare1st,rare2st) > raremin*sdelta && fmax(rare1st,rare2st) < raremax*sdelta)
+            {
+                rarecorrector = true;
+                if (rare1st > rare2st)
+                {
+                    lambda[1] = s1m;
+                }
+                else if (rare2st > rare1st)
+                {
+                    lambda[1] = s2m;
+                }
+                else
+                {
+                    lambda[1] = 0.5*(s1m + s2m);
+                }
+            }
+        }
+        if (hstarHLL < fmin(hL,hR)/5.0) rarecorrector = false;
+    }
 
+    for (mw = 0; mw<=mwaves; ++mw)
+    {
+        r[0][mw] = 1.0;
+        r[1][mw] = lambda[mw];
+        r[2][mw] = pow(lambda[mw],2);
+    }
 
+    if (!rarecorrector)
+    {
+        lambda[1]= 0.5*(lambda[0] + lambda[2]);
+        r[0][1] = 0.0;
+        r[1][1] = 0.0;
+        r[2][1] = 1.0;
+    }
 
+    // determine the steady state wave
+    criticaltol = 1.0e-6;
+    deldelh = -delh;
+    deldelphi = -g*0.5*(hR+hL)*delb;
 
+    // determine a few quantities needed for steady state wave if iterated
+    hLstar = hL;
+    hRstar = hR;
+    uLstar = uL;
+    uRstar = uR;
+    huLstar = uLstar*hLstar;
+    huRstar = uRstar*hRstar;
+
+    // iterate to better determine steady state wave
+    convergencetol = 1.0e-6;
+    for (iter=0; iter<=maiter; ++iter)
+    {
+        // determine steady state wave (this will be subtracted from the delta vectors)
+        if (fmin(hLstar,hRstar) < drytol && rarecorrector)
+        {
+            rarecorrector = false;
+            hLstar = hL;
+            hRstar = hR;
+            uLstar = uL;
+            uRstar = uR;
+            huLstar = uLstar*hLstar;
+            huRstar = uRstar*hRstar;
+            lambda[1] = 0.5*(lambda[0] + lambda[2]);
+            r[0][1] = 0.0;
+            r[1][1] = 0.0;
+            r[2][1] = 1.0;
+        }
+
+        hbar = fmax(0.5*(hLstar+hRstar),0.0);
+        s1s2bar = 0.25*pow((uLstar+uRstar),2) - g*hbar;
+        s1s2tilde = fmax(0.0,uLstar*uRstar) - g*hbar;
+
+        //  find if sonic problem
+        sonic = false;
+        if (fabs(s1s2bar) <= criticaltol) sonic = true;
+        if (s1s2bar*s1s2tilde <= criticaltol) sonic = true;
+        if (s1s2bar*sE1*sE2 <= criticaltol) sonic = true;
+        if (fmin(fabs(sE1),fabs(sE2)) <= criticaltol) sonic = true;
+        if (sE1 < 0.0 && s1m > 0.0) sonic = true;
+        if (sE2 > 0.0 && s2m < 0.0) sonic = true;
+        if ((uL+sqrt(g*hL))*(uR+sqrt(g*hR)) < 0.0) sonic = true;
+        if ((uL-sqrt(g*hL))*(uR-sqrt(g*hR)) < 0.0) sonic = true;
+
+        // find jump in h, deldelh
+        if (sonic)
+        {
+            deldelh = -delh;
+        }
+        else
+        {
+            deldelh = delb*g*hbar/s1s2bar;
+        }
+
+        //  find bounds in case of critical state resonance, or negative states
+        if (sE1 < -criticaltol && sE2 > criticaltol)
+        {
+            deldelh = fmin(deldelh,hstarHLL*(sE2 - sE1)/sE2);
+            deldelh = fmax(deldelh,hstarHLL*(sE2 - sE1)/sE1);
+        }
+        else if (sE1 >= criticaltol)
+        {
+            deldelh = fmin(deldelh,hstarHLL*(sE2 - sE1)/sE1);
+            deldelh = fmax(deldelh,-hL);
+        }
+        else if (sE2 <= -criticaltol)
+        {
+            deldelh = fmin(deldelh,hR);
+            deldelh = fmax(deldelh,hstarHLL*(sE2 - sE1)/sE2);
+        }
+
+        //  find jump in phi, deldelphi
+        if (sonic)
+        {
+            deldelphi = -g*hbar*delb;
+        }
+        else
+        {
+            deldelphi = -delb*g*hbar*s1s2tilde/s1s2bar;
+        }
+
+        // find bounds in case of critical state resonance, or negative states
+        deldelphi = fmin(deldelphi,g*fmax(-hLstar*delb,-hRstar*delb));
+        deldelphi = fmax(deldelphi,g*fmin(-hLstar*delb,-hRstar*delb));
+
+        del[0] = delh - deldelh;
+        del[1] = delhu;
+        del[2] = delphi - deldelphi;
+
+        //--- determine determinant of eigen matrix ----
+        det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
+        det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
+        det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
+        determinant = det1 - det2 + det3;
+
+        // --- solve for beta(k) using Cramers Rule ---
+        for(k=0; k<=2; ++k)
+        {
+            for(mw=0; mw<=2; ++mw)
+            {
+                A[0][mw] = r[0][mw];
+                A[1][mw] = r[1][mw];
+                A[2][mw] = r[2][mw];
+            }
+            A[0][k] = del[0];
+            A[1][k] = del[1];
+            A[2][k] = del[2];
+            det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
+            det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
+            det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+            beta[k] = (det1 - det2 + det3)/determinant;
+        }
+
+        //  exit if things aren't changing
+        if (fabs(pow(del[0],2)+pow(del[2],2) - delnorm) < convergencetol) break;
+
+        delnorm = pow(del[0],2)+pow(del[2],2);
+
+        // find new states qLstar and qRstar on either side of the interface
+        hLstar = hL;
+        hRstar = hR;
+        uLstar = uL;
+        uRstar = uR;
+        huLstar = uLstar*hLstar;
+        huRstar = uRstar*hRstar;
+        for (mw=0; mw<=mwaves; ++mw)
+        {
+            if (lambda[mw] < 0.0)
+            {
+                hLstar = hLstar + beta[mw]*r[0][mw];
+                huLstar = huLstar + beta[mw]*r[1][mw];
+            }
+        }
+
+        for (mw = mwaves-1; mw >= 0; mw--)
+        {
+            if (lambda[mq] > 0.0)
+            {
+                hRstar = hRstar - beta[mw]*r[0][mw];
+                huRstar = huRstar - beta[mw]*r[1][mw];
+            }
+        }
+
+        if (hLstar > drytol) 
+        {
+            uLstar = huLstar/hLstar;
+        }
+        else
+        {
+            hLstar = fmax(hLstar,0.0);
+            uLstar = 0.0;
+        }
+
+        if (hRstar > drytol) 
+        {
+            uRstar = huRstar/hRstar;
+        }
+        else
+        {
+            hRstar = fmax(hRstar,0.0);
+            uRstar = 0.0;
+        }
+    } // --end iteration on Riemann problem
+
+    for (mw=0; mw<=mwaves; ++mw)
+    {
+        sw[mw] = lambda[mw];
+        fw[0,mw] = beta[mw]*r[1][mw];
+        fw[1,mw] = beta[mw]*r[2][mw];
+        fw[2,mw] = beta[mw]*r[1][mw];
+    }
+
+    // find transverse components (ie huv jumps)
+    fw[2][0] = fw[2][0]*vL;
+    fw[2][2] = fw[2][2]*vR;
+    fw[2][2] = hR*uR*vR - hL*uL*vL - fw[2][0] - fw[2][2];
 }// === end function riemann_aug_JCP ========================================================
 
 
@@ -353,7 +578,7 @@ void riemanntype(double hL, double hR, double uL, double uR, double hm,
         {
             // root finding using a Newton iteration on sqrt(h)
             h0 = h_max;
-            for (iter=0; iter < maxiter; ++iter)
+            for (iter=0; iter <= maxiter; ++iter)
             {
                 gL = sqrt(0.5*g*(1/h0 + 1/hL));
                 gR = sqrt(0.5*g*(1/h0 + 1/hR));
@@ -376,7 +601,7 @@ void riemanntype(double hL, double hR, double uL, double uR, double hm,
         else // 1-shock 1-rarefaction
         {
             h0 = h_min;
-            for(iter=0; iter < maxiter; ++iter)
+            for(iter=0; iter <= maxiter; ++iter)
             {
                 F0 = delu + 2.0*(sqrt(g*h0) - sqrt(g*h_max)) + (h0-h_min)*sqrt(0.5*g*(1/h0 + 1/h_min));
                 slope = (F_max - F0)/(h_max - h_min);
