@@ -25,6 +25,33 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include "geoflood_riemann_utils.h"
 
 __constant__ double s_grav;
+__constant__ double drytol;
+__constant__ double earth_radius;
+__constant__ double deg2rad;
+__constant__ int coordinate_system;
+
+void setprob_cuda()
+{
+    double grav;
+    double dry_tolerance;
+    double earth_rad;
+    double deg_2_rad;
+    int coordinate_system_;
+    FILE *f = fopen("setprob.data","r");
+    fscanf(f,"%lf",&grav);
+    fscanf(f,"%lf",&dry_tolerance);
+    fscanf(f,"%lf",&earth_rad);
+    fscanf(f,"%lf",&deg_2_rad);
+    fscanf(f,"%d",&coordinate_system_);
+    fclose(f);
+
+    CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(drytol, &dry_tolerance, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(deg2rad, &deg_2_rad, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
+
+}
 
 __device__ double fmax(double, double)
 
@@ -35,7 +62,6 @@ __device__ double fabs(double x)
 __device__ double pow(double x, double y)
 
 __device__ double sqrt(double x)
-
 
 __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                             int maux, double ql[], double qr[],
@@ -71,11 +97,190 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
     }
 
-
-
     // set normal direction
     mu = 1+idir;
     mv = 2-idir;
+
+    // zero (small) negative values if they exsit
+    if (qr[0] < 0.0)
+    {
+        qr[0] = 0.0;
+        qr[1] = 0.0;
+        qr[2] = 0.0;
+    }
+
+    if (ql[0] < 0.0)
+    {
+        ql[0] = 0.0;
+        ql[1] = 0.0;
+        ql[2] = 0.0;
+    }
+
+    //  skip problem if in a completely dry area
+    if (qr[0] <= drytol && ql[0] <= drytol) continue;
+
+    // Riemann problem variables
+    hL = qr[0];
+    hR = ql[0];
+    huL = qr[mu];
+    huR = ql[mu];
+    bL = auxr[0];
+    bR = auxl[0];
+
+    hvL = qr[mv];
+    hvR = ql[mv];
+
+    // check for wet/dry boundary
+    if (hR > drytol)
+    {
+        uR = huR/hR;
+        vR = hvR/hR;
+        phiR = 0.5*s_grav*(hR*hR) + (huR*huR)/hR
+    }
+    else
+    {
+        hR = 0.0;
+        huR = 0.0;
+        hvR = 0.0;
+        uR = 0.0;
+        vR = 0.0;
+        phiR = 0.0;
+    }
+
+    if (hL > drytol)
+    {
+        uL = huL/hL;
+        vL = hvL/hL;
+        phiL = 0.5*s_grav*(hL*hL) + (huL*huL)/hL
+    }
+    else
+    {
+        hL = 0.0;
+        huL = 0.0;
+        hvL = 0.0;
+        uL = 0.0;
+        vL = 0.0;
+        phiL = 0.0;
+    }
+
+    wall[0] = 1.0;
+    wall[1] = 1.0;
+    wall[2] = 1.0;
+    if (hR <= drytol)
+    {
+        riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
+        hstartest = fmax(hK,hstar);
+        if (hstartest + bL < bR) //right state should become ghost values that mirror left for wall problem
+        {
+            wall[1] = 0.0;
+            wall[2] = 0.0;
+            hR = hL;
+            huR = -huL;
+            bR = bL;
+            phiR = phiL;
+            uR = -uL;
+            vR = vL;
+        }
+        else if (hL+bL < bR)
+        {
+            bR = hL +bL;
+        }
+    }
+    else if (hL <= drytol)
+    {
+        riemanntype(hR,hR,uR,-uR,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
+        hstartest = fmax(hK,hstar);
+        if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
+        {
+            wall[0] = 0.0;
+            wall[2] = 0.0;
+            hL = hR;
+            huL = -huR;
+            bL = bR;
+            phiL = phiR;
+            uL = -uR;
+            vL = vR;
+        }
+        else if (hR+bR < bL)
+        {
+            bL = hR +bR;
+        }
+    }
+
+    //  determine wave speeds
+    sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
+    sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
+
+    uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe velocity
+    chat = sqrt(0.5*s_grav*(hL+hR)); // Roe speed of sound
+    sRoe1 = uhat - chat; // Roe wave speed 1 wave
+    sRoe2 = uhat + chat; // Roe wave speed 2 wave
+
+    sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
+    sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
+
+    // --- end initializing ------------------------------------
+
+    // solve Riemann problem
+    maxiter = 0;
+
+    riemann_aug_JCP(maxiter,2,2,hL,hR,huL,huR,hvL,hvR,bL,bR,
+                    uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,s_grav,sw,fw);
+
+    // eliminate ghost fluxes for wall
+    for (mw=0; mw<2; mw++)
+    {
+        sw[mw] = sw[mw]*wall[mw];
+        fw[mw] = fw[mw]*wall[mw];
+    }
+
+    for (mw=0; mw<mwaves; mw++)
+    {
+        s[mw] = sw[mw];
+        fwave[mw] = fw[mw];
+        fwave[mu] = fw[mw];
+        fwave[mv] = fw[mw];
+    }
+
+    // -- Capacity for Mapping from Latitude Longitude to physical space ----
+    if (mcapa > 0)
+    {
+        if (idir == 0)
+        {
+            dxdc = earth_radius*deg2rad;
+        }
+        else
+        {
+            dxdc = earth_radius*cos(auxl[2])*deg2rad;
+        }
+        for (mw=0; mw<mwaves; mw++)
+        {
+            s[mw] = dxdc*s[mw];
+            fwave[mw] = dxdc*fwave[mw];
+        }
+    }
+
+    // --- compute fluctuations ------------------------------------
+    amdq[0:2] = 0.0;
+    apdq[0:2] = 0.0;
+    for (mw=0; mw<mwaves; mw++)
+    {
+        if (s[mw] < 0.0)
+        {
+            amdq[0:2] = amdq[0:2] + fwave[mw];
+        }
+        else if (s[mw] > 0.0)
+        {
+            apdq[0:2] = apdq[0:2] + fwave[mw];
+        }
+        else
+        {
+            amdq[0:2] = amdq[0:2] + 0.5*fwave[mw];
+            apdq[0:2] = apdq[0:2] + 0.5*fwave[mw];
+        }
+    }
+
+     
 
 
 }

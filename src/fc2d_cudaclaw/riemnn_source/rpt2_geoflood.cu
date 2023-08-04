@@ -7,12 +7,35 @@ topography
 
 #include "geoflood_riemann_utils.h"
  
-// --remember to call these variables from geoclaw_module.f90 ---//
-__constant__ double grav;
-__constant__ double dry_tolerance;
+__constant__ double s_grav;
+__constant__ double drytol;
 __constant__ double earth_radius;
 __constant__ double deg2rad;
 __constant__ int coordinate_system;
+
+void setprob_cuda()
+{
+    double grav;
+    double dry_tolerance;
+    double earth_rad;
+    double deg_2_rad;
+    int coordinate_system_;
+    FILE *f = fopen("setprob.data","r");
+    fscanf(f,"%lf",&grav);
+    fscanf(f,"%lf",&dry_tolerance);
+    fscanf(f,"%lf",&earth_rad);
+    fscanf(f,"%lf",&deg_2_rad);
+    fscanf(f,"%d",&coordinate_system_);
+    fclose(f);
+
+    CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(drytol, &dry_tolerance, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(deg2rad, &deg_2_rad, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
+
+}
+
 
 __device__ double fmax(double, double)
 __device__ double fmin(double x, double y)
@@ -175,7 +198,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     bpasdq[1] = 0.0;
     bmasdq[2] = 0.0;
     bpasdq[2] = 0.0;
-    for (mw=0; mw < mwaves; mw++)
+    for (mw=0; mw < 2; mw++)
     {
         if (sw[mw] < 0.0)
         {

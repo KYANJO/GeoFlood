@@ -17,17 +17,6 @@ extern "C"
 #endif
 #endif
 
-// using Fortran modules in C
-typedef struct {
-    double grav;
-    double dry_tolerance;
-    double earth_radius;
-    double coordinate_system;
-    double deg2rad;
-}geoclaw_module;
-
-
-
 extern __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR,
                  double huL, double huR, double hvL, double hvR, double bL, double bR, 
                  double uL, double uR, double vL, double vR, double phiL, double phiR,
