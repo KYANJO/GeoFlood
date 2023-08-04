@@ -8,17 +8,6 @@
 
 #include "geoflood_riemann_utils.h"
 
-__device__ double fmax(double, double)
-
-__device__ double fmin(double x, double y)
-
-__device__ double fabs(double x)
-
-__device__ double pow(double x, double y)
-
-__device__ double sqrt(double x)
-
-
 /* === Begin fuction riemann_aug_JCP======================================================== @description: - Solves swe give single left and right states
 @note: - To use the original solver call with maxiter=1.
        - This solver allows iteration when maxiter > 1. The iteration seems to help  

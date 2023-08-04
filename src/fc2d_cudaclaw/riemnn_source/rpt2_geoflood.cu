@@ -10,41 +10,33 @@ topography
 __constant__ double s_grav;
 __constant__ double drytol;
 __constant__ double earth_radius;
-__constant__ double deg2rad;
 __constant__ int coordinate_system;
+__constant__ int mcapa;
 
 void setprob_cuda()
 {
     double grav;
     double dry_tolerance;
     double earth_rad;
-    double deg_2_rad;
     int coordinate_system_;
+    int mcapa_;
     FILE *f = fopen("setprob.data","r");
     fscanf(f,"%lf",&grav);
     fscanf(f,"%lf",&dry_tolerance);
     fscanf(f,"%lf",&earth_rad);
-    fscanf(f,"%lf",&deg_2_rad);
     fscanf(f,"%d",&coordinate_system_);
+    fscanf(f,"%d",&mcapa_);
     fclose(f);
 
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(drytol, &dry_tolerance, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(deg2rad, &deg_2_rad, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
-
+    CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
 }
 
-
-__device__ double fmax(double, double)
-__device__ double fmin(double x, double y)
-__device__ double fabs(double x)
-__device__ double pow(double x, double y)
-__device__ double sqrt(double x)
-__device__ double sin(double x)
-__device__ double cos(double x)
-
+__device__ __constant__ double pi = 4.0*atan(1.0);
+__device__ __constant__ double deg2rad = pi/180.0;
 
 __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                                 double ql[], double qr[], double aux1[], 
