@@ -6,6 +6,19 @@
             Riemann Solvers for the swe with steady states and Inundation
 */
 
+#include "geoflood_riemann_utils.h"
+
+__device__ double fmax(double, double)
+
+__device__ double fmin(double x, double y)
+
+__device__ double fabs(double x)
+
+__device__ double pow(double x, double y)
+
+__device__ double sqrt(double x)
+
+
 /* === Begin fuction riemann_aug_JCP======================================================== @description: - Solves swe give single left and right states
 @note: - To use the original solver call with maxiter=1.
        - This solver allows iteration when maxiter > 1. The iteration seems to help  
@@ -18,7 +31,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
                  double sE1, double sE2, double drytol, double g, double sw[], double fw[][])
 {
     // Local variables
-    integer m, mw, k, iter;
+    int m, mw, k, iter;
     double A[2][2];
     double r[2][2];
     double lambda[2];
@@ -89,7 +102,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         if (hstarHLL < fmin(hL,hR)/5.0) rarecorrector = false;
     }
 
-    for (mw = 0; mw<=mwaves; ++mw)
+    for (mw = 0; mw < mwaves; mw++)
     {
         r[0][mw] = 1.0;
         r[1][mw] = lambda[mw];
@@ -119,7 +132,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
 
     // iterate to better determine steady state wave
     convergencetol = 1.0e-6;
-    for (iter=0; iter<=maiter; ++iter)
+    for (iter=0; iter < maiter; iter++)
     {
         // determine steady state wave (this will be subtracted from the delta vectors)
         if (fmin(hLstar,hRstar) < drytol && rarecorrector)
@@ -204,9 +217,9 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         determinant = det1 - det2 + det3;
 
         // --- solve for beta(k) using Cramers Rule ---
-        for(k=0; k<=2; ++k)
+        for(k=0; k < 2; k++)
         {
-            for(mw=0; mw<=2; ++mw)
+            for(mw=0; mw < 2; mw++)
             {
                 A[0][mw] = r[0][mw];
                 A[1][mw] = r[1][mw];
@@ -233,7 +246,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         uRstar = uR;
         huLstar = uLstar*hLstar;
         huRstar = uRstar*hRstar;
-        for (mw=0; mw<=mwaves; ++mw)
+        for (mw=0; mw < mwaves; mw++)
         {
             if (lambda[mw] < 0.0)
             {
@@ -272,7 +285,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         }
     } // --end iteration on Riemann problem
 
-    for (mw=0; mw<=mwaves; ++mw)
+    for (mw=0; mw < mwaves; mw++)
     {
         sw[mw] = lambda[mw];
         fw[0,mw] = beta[mw]*r[1][mw];
@@ -305,7 +318,7 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
     double sL,sR;
     double uhat,chat,sRoe1,sRoe2;
 
-    integer iter;
+    int iter;
     bool sonic;
 
     // determine del vectors
@@ -334,7 +347,7 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
         alpha2 = 0.0;
 
         // iterate to better determine the Riemann problem
-        for (iter=0; iter <= maxiter; ++iter)
+        for (iter=0; iter < maxiter; iter++)
         {
             // determine steady state wave (this will be subtracted from delta vectors)
             hbar = fmax(0.5*(hLstar + hRstar),0.0);
@@ -580,7 +593,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double h
         {
             // root finding using a Newton iteration on sqrt(h)
             h0 = h_max;
-            for (iter=0; iter <= maxiter; ++iter)
+            for (iter=0; iter < maxiter; iter++)
             {
                 gL = sqrt(0.5*g*(1/h0 + 1/hL));
                 gR = sqrt(0.5*g*(1/h0 + 1/hR));
@@ -603,7 +616,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double h
         else // 1-shock 1-rarefaction
         {
             h0 = h_min;
-            for(iter=0; iter <= maxiter; ++iter)
+            for(iter=0; iter < maxiter; iter++)
             {
                 F0 = delu + 2.0*(sqrt(g*h0) - sqrt(g*h_max)) + (h0-h_min)*sqrt(0.5*g*(1/h0 + 1/h_min));
                 slope = (F_max - F0)/(h_max - h_min);

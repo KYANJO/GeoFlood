@@ -1,7 +1,7 @@
 /* 
 @author: Brian Kyanjo
 @date: 31 July 2023
-@description: Solves normal Riemann problems for the @D shallow water equations (swe) with 
+@description: Solves normal Riemann problems for the 2D shallow water equations (swe) with 
 topography:
             h_t + (hu)_x + (hv)_y = 0
             (hu)_t + (hu^2 + 1/2gh^2)_x + (huv)_y = -ghb_x
@@ -22,20 +22,29 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 
 #include <fc2d_cudaclaw.h>
 #include <fc2d_cudaclaw_check.h>
+#include "geoflood_riemann_utils.h"
 
 __constant__ double s_grav;
 
+__device__ double fmax(double, double)
 
+__device__ double fmin(double x, double y)
+
+__device__ double fabs(double x)
+
+__device__ double pow(double x, double y)
+
+__device__ double sqrt(double x)
 
 
 __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                             int maux, double ql[], double qr[],
                             double auxl[], double auxr[],
-                            double wave[], double s[], 
+                            double fwave[], double s[], 
                             double amdq[], double apdq[])
 {
     // local variables
-    integer m,i,mw,maxiter,mu,mv;
+    int m,i,mw,maxiter,mu,mv;
     double wall[2];
     double fw[2][2];
     double sw[2];
@@ -47,6 +56,22 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     double tw,dxdc;
 
     bool rare1, rare2;
+
+    // --- Intializing ------------------------------------
+    if((qr[0] < 0.0) || (ql[0] < 0.0) )
+    {
+        printf("Negative input: hl,hr=\n %f %f\n",ql[0],qr[0]);
+    }
+
+    // Initialize Riemann problem for the grid interface
+    for (mw=0; mw<=mwaves; ++mw)
+    {
+        sw[mw] = 0.0;
+        fwave[mw] = 0.0;
+
+    }
+
+
 
     // set normal direction
     mu = 1+idir;
