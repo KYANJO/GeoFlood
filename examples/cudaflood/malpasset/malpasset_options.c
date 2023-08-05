@@ -30,27 +30,19 @@ static int s_user_options_package_id = -1;
 static void *
 malpasset_register (user_options_t* user, sc_options_t * opt)
 {
-   sc_options_add_int (opt, 0, "example", &user->example, 0,
-                           "[user] Example [0]");
     /* [user] User options */
+    sc_options_add_bool (opt, 0, "cuda", &user->cuda, 0,
+                           "Use cudaclaw [F]");    
     sc_options_add_double (opt, 0, "gravity", &user->gravity, 1.0, 
                            "[user] gravity [1.0]");
-
-    // sc_options_add_double (opt, 0, "dry_tolerance", &user->dry_tolerance, 0.001, 
-    //                        "[user] dry_tolerance [0.001]");
-
-    // sc_options_add_double (opt, 0, "earth_radius", &user->earth_radius, 6367.5e3, 
-    //                        "[user] earth_radius [6367.5e3]");  
-    // sc_options_add_int (opt, 0, "coordinate_system", &user->coordinate_system, 0,
-    //                        "[user] coordinate_system [0]");
-    
-    // sc_options_add_int (opt, 0, "mcapa", &user->mcapa, 0,
-    //                        "[user] mcapa [0]");                    
-
-    sc_options_add_int (opt, 0, "claw-version", &user->claw_version, 4,
-                           "Clawpack_version (4 only) [4]");
-    sc_options_add_bool (opt, 0, "cuda", &user->cuda, 0,
-                           "Use cudaclaw [F]");                       
+    sc_options_add_double (opt, 0, "dry_tolerance", &user->dry_tolerance, 0.001, 
+                           "[user] dry_tolerance [0.001]");
+    sc_options_add_double (opt, 0, "earth_radius", &user->earth_radius, 6367.5e3, 
+                           "[user] earth_radius [6367.5e3]");  
+    sc_options_add_int (opt, 0, "coordinate_system", &user->coordinate_system, 0,
+                           "[user] coordinate_system [0]");
+    sc_options_add_int (opt, 0, "mcapa", &user->mcapa, 0,
+                           "[user] mcapa [0]");                            
 
     user->is_registered = 1;
     return NULL;

@@ -67,6 +67,14 @@ manning_coefficient = 0.03333
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
 
+# --------------------- user options ------------------------------------------
+use_cuda = True
+gravity = 9.81
+dry_tolerance = 1.e-4
+earth_radius = 6367.5e3
+coordinate_system = 1
+mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
+
 # --------------------- Topography file -----------------------------------------------
 topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
 topofile_int = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
@@ -198,7 +206,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_aux = 1
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 0 #flag set to 0 if coordinate system = 1 otherwise 2
+    clawdata.capa_index = mcapa 
 
     # -------------
     # Initial time:
@@ -252,8 +260,6 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.output_aux_components = 'none'  # could be list
     clawdata.output_aux_onlyonce = True    # output aux arrays only at t0
 
-
-
     # ---------------------------------------------------
     # Verbosity of messages to screen during integration:
     # ---------------------------------------------------
@@ -262,8 +268,6 @@ def setrun(claw_pkg='geoclaw'):
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
     clawdata.verbosity = 1
-
-
 
     # --------------
     # Time stepping:
@@ -324,7 +328,6 @@ def setrun(claw_pkg='geoclaw'):
     #   src_split == 1 or 'godunov' ==> Godunov (1st order) splitting used,
     #   src_split == 2 or 'strang'  ==> Strang (2nd order) splitting used,  not recommended.
     clawdata.source_split = 'godunov'
-
 
     # --------------------
     # Boundary conditions:
@@ -401,7 +404,13 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_prefix = "mlp"
     geoflooddata.tikz_plot_suffix = "png"
 
-    geoflooddata.user = {'example'     : 1}
+    geoflooddata.user = {'cuda'     : use_cuda,
+                         'gravity'  : gravity,
+                         'dry_tolerance' : dry_tolerance,
+                         'earth_radius'  : earth_radius,
+                         'coordinate_system' : coordinate_system,
+                        'mcapa'     : mcapa,
+                         }
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
@@ -541,9 +550,9 @@ def setgeo(rundata):
         raise AttributeError("Missing geo_data attribute")
 
     # == Physics ==
-    geo_data.gravity = 9.81
-    geo_data.coordinate_system = 1   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
-    geo_data.earth_radius = 6367.5e3
+    geo_data.gravity = gravity
+    geo_data.coordinate_system = coordinate_system   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
+    geo_data.earth_radius = earth_radius
 
     # == Forcing Options
     geo_data.coriolis_forcing = False #Not used in TELEmac

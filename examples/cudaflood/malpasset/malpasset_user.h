@@ -46,7 +46,6 @@ extern "C"
 
 typedef struct user_options
 {
-    int example;
     int cuda;
     double gravity;
     double dry_tolerance;
