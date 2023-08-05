@@ -53,10 +53,6 @@ typedef struct user_options
     double earth_radius;
     int coordinate_system;
     int mcapa;
-    int mapping; 
-    double alpha;
-    int claw_version;
-    int is_registered;
 } user_options_t;
 
 
