@@ -23,8 +23,8 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef BUMP_USER_H
-#define BUMP_USER_H
+#ifndef MALPASSET_USER_H
+#define MALPASSET_USER_H
 
 #include <fc2d_cudaclaw.h>
 #include <fc2d_cudaclaw_options.h>
@@ -62,20 +62,20 @@ typedef struct user_options
 
 /* --------------------------------------- Cuda ----------------------------------------*/
 
-  void bump_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
-  void bump_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
-  void bump_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
+  void malpasset_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
+  void malpasset_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
+  void malpasset_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
 
   void setprob_cuda();
 
-void bump_link_solvers(fclaw2d_global_t *glob);
+void malpasset_link_solvers(fclaw2d_global_t *glob);
 
-user_options_t* bump_options_register (fclaw_app_t * app,
+user_options_t* malpasset_options_register (fclaw_app_t * app,
                                        const char *configfile);
 
-void bump_options_store (fclaw2d_global_t* glob, user_options_t* user);
+void malpasset_options_store (fclaw2d_global_t* glob, user_options_t* user);
 
-user_options_t* bump_get_options(fclaw2d_global_t* glob);
+user_options_t* malpasset_get_options(fclaw2d_global_t* glob);
 
 /* ----------------------------- Conservative update ---------------------------------- */
 
@@ -91,8 +91,8 @@ user_options_t* bump_get_options(fclaw2d_global_t* glob);
 /* --------------------------------------- non-Cuda ----------------------------------------*/
 
 #if 0
-#define BUMP_SETPROB FCLAW_F77_FUNC(bump_setprob, BUMP_SETPROB)
-void BUMP_SETPROB();
+#define MALPASSET_SETPROB FCLAW_F77_FUNC(malpasset_setprob, MALPASSET_SETPROB)
+void MALPASSET_SETPROB();
 
 #define USER5_SETAUX_MANIFOLD FCLAW_F77_FUNC(user5_setaux_manifold, \
                                              USER5_SETAUX_MANIFOLD)
@@ -108,7 +108,7 @@ void USER5_SETAUX_MANIFOLD(const int* mbc,
                            double area[]);
 
 
-void bump_patch_setup(fclaw2d_global_t *glob,
+void malpasset_patch_setup(fclaw2d_global_t *glob,
                            fclaw2d_patch_t *this_patch,
                            int this_block_idx,
                            int this_patch_idx);

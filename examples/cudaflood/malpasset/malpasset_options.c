@@ -23,12 +23,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "bump_user.h"
+#include "malpasset_user.h"
 
 static int s_user_options_package_id = -1;
 
 static void *
-bump_register (user_options_t* user, sc_options_t * opt)
+malpasset_register (user_options_t* user, sc_options_t * opt)
 {
    sc_options_add_int (opt, 0, "example", &user->example, 0,
                            "[user] Example [0]");
@@ -57,7 +57,7 @@ bump_register (user_options_t* user, sc_options_t * opt)
 }
 
 static fclaw_exit_type_t
-bump_check (user_options_t *user)
+malpasset_check (user_options_t *user)
 {
     if(user->cuda != 0)
     {
@@ -70,7 +70,7 @@ bump_check (user_options_t *user)
 }
 
 static void
-bump_destroy(user_options_t *user)
+malpasset_destroy(user_options_t *user)
 {
     /* Nothing to destroy */
 }
@@ -87,7 +87,7 @@ options_register (fclaw_app_t * app, void *package, sc_options_t * opt)
 
     user = (user_options_t*) package;
 
-    return bump_register(user,opt);
+    return malpasset_register(user,opt);
 }
 
 static fclaw_exit_type_t
@@ -101,7 +101,7 @@ options_check(fclaw_app_t *app, void *package,void *registered)
 
     user = (user_options_t*) package;
 
-    return bump_check(user);
+    return malpasset_check(user);
 }
 
 
@@ -117,7 +117,7 @@ options_destroy (fclaw_app_t * app, void *package, void *registered)
     user = (user_options_t*) package;
     FCLAW_ASSERT (user->is_registered);
 
-    bump_destroy (user);
+    malpasset_destroy (user);
 
     FCLAW_FREE (user);
 }
@@ -133,7 +133,7 @@ static const fclaw_app_options_vtable_t options_vtable_user =
 
 /* ------------- User options access functions --------------------- */
 
-user_options_t* bump_options_register (fclaw_app_t * app,
+user_options_t* malpasset_options_register (fclaw_app_t * app,
                                           const char *configfile)
 {
     user_options_t *user;
@@ -147,14 +147,14 @@ user_options_t* bump_options_register (fclaw_app_t * app,
     return user;
 }
 
-void bump_options_store (fclaw2d_global_t* glob, user_options_t* user)
+void malpasset_options_store (fclaw2d_global_t* glob, user_options_t* user)
 {
     FCLAW_ASSERT(s_user_options_package_id == -1);
     int id = fclaw_package_container_add_pkg(glob,user);
     s_user_options_package_id = id;
 }
 
-user_options_t* bump_get_options(fclaw2d_global_t* glob)
+user_options_t* malpasset_get_options(fclaw2d_global_t* glob)
 {
     int id = s_user_options_package_id;
     return (user_options_t*) fclaw_package_get_options(glob, id);    
