@@ -48,14 +48,14 @@ typedef struct user_options
 {
     int example;
     int cuda;
-
     double gravity;
-
+    double dry_tolerance;
+    double earth_radius;
+    int coordinate_system;
+    int mcapa;
     int mapping; 
     double alpha;
-
     int claw_version;
-
     int is_registered;
 } user_options_t;
 

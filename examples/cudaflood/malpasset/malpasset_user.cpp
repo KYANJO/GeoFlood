@@ -24,29 +24,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "malpasset_user.h"
-
+#include <fclaw2d_include_all.h>
 #include <fclaw2d_clawpatch.h>
-
-#include <fc2d_clawpack46.h>
+#include <fc2d_geoclaw.h>
 
 static
 void malpasset_problem_setup(fclaw2d_global_t* glob)
 {
     const user_options_t* user = malpasset_get_options(glob);
-    
+
     if (glob->mpirank == 0)
     {
         FILE *f = fopen("setprob.data","w");
         if(user->cuda != 0)
-        {
+        {   
             fprintf(f,  "%-24.16f   %s",user->gravity,"\% gravity\n");
-            /* <-- for geoflood applications
             fprintf(f,  "%-24.16f   %s",user->dry_tolerance,"\% dry_tolerance\n");
             fprintf(f,  "%-24.16f   %s",user->earth_radius,"\% earth_radius\n");
             fprintf(f,  "%-24d   %s",  user->coordinate_system,"\% coordinate_system\n");
             fprintf(f,  "%-24d   %s",  user->mcapa,"\% mcapa\n");
-            */
-           
+        
         }
         else
         {
