@@ -31,45 +31,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_clawpatch.h>
 
-#include <fc2d_clawpack46_options.h>
-#include <fc2d_clawpack5_options.h>
-
-#include <fc2d_clawpack46.h>
-#include <fc2d_clawpack5.h>
+#include <fc2d_geoclaw.h>
+#include <fc2d_geoclaw_options.h>
 
 static
 fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, 
-                                fclaw_options_t* fclaw_opt,
-                                user_options_t* user)
+                                fclaw_options_t* fclaw_opt)
 {
     /* Mapped, multi-block domain */
     p4est_connectivity_t     *conn = NULL;
     fclaw2d_domain_t         *domain;
-    fclaw2d_map_context_t    *cont = NULL;
+    fclaw2d_map_context_t    *cont = NULL, *brick = NULL;
 
-    if (user->cuda == 0)
-    {
-        switch (user->example)
-        {
-        case 0:
-            /* Use [ax,bx]x[ay,by] */
-            conn = p4est_connectivity_new_unitsquare();
-            cont = fclaw2d_map_new_nomap();
-            break;
-        default:
-            SC_ABORT_NOT_REACHED ();
-        }
-    }
-    else
-    {
-        /* Use [ax,bx]x[ay,by] */
-        conn = p4est_connectivity_new_unitsquare();
-        cont = fclaw2d_map_new_nomap();
-    }
+    int mi,mj,a,b;
+
+    mi = fclaw_opt->mi;
+    mj = fclaw_opt->mj;
+    a = 0; /* non-periodic */
+    b = 0;
+
+    /* Rectangular brick domain */
+    conn = p4est_connectivity_new_brick(mi,mj,a,b);
+    brick = fclaw2d_map_new_brick(conn,mi,mj);
+    cont = fclaw2d_map_new_nomap_brick(brick);
 
     domain = fclaw2d_domain_new_conn_map (mpicomm, fclaw_opt->minlevel, conn, cont);
     fclaw2d_domain_list_levels(domain, FCLAW_VERBOSITY_ESSENTIAL);
-    fclaw2d_domain_list_neighbors(domain, FCLAW_VERBOSITY_DEBUG);  
+    fclaw2d_domain_list_neighbors(domain, FCLAW_VERBOSITY_DEBUG); 
     return domain;
 }
 
@@ -102,11 +90,15 @@ void run_program(fclaw2d_global_t* glob)
     }
     else
     {
-        fc2d_clawpack46_solver_initialize();
+        fc2d_geoclaw_solver_initialize(glob);
     }   
 
     malpasset_link_solvers(glob);
 
+    if(user_opt->cuda != 0)
+    {
+         fc2d_geoclaw_module_setup(glob);
+    }
 
     /* ---------------------------------------------------------------
        Run
@@ -173,7 +165,7 @@ main (int argc, char **argv)
         /* Options have been checked and are valid */
 
         mpicomm = fclaw_app_get_mpi_size_rank (app, NULL, NULL);
-        domain = create_domain(mpicomm, fclaw_opt,user_opt);
+        domain = create_domain(mpicomm, fclaw_opt);
     
         /* Create global structure which stores the domain, timers, etc */
         glob = fclaw2d_global_new();
