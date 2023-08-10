@@ -191,7 +191,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     bmasdq[2] = 0.0;
     bpasdq[2] = 0.0;
     j = 0; k = 0; // counter for data packing
-    for (mw=0; mw < 2; mw++)
+    for (mw=0; mw < 3; mw++)
     {
         if (sw[mw] < 0.0)
         {
