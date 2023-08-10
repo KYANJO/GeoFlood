@@ -63,10 +63,10 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                             double amdq[], double apdq[])
 {
     // local variables
-    int m,i,mw,maxiter,mu,mv;
-    double wall[2];
-    double fw[2][2];
-    double sw[2];
+    int m,i,j,k,mw,maxiter,mu,mv;
+    double wall[3];
+    double fw[9];
+    double sw[3];
 
     double hR,hR,huR,huL,uR,uL,hvR,hvL,vR,vL,phiR,phiL;
     double bR,bL,sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat;
@@ -83,11 +83,13 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     }
 
     // Initialize Riemann problem for the grid interface
+    k = 0; //counter for data  packing
     for (mw=0; mw<=mwaves; ++mw)
     {
         sw[mw] = 0.0;
-        fwave[mw] = 0.0;
-
+        fwave[k] = 0.0; k = k+1;
+        fwave[k] = 0.0; k = k+1;
+        fwave[k] = 0.0; k = k+1;
     }
 
     // set normal direction
@@ -221,18 +223,22 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                     uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,s_grav,sw,fw);
 
     // eliminate ghost fluxes for wall
-    for (mw=0; mw<2; mw++)
+    k = 0; // counter for data packing
+    for (mw=0; mw<3; mw++)
     {
         sw[mw] = sw[mw]*wall[mw];
-        fw[mw] = fw[mw]*wall[mw];
+        fw[k] = fw[k]*wall[mw]; k = k+1;
+        fw[k] = fw[k]*wall[mw]; k = k+1;
+        fw[k] = fw[k]*wall[mw]; k = k+1;
     }
 
+    k = 0; // counter for data packing
     for (mw=0; mw<mwaves; mw++)
     {
         s[mw] = sw[mw];
-        fwave[mw] = fw[mw];
-        fwave[mu] = fw[mw];
-        fwave[mv] = fw[mw];
+        fwave[0 + meqn*mw] = fw[k]; k = k+1;
+        fwave[mu + meqn*mw] = fw[k]; k = k+1;
+        fwave[mv + meqn*mw] = fw[k]; k = k+1;
     }
 
     // -- Capacity for Mapping from Latitude Longitude to physical space ----
@@ -246,36 +252,51 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         {
             dxdc = earth_radius*cos(auxl[2])*deg2rad;
         }
+        
+        k = 0; // counter for data packing
         for (mw=0; mw<mwaves; mw++)
         {
             s[mw] = dxdc*s[mw];
-            fwave[mw] = dxdc*fwave[mw];
+            fwave[k] = dxdc*fwave[k]; k = k+1;
+            fwave[k] = dxdc*fwave[k]; k = k+1;
+            fwave[k] = dxdc*fwave[k]; k = k+1;
         }
     }
 
     // --- compute fluctuations ------------------------------------
-    amdq[0:2] = 0.0;
-    apdq[0:2] = 0.0;
-    for (mw=0; mw<mwaves; mw++)
-    {
+   amdq[0]  = 0.0;
+   amdq[1]  = 0.0;
+   amdq[2]  = 0.0;
+   apdq[0]  = 0.0;
+   apdq[1]  = 0.0;
+   apdq[2]  = 0.0;
+
+   i = 0; j = 0; k = 0; // counter for data packing
+   for (mw=0; mw<mwaves; mw++)
+   {
         if (s[mw] < 0.0)
         {
-            amdq[0:2] = amdq[0:2] + fwave[mw];
+            amdq[0] = amdq[0] + fwave[i]; i = i+1;
+            amdq[1] = amdq[1] + fwave[i]; i = i+1;
+            amdq[2] = amdq[2] + fwave[i]; i = i+1;
         }
         else if (s[mw] > 0.0)
         {
-            apdq[0:2] = apdq[0:2] + fwave[mw];
+            apdq[0] = apdq[0] + fwave[j]; j = j+1;
+            apdq[1] = apdq[1] + fwave[j]; j = j+1;
+            apdq[2] = apdq[2] + fwave[j]; j = j+1;
         }
         else
         {
-            amdq[0:2] = amdq[0:2] + 0.5*fwave[mw];
-            apdq[0:2] = apdq[0:2] + 0.5*fwave[mw];
+            amdq[0] = amdq[0] + 0.5*fwave[k]; k = k+1;
+            amdq[1] = amdq[1] + 0.5*fwave[k]; k = k+1;
+            amdq[2] = amdq[2] + 0.5*fwave[k]; k = k+1;
+            apdq[0] = apdq[0] + 0.5*fwave[m]; m = m+1;
+            apdq[1] = apdq[1] + 0.5*fwave[m]; m = m+1;
+            apdq[2] = apdq[2] + 0.5*fwave[m]; m = m+1;
         }
-    }
-
-     
-
-
+   }
+   
 }
 
 __device__ cudaclaw_cuda_rpn2_t geoflood_rpn2 = cudaflood_rpn2;
