@@ -43,11 +43,11 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                                 double aux2[], double aux3[], int imp, 
                                 double asdq[], double bmasdq[], double bpasdq[]) //<-- added imp, don't forget to update it in cudaclaw_flux2.cu
 {
-    int i,m,mw,mu,mv;
+    int i,j,k,m,mw,mu,mv;
 
-    double s[2];
-    double r[2][2];
-    double beta[2];
+    double s[3];
+    double r[9];
+    double beta[3];
     double abs_tol;
     double hl,hr,hul,hur,hvl,hvr,vl,vr,ul,ur,bl,br;
     double uhat,vhat,hhat,roe1,roe3,s1,s2,s3,s1l,s3r;
@@ -96,8 +96,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
         s[mw] = 0.0;
         beta[mw] = 0.0;
         for (m=0; m<meqn; m++)
-        {
-            r[mw][m] = 0.0;
+        {   
+            r[meqn*mw + m] = 0.0;
         }
     }
     dxdcp = 1.0;
@@ -171,17 +171,17 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     beta[2] = (delf3/(s3-s1)) - (s1*delf1/(s3-s1));
 
     // --- Set-up eigenvectors matrix (r) ---//
-    r[0][0] = 1.0;
-    r[1][0] = s2;
-    r[2][0] = s1;
+    r[0] = 1.0;
+    r[1] = s2;
+    r[2] = s1;
 
-    r[0][1] = 0.0;
-    r[1][1] = 1.0;
-    r[2][1] = 0.0;
+    r[3] = 0.0;
+    r[4] = 1.0;
+    r[5] = 0.0;
 
-    r[0][2] = 1.0;
-    r[1][2] = s2;
-    r[2][2] = s3;
+    r[6] = 1.0;
+    r[7] = s2;
+    r[8] = s3;
 
     // ---- Compute fluctuations ----//
     bmasdq[0] = 0.0;
@@ -190,19 +190,20 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     bpasdq[1] = 0.0;
     bmasdq[2] = 0.0;
     bpasdq[2] = 0.0;
+    j = 0; k = 0; // counter for data packing
     for (mw=0; mw < 2; mw++)
     {
         if (sw[mw] < 0.0)
         {
-            bmasdq[0] = bmasdq[0] + dxdcm*s[mw]*beta[mw]*r[0][mw];
-            bmasdq[mu] = bmasdq[mu] + dxdcm*s[mw]*beta[mw]*r[1][mw];
-            bmasdq[mv] = bmasdq[mv] + dxdcm*s[mw]*beta[mw]*r[2][mw];
+            bmasdq[0] = bmasdq[0] + dxdcm*s[mw]*beta[mw]*r[j]; j = j+1;
+            bmasdq[mu] = bmasdq[mu] + dxdcm*s[mw]*beta[mw]*r[j]; j = j+1;
+            bmasdq[mv] = bmasdq[mv] + dxdcm*s[mw]*beta[mw]*r[j]; j = j+1;
         }
         else if (s[mw] > 0.0)
         {
-            bpasdq[0] = bpasdq[0] + dxdcp*s[mw]*beta[mw]*r[0][mw];
-            bpasdq[mu] = bpasdq[mu] + dxdcp*s[mw]*beta[mw]*r[1][mw];
-            bpasdq[mv] = bpasdq[mv] + dxdcp*s[mw]*beta[mw]*r[2][mw];
+            bpasdq[0] = bpasdq[0] + dxdcp*s[mw]*beta[mw]*r[k]; k = k+1;
+            bpasdq[mu] = bpasdq[mu] + dxdcp*s[mw]*beta[mw]*r[k]; k = k+1;
+            bpasdq[mv] = bpasdq[mv] + dxdcp*s[mw]*beta[mw]*r[k]; k = k+1;
         }
     }
 }
