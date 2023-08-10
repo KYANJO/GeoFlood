@@ -541,7 +541,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double h
                  double drytol, double g)
 {
     // Local variables
-    double u1m, u2m, delu;
+    double u1m, u2m, um, delu;
     double h_max, h_min, h0, F_max, F_min, dfdh, F0, slope, gL, gR;
     int iter;
 
@@ -574,7 +574,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double h
 
         if (F_min > 0.0) //2-rarefactions
         {
-            hm = (1/(16*g))*pow(fmax(0.0,-delu+2*(sqrt(g*hL)+srt(g*hR))),2);
+            hm = (1/(16*g))*pow(fmax(0.0,-delu+2*(sqrt(g*hL)+sqrt(g*hR))),2);
             double sign_hm = (hm >= 0.0) ? 1.0 : -1.0;
             um = sign_hm*(uL+2*(sqrt(g*hL)-sqrt(g*hm)));
 

@@ -68,7 +68,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     double fw[9];
     double sw[3];
 
-    double hR,hR,huR,huL,uR,uL,hvR,hvL,vR,vL,phiR,phiL;
+    double hR,hL,huR,huL,uR,uL,hvR,hvL,vR,vL,phiR,phiL;
     double bR,bL,sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat;
     double s1m,s2m;
     double hstar,hstartest,hstarHLL,sLtest,sRtest;
@@ -112,7 +112,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     }
 
     //  skip problem if in a completely dry area
-    if (qr[0] > drytol && ql[0] > drytol)
+    if (qr[0] > dry_tolerance && ql[0] > dry_tolerance)
     {
         // Riemann problem variables
         hL = qr[0];
@@ -126,11 +126,11 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         hvR = ql[mv];
 
         // check for wet/dry boundary
-        if (hR > drytol)
+        if (hR > dry_tolerance)
         {
             uR = huR/hR;
             vR = hvR/hR;
-            phiR = 0.5*s_grav*(hR*hR) + (huR*huR)/hR
+            phiR = 0.5*s_grav*(hR*hR) + (huR*huR)/hR;
         }
         else
         {
@@ -142,11 +142,11 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
             phiR = 0.0;
         }
 
-        if (hL > drytol)
+        if (hL > dry_tolerance)
         {
             uL = huL/hL;
             vL = hvL/hL;
-            phiL = 0.5*s_grav*(hL*hL) + (huL*huL)/hL
+            phiL = 0.5*s_grav*(hL*hL) + (huL*huL)/hL;
         }
         else
         {
@@ -161,10 +161,10 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         wall[0] = 1.0;
         wall[1] = 1.0;
         wall[2] = 1.0;
-        if (hR <= drytol)
+        if (hR <= dry_tolerance)
         {
-            riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
-            hstartest = fmax(hK,hstar);
+            riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,rare1,rare2,0,dry_tolerance,s_grav);
+            hstartest = fmax(hL,hstar);
             if (hstartest + bL < bR) //right state should become ghost values that mirror left for wall problem
             {
                 wall[1] = 0.0;
@@ -181,10 +181,10 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                 bR = hL +bL;
             }
         }
-        else if (hL <= drytol)
+        else if (hL <= dry_tolerance)
         {
-            riemanntype(hR,hR,uR,-uR,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
-            hstartest = fmax(hK,hstar);
+            riemanntype(hR,hR,uR,-uR,hstar,s1m,s2m,rare1,rare2,0,dry_tolerance,s_grav);
+            hstartest = fmax(hR,hstar);
             if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
             {
                 wall[0] = 0.0;
@@ -220,7 +220,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         maxiter = 0;
 
         riemann_aug_JCP(maxiter,2,2,hL,hR,huL,huR,hvL,hvR,bL,bR,
-                        uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,s_grav,sw,fw);
+                        uL,uR,vL,vR,phiL,phiR,sE1,sE2,dry_tolerance,s_grav,sw,fw);
 
         // eliminate ghost fluxes for wall
         k = 0; // counter for data packing
