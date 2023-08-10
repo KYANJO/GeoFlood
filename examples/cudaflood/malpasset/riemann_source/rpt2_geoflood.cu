@@ -5,10 +5,14 @@
 topography
 */
 
+#include <fc2d_cudaclaw.h>
+
+#include <fc2d_cudaclaw_check.h>
+
 #include "geoflood_riemann_utils.h"
  
 __constant__ double s_grav;
-__constant__ double drytol;
+__constant__ double dry_tolerance;
 __constant__ double earth_radius;
 __constant__ int coordinate_system;
 __constant__ int mcapa;
@@ -16,7 +20,7 @@ __constant__ int mcapa;
 void setprob_cuda()
 {
     double grav;
-    double dry_tolerance;
+    double drytol;
     double earth_rad;
     int coordinate_system_;
     int mcapa_;
@@ -29,7 +33,7 @@ void setprob_cuda()
     fclose(f);
 
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(drytol, &dry_tolerance, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(dry_tolerance, &drytol, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
     CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
@@ -103,85 +107,92 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     dxdcp = 1.0;
     dxdcm = 1.0;
 
-    if (hl <= abs_tol && hr <= abs_tol) continue;
+    // if (hl <= abs_tol && hr <= abs_tol) continue;
 
-    // check and see if cell that transverse waves are going in is high and dry
-    // if (imp == 0)
-    // {
-        eta = qr[0] + aux2[0];
-        topo1 = aux1[0];
-        topo3 = aux3[0];
-    // }
-    // else
-    // {
-    //     eta = ql[0] + aux2[0];
-    //     topo1 = aux1[0];
-    //     topo3 = aux3[0];
-    // }
-    if (eta < fmax(topo1,topo3)) continue;
-
-    if (coordinate_system == 1)
+    if (hl > abs_tol && hr > abs_tol) 
     {
-        if (ixy == 1 )
+        // check and see if cell that transverse waves are going in is high and dry
+        // if (imp == 0)
+        // {
+            eta = qr[0] + aux2[0];
+            topo1 = aux1[0];
+            topo3 = aux3[0];
+        // }
+        // else
+        // {
+        //     eta = ql[0] + aux2[0];
+        //     topo1 = aux1[0];
+        //     topo3 = aux3[0];
+        // }
+        // if (eta < fmax(topo1,topo3)) continue;
+
+        if (eta > fmax(topo1,topo3))
         {
-            dxdcp = (earth_radius*deg2rad);
-            dxdcm = dxdcp;
-        }
-        else
-        {
-            // if (imp == 0)
-            // {
-                dxdcp = earth_radius*cos(aux3[2])*deg2rad;
-                dxdcm = earth_radius*cos(aux1[2])*deg2rad;
-            // }
-            // else
-            // {
-            //     dxdcp = earth_radius*cos(aux3[2])*deg2rad;
-            //     dxdcm = earth_radius*cos(aux1[2])*deg2rad;
-            // }
-        }
+            if (coordinate_system == 1)
+            {
+                if (idir == 1 )
+                {
+                    dxdcp = (earth_radius*deg2rad);
+                    dxdcm = dxdcp;
+                }
+                else
+                {
+                    // if (imp == 0)
+                    // {
+                        dxdcp = earth_radius*cos(aux3[2])*deg2rad;
+                        dxdcm = earth_radius*cos(aux1[2])*deg2rad;
+                    // }
+                    // else
+                    // {
+                    //     dxdcp = earth_radius*cos(aux3[2])*deg2rad;
+                    //     dxdcm = earth_radius*cos(aux1[2])*deg2rad;
+                    // }
+                }
+            }
+            // ---- determine some speeds necessary for the Jacobian ----//
+            vhat = (vr*sqrt(hr))/(sqrt(hr)+sqrt(hl)) + (vl*sqrt(hl))/(sqrt(hr)+sqrt(hl));
+            uhat = (ur*sqrt(hr))/(sqrt(hr)+sqrt(hl)) + (ul*sqrt(hl))/(sqrt(hr)+sqrt(hl));
+            hhat = (hr + hl)/2.0;
+
+            roe1 = vhat - sqrt(s_grav*hhat);
+            roe3 = vhat + sqrt(s_grav*hhat);
+
+            s1l = vl - sqrt(s_grav*hl);
+            s3r = vr + sqrt(s_grav*hr);
+
+            s1 = fmin(roe1,s1l);
+            s3 = fmax(roe3,s3r);
+
+            s2 = 0.5*(s1+s3);
+
+            s[0] = s1;
+            s[1] = s2;
+            s[2] = s3;
+
+            // ---- determine asdq decomposition (beta) ----//
+            delf1 = asdq[0];
+            delf2 = asdq[mu];
+            delf3 = asdq[mv];
+
+            beta[0] = (s3*delf1/(s3-s1)) - (delf3/(s3-s1));
+            beta[1] = -s2*delf1 + delf2;
+            beta[2] = (delf3/(s3-s1)) - (s1*delf1/(s3-s1));
+
+            // --- Set-up eigenvectors matrix (r) ---//
+            r[0] = 1.0;
+            r[1] = s2;
+            r[2] = s1;
+
+            r[3] = 0.0;
+            r[4] = 1.0;
+            r[5] = 0.0;
+
+            r[6] = 1.0;
+            r[7] = s2;
+            r[8] = s3;
+        }        
     }
-    // ---- determine some speeds necessary for the Jacobian ----//
-    vhat = (vr*sqrt(hr))/(sqrt(hr)+sqrt(hl)) + (vl*sqrt(hl))/(sqrt(hr)+sqrt(hl));
-    uhat = (ur*sqrt(hr))/(sqrt(hr)+sqrt(hl)) + (ul*sqrt(hl))/(sqrt(hr)+sqrt(hl));
-    hhat = (hr + hl)/2.0;
-
-    roe1 = vhat - sqrt(grav*hhat);
-    roe3 = vhat + sqrt(grav*hhat);
-
-    s1l = vl - sqrt(grav*hl);
-    s3r = vr + sqrt(grav*hr);
-
-    s1 = fmin(roe1,s1l);
-    s3 = fmax(roe3,s3r);
-
-    s2 = 0.5*(s1+s3);
-
-    s[0] = s1;
-    s[1] = s2;
-    s[2] = s3;
-
-    // ---- determine asdq decomposition (beta) ----//
-    delf1 = asdq[0];
-    delf2 = asdq[mu];
-    delf3 = asdq[mv];
-
-    beta[0] = (s3*delf1/(s3-s1)) - (delf3/(s3-s1));
-    beta[1] = -s2*delf1 + delf2;
-    beta[2] = (delf3/(s3-s1)) - (s1*delf1/(s3-s1));
-
-    // --- Set-up eigenvectors matrix (r) ---//
-    r[0] = 1.0;
-    r[1] = s2;
-    r[2] = s1;
-
-    r[3] = 0.0;
-    r[4] = 1.0;
-    r[5] = 0.0;
-
-    r[6] = 1.0;
-    r[7] = s2;
-    r[8] = s3;
+    
 
     // ---- Compute fluctuations ----//
     bmasdq[0] = 0.0;
@@ -193,7 +204,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     j = 0; k = 0; // counter for data packing
     for (mw=0; mw < 3; mw++)
     {
-        if (sw[mw] < 0.0)
+        if (s[mw] < 0.0)
         {
             bmasdq[0] = bmasdq[0] + dxdcm*s[mw]*beta[mw]*r[j]; j = j+1;
             bmasdq[mu] = bmasdq[mu] + dxdcm*s[mw]*beta[mw]*r[j]; j = j+1;

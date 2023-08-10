@@ -14,10 +14,11 @@
          with instabilities that arise (with any solver) as flow becomes transcritical 
          over variable topography due to loss of hyperbolicity. 
 */
-__device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR,
-                 double huL, double huR, double hvL, double hvR, double bL, double bR, 
-                 double uL, double uR, double vL, double vR, double phiL, double phiR,
-                 double sE1, double sE2, double drytol, double g, double* sw, double* fw)
+__device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
+                 double hR, double huL, double huR, double hvL, double hvR, 
+                 double bL, double bR, double uL, double uR, double vL, 
+                 double vR, double phiL, double phiR, double sE1, double sE2, 
+                 double drytol, double g, double* sw, double* fw)
 {
     // Local variables
     int m, mw, k, iter;
@@ -52,7 +53,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
     lambda[2] = fmax(sE2,s1m); // Modified Einfeldt speed
     sE1 = lambda[0];
     sE2 = lambda[2];
-    lambda[1] = 0.0 // Fix to avoid uninitialized value in loop on mw
+    lambda[1] = 0.0; // Fix to avoid uninitialized value in loop on mw
 
     hstarHLL = fmax((huL-huR+sE2*hR-sE1*hL)/(sE2-sE1),0.0); // middle state in a HLL solver
 
@@ -122,7 +123,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
 
     // iterate to better determine steady state wave
     convergencetol = 1.0e-6;
-    for (iter=0; iter < maiter; iter++)
+    for (iter=0; iter < maxiter; iter++)
     {
         // determine steady state wave (this will be subtracted from the delta vectors)
         if (fmin(hLstar,hRstar) < drytol && rarecorrector)
@@ -250,7 +251,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         k = 0; // counter for data packing
         for (mw = mwaves-1; mw >= 0; mw--)
         {
-            if (lambda[mq] > 0.0)
+            if (lambda[mw] > 0.0)
             {
                 hRstar = hRstar - beta[mw]*r[k]; k = k + 1;
                 huRstar = huRstar - beta[mw]*r[k]; k = k + 1;
@@ -303,7 +304,7 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
                  double phiR, double sE1, double sE2, double drytol, double g, double* sw, double* fw)
 {
     // Local variables
-    double delh, delhu, delphi, delb, delhdecomp, delphidecomp, deldelh;
+    double delh, delhu, delphi, delb, delhdecomp, delphidecomp;
     double s1s2bar,s1s2tilde,hbar,hLstar,hRstar,hustar;
     double uRstar,uLstar,hstarHLL;
     double deldelh, deldelphi;
@@ -352,7 +353,7 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
             sonic = false;
             if (fabs(s1s2bar) <= criticaltol) sonic = true;
             if (s1s2bar*s1s2tilde <= criticaltol) sonic = true;
-            if (s1s2bar*sE1*sE2*E2 <= criticaltol) sonic = true;
+            if (s1s2bar*sE1*sE2 <= criticaltol) sonic = true;
             if (fmin(fabs(sE1),fabs(sE2)) < criticaltol) sonic = true;
 
             // find jump in h, deldelh

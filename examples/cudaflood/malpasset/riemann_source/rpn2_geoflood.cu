@@ -25,7 +25,7 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include "geoflood_riemann_utils.h"
 
 __constant__ double s_grav;
-__constant__ double drytol;
+__constant__ double dry_tolerance;
 __constant__ double earth_radius;
 __constant__ int coordinate_system;
 __constant__ int mcapa;
@@ -33,7 +33,7 @@ __constant__ int mcapa;
 void setprob_cuda()
 {
     double grav;
-    double dry_tolerance;
+    double drytol;
     double earth_rad;
     int coordinate_system_;
     int mcapa_;
@@ -46,7 +46,7 @@ void setprob_cuda()
     fclose(f);
 
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(drytol, &dry_tolerance, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(dry_tolerance, &drytol, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
     CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
@@ -112,133 +112,134 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     }
 
     //  skip problem if in a completely dry area
-    if (qr[0] <= drytol && ql[0] <= drytol) continue;
-
-    // Riemann problem variables
-    hL = qr[0];
-    hR = ql[0];
-    huL = qr[mu];
-    huR = ql[mu];
-    bL = auxr[0];
-    bR = auxl[0];
-
-    hvL = qr[mv];
-    hvR = ql[mv];
-
-    // check for wet/dry boundary
-    if (hR > drytol)
+    if (qr[0] > drytol && ql[0] > drytol)
     {
-        uR = huR/hR;
-        vR = hvR/hR;
-        phiR = 0.5*s_grav*(hR*hR) + (huR*huR)/hR
-    }
-    else
-    {
-        hR = 0.0;
-        huR = 0.0;
-        hvR = 0.0;
-        uR = 0.0;
-        vR = 0.0;
-        phiR = 0.0;
-    }
+        // Riemann problem variables
+        hL = qr[0];
+        hR = ql[0];
+        huL = qr[mu];
+        huR = ql[mu];
+        bL = auxr[0];
+        bR = auxl[0];
 
-    if (hL > drytol)
-    {
-        uL = huL/hL;
-        vL = hvL/hL;
-        phiL = 0.5*s_grav*(hL*hL) + (huL*huL)/hL
-    }
-    else
-    {
-        hL = 0.0;
-        huL = 0.0;
-        hvL = 0.0;
-        uL = 0.0;
-        vL = 0.0;
-        phiL = 0.0;
-    }
+        hvL = qr[mv];
+        hvR = ql[mv];
 
-    wall[0] = 1.0;
-    wall[1] = 1.0;
-    wall[2] = 1.0;
-    if (hR <= drytol)
-    {
-        riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
-        hstartest = fmax(hK,hstar);
-        if (hstartest + bL < bR) //right state should become ghost values that mirror left for wall problem
+        // check for wet/dry boundary
+        if (hR > drytol)
         {
-            wall[1] = 0.0;
-            wall[2] = 0.0;
-            hR = hL;
-            huR = -huL;
-            bR = bL;
-            phiR = phiL;
-            uR = -uL;
-            vR = vL;
+            uR = huR/hR;
+            vR = hvR/hR;
+            phiR = 0.5*s_grav*(hR*hR) + (huR*huR)/hR
         }
-        else if (hL+bL < bR)
+        else
         {
-            bR = hL +bL;
+            hR = 0.0;
+            huR = 0.0;
+            hvR = 0.0;
+            uR = 0.0;
+            vR = 0.0;
+            phiR = 0.0;
         }
-    }
-    else if (hL <= drytol)
-    {
-        riemanntype(hR,hR,uR,-uR,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
-        hstartest = fmax(hK,hstar);
-        if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
+
+        if (hL > drytol)
         {
-            wall[0] = 0.0;
-            wall[2] = 0.0;
-            hL = hR;
-            huL = -huR;
-            bL = bR;
-            phiL = phiR;
-            uL = -uR;
-            vL = vR;
+            uL = huL/hL;
+            vL = hvL/hL;
+            phiL = 0.5*s_grav*(hL*hL) + (huL*huL)/hL
         }
-        else if (hR+bR < bL)
+        else
         {
-            bL = hR +bR;
+            hL = 0.0;
+            huL = 0.0;
+            hvL = 0.0;
+            uL = 0.0;
+            vL = 0.0;
+            phiL = 0.0;
         }
-    }
 
-    //  determine wave speeds
-    sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
-    sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
+        wall[0] = 1.0;
+        wall[1] = 1.0;
+        wall[2] = 1.0;
+        if (hR <= drytol)
+        {
+            riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
+            hstartest = fmax(hK,hstar);
+            if (hstartest + bL < bR) //right state should become ghost values that mirror left for wall problem
+            {
+                wall[1] = 0.0;
+                wall[2] = 0.0;
+                hR = hL;
+                huR = -huL;
+                bR = bL;
+                phiR = phiL;
+                uR = -uL;
+                vR = vL;
+            }
+            else if (hL+bL < bR)
+            {
+                bR = hL +bL;
+            }
+        }
+        else if (hL <= drytol)
+        {
+            riemanntype(hR,hR,uR,-uR,hstar,s1m,s2m,rare1,rare2,0,drytol,s_grav);
+            hstartest = fmax(hK,hstar);
+            if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
+            {
+                wall[0] = 0.0;
+                wall[2] = 0.0;
+                hL = hR;
+                huL = -huR;
+                bL = bR;
+                phiL = phiR;
+                uL = -uR;
+                vL = vR;
+            }
+            else if (hR+bR < bL)
+            {
+                bL = hR +bR;
+            }
+        }
 
-    uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe velocity
-    chat = sqrt(0.5*s_grav*(hL+hR)); // Roe speed of sound
-    sRoe1 = uhat - chat; // Roe wave speed 1 wave
-    sRoe2 = uhat + chat; // Roe wave speed 2 wave
+        //  determine wave speeds
+        sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
+        sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
 
-    sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
-    sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
+        uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe velocity
+        chat = sqrt(0.5*s_grav*(hL+hR)); // Roe speed of sound
+        sRoe1 = uhat - chat; // Roe wave speed 1 wave
+        sRoe2 = uhat + chat; // Roe wave speed 2 wave
 
-    // --- end initializing ------------------------------------
+        sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
+        sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
 
-    // solve Riemann problem
-    maxiter = 0;
+        // --- end initializing ------------------------------------
 
-    riemann_aug_JCP(maxiter,2,2,hL,hR,huL,huR,hvL,hvR,bL,bR,
-                    uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,s_grav,sw,fw);
+        // solve Riemann problem
+        maxiter = 0;
 
-    // eliminate ghost fluxes for wall
-    k = 0; // counter for data packing
-    for (mw=0; mw<3; mw++)
-    {
-        sw[mw] = sw[mw]*wall[mw];
-        fw[k] = fw[k]*wall[mw]; k = k+1;
-        fw[k] = fw[k]*wall[mw]; k = k+1;
-        fw[k] = fw[k]*wall[mw]; k = k+1;
-    }
+        riemann_aug_JCP(maxiter,2,2,hL,hR,huL,huR,hvL,hvR,bL,bR,
+                        uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,s_grav,sw,fw);
 
-    k = 0; // counter for data packing
-    for (mw=0; mw<mwaves; mw++)
-    {
-        s[mw] = sw[mw];
-        fwave[0 + meqn*mw] = fw[k]; k = k+1;
-        fwave[mu + meqn*mw] = fw[k]; k = k+1;
-        fwave[mv + meqn*mw] = fw[k]; k = k+1;
+        // eliminate ghost fluxes for wall
+        k = 0; // counter for data packing
+        for (mw=0; mw<3; mw++)
+        {
+            sw[mw] = sw[mw]*wall[mw];
+            fw[k] = fw[k]*wall[mw]; k = k+1;
+            fw[k] = fw[k]*wall[mw]; k = k+1;
+            fw[k] = fw[k]*wall[mw]; k = k+1;
+        }
+
+        k = 0; // counter for data packing
+        for (mw=0; mw<mwaves; mw++)
+        {
+            s[mw] = sw[mw];
+            fwave[0 + meqn*mw] = fw[k]; k = k+1;
+            fwave[mu + meqn*mw] = fw[k]; k = k+1;
+            fwave[mv + meqn*mw] = fw[k]; k = k+1;
+        }
     }
 
     // -- Capacity for Mapping from Latitude Longitude to physical space ----
