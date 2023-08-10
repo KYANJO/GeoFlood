@@ -465,19 +465,19 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
     beta2 = (delphidecomp - sE1*delhu)/(sE2-sE1);
 
     //  1st nonlinear wave
-    fw[0][0] = alpha1*sE1;
-    fw[1][0] = beta1*sE1;
-    fw[2][0] = fw[0][0]*vL;
+    fw[0] = alpha1*sE1;
+    fw[1] = beta1*sE1;
+    fw[2] = fw[0]*vL;
 
     //  2nd nonlinear wave
-    fw[0][2] = alpha2*sE2;
-    fw[1][2] = beta2*sE2;
-    fw[2][2] = fw[0][2]*vR;
-
+    fw[6] = alpha2*sE2;
+    fw[7] = beta2*sE2;
+    fw[8] = fw[6]*vR;
+    
     //  advection of transverse wave
-    fw[0][1] = 0.0;
-    fw[1][1] = 0.0;
-    fw[2][1] = hR*uR*vR - hL*uL*vL - fw[2][1] - fw[2][2];
+    fw[3] = 0.0;
+    fw[4] = 0.0;
+    fw[5] = hR*uR*vR - hL*uL*vL - fw[2] - fw[8];
 
     //  speeds
     sw[0] = sE1;
@@ -516,19 +516,19 @@ __device__ void riemann_fwaves(int meqn, int mwaves, double hL, double hR, doubl
     sw[2] = s2;
 
     // 1st nonlinear wave
-    fw[0][0] = beta1;
-    fw[1][0] = beta1*s1;
-    fw[2][0] = beta*vL;
+    fw[0] = beta1;
+    fw[1] = beta1*s1;
+    fw[2] = beta1*vL;
 
     // 2nd nonlinear wave
-    fw[0][2] = beta2;
-    fw[1][2] = beta2*s2;
-    fw[2][2] = beta2*vR;
+    fw[6] = beta2;
+    fw[7] = beta2*s2;
+    fw[8] = beta2*vR;
 
-    // advsction of transverse wave
-    fw[0][1] = 0.0;
-    fw[1][1] = 0.0;
-    fw[2][1] = hR*uR*vR - hL*uL*vL -fw[2][0] - fw[2][2];
+    // advection of transverse wave
+    fw[3] = 0.0;
+    fw[4] = 0.0;
+    fw[5] = hR*uR*vR - hL*uL*vL - fw[2] - fw[8];
 }
 // === end function Riemann_fwaves ========================================================
 
