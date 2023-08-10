@@ -6,41 +6,46 @@ topography
 */
 
 #include <fc2d_cudaclaw.h>
-
 #include <fc2d_cudaclaw_check.h>
+#include <fc2d_cudaclaw_options.h>
+#include <cudaclaw_user_fort.h>
+#include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
+#include <fclaw2d_include_all.h>
 
 #include "geoflood_riemann_utils.h"
- 
-__constant__ double s_grav;
-__constant__ double dry_tolerance;
-__constant__ double earth_radius;
-__constant__ int coordinate_system;
-__constant__ int mcapa;
+#include "variables.h"
+// __constant__ double s_grav;
+// __constant__ double dry_tolerance;
+// __constant__ double earth_radius;
+// __constant__ int coordinate_system;
+// __constant__ int mcapa;
 
-void setprob_cuda()
-{
-    double grav;
-    double drytol;
-    double earth_rad;
-    int coordinate_system_;
-    int mcapa_;
-    FILE *f = fopen("setprob.data","r");
-    fscanf(f,"%lf",&grav);
-    fscanf(f,"%lf",&dry_tolerance);
-    fscanf(f,"%lf",&earth_rad);
-    fscanf(f,"%d",&coordinate_system_);
-    fscanf(f,"%d",&mcapa_);
-    fclose(f);
+// void setprob_cuda()
+// {
+//     double grav;
+//     double drytol;
+//     double earth_rad;
+//     int coordinate_system_;
+//     int mcapa_;
+//     FILE *f = fopen("setprob.data","r");
+//     fscanf(f,"%lf",&grav);
+//     fscanf(f,"%lf",&dry_tolerance);
+//     fscanf(f,"%lf",&earth_rad);
+//     fscanf(f,"%d",&coordinate_system_);
+//     fscanf(f,"%d",&mcapa_);
+//     fclose(f);
 
-    CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(dry_tolerance, &drytol, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
-}
+//     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
+//     CHECK(cudaMemcpyToSymbol(dry_tolerance, &drytol, sizeof(double)));
+//     CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
+//     CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
+//     CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
+// }
 
-__device__ __constant__ double pi = 4.0*atan(1.0);
-__device__ __constant__ double deg2rad = pi/180.0;
+// const double atan1 = atan(1.0); // Precompute the value
+// __device__ __constant__ double pi = 3.14159265358979323846;
+// __device__ __constant__ double deg2rad = pi/180.0;
 
 __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                                 double ql[], double qr[], double aux1[], 
@@ -57,6 +62,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     double uhat,vhat,hhat,roe1,roe3,s1,s2,s3,s1l,s3r;
     double delf1,delf2,delf3,dxdcd,dxdcu;
     double dxdcm,dxdcp,topo1,topo3,eta;
+    double pi = 3.14159265358979323846;
+    double deg2rad = pi/180.0;
 
     abs_tol = dry_tolerance;
 
@@ -112,18 +119,18 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     if (hl > abs_tol && hr > abs_tol) 
     {
         // check and see if cell that transverse waves are going in is high and dry
-        // if (imp == 0)
-        // {
+        if (imp == 0)
+        {
             eta = qr[0] + aux2[0];
             topo1 = aux1[0];
             topo3 = aux3[0];
-        // }
-        // else
-        // {
-        //     eta = ql[0] + aux2[0];
-        //     topo1 = aux1[0];
-        //     topo3 = aux3[0];
-        // }
+        }
+        else
+        {
+            eta = ql[0] + aux2[0];
+            topo1 = aux1[0];
+            topo3 = aux3[0];
+        }
         // if (eta < fmax(topo1,topo3)) continue;
 
         if (eta > fmax(topo1,topo3))
@@ -137,16 +144,16 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                 }
                 else
                 {
-                    // if (imp == 0)
-                    // {
+                    if (imp == 0)
+                    {
                         dxdcp = earth_radius*cos(aux3[2])*deg2rad;
                         dxdcm = earth_radius*cos(aux1[2])*deg2rad;
-                    // }
-                    // else
-                    // {
-                    //     dxdcp = earth_radius*cos(aux3[2])*deg2rad;
-                    //     dxdcm = earth_radius*cos(aux1[2])*deg2rad;
-                    // }
+                    }
+                    else
+                    {
+                        dxdcp = earth_radius*cos(aux3[2])*deg2rad;
+                        dxdcm = earth_radius*cos(aux1[2])*deg2rad;
+                    }
                 }
             }
             // ---- determine some speeds necessary for the Jacobian ----//
