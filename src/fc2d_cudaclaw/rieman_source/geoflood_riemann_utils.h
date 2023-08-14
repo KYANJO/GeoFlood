@@ -20,23 +20,23 @@ extern "C"
 extern __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR,
                  double huL, double huR, double hvL, double hvR, double bL, double bR, 
                  double uL, double uR, double vL, double vR, double phiL, double phiR,
-                 double sE1, double sE2, double drytol, double g, double sw[], double fw[][]);
+                 double sE1, double sE2, double drytol, double g, double* sw, double* fw);
 
 
 extern __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL, 
                  double hR, double huL, double huR, double hvL, double hvR, double bL, 
                  double bR, double uL, double uR, double vL, double vR, double phiL, 
-                 double phiR, double sE1, double sE2, double drytol, double g, double sw[], double fw[][]) ;
+                 double phiR, double sE1, double sE2, double drytol, double g, double* sw, double* fw) ;
 
 
 extern __device__ void riemann_fwaves(int meqn, int mwaves, double hL, double hR, double huL, 
                 double huR, double hvL, double hvR, double bL, double bR, double uL, double uR, 
-                double vL, double vR, double phiL, double phiR, double s1, double s2, double drytol, double g, double sw[], double fw[][]) ;
+                double vL, double vR, double phiL, double phiR, double s1, double s2, double drytol, double g, double* sw, double* fw) ;
 
 
 extern __device__ void riemanntype(double hL, double hR, double uL, double uR, double hm, 
                  double s1m, double s2m, bool rare1, bool rare2, int maxiter,
-                 double drytol, double g)
+                 double drytol, double g);
 
 
 #ifdef __cplusplus
