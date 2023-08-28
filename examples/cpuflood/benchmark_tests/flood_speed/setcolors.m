@@ -65,16 +65,39 @@ function setcolors(p,x,y,z,q)
     %      MULTICOLORMAP, MULTICOLORMAP_COLORBAR.
     %
     
-    cm = colormap;
+    % cm = colormap;
+    mymap = [ 127 255 0 
+    0 128 0 
+    255 255 0
+    255 165 9
+    255 0 0
+    255 192 203
+    255 0 255]/255;
+
+    pos = linspace(0, 1, size(mymap, 1));
+    
+    % Create a fine-grained colormap using interpolation
+    fine_pos = linspace(0, 1, 256)';
+    fine_mymap = interp1(pos, mymap, fine_pos,"linear");
+    % r = interp1(pos,mymap(:,1),fine_pos,"linear");
+    % g = interp1(pos,mymap(:,2),fine_pos,"linear");
+    % b = interp1(pos,mymap(:,3),fine_pos,"linear");
+    % fine_mymap = [r,g,b];
+    % Set the stretched colormap
+    % colormap(fine_mymap);
     
     % Map nan values to brown (land)
-    cnew = [[153,76,0]/255; cm];
+    % cnew = [[153,76,0]/255; cm];
+    cm  = fine_mymap;
+    cm  = [[78, 158, 130]/255; cm];
+    cnew = cm;
+    colormap(cm);
     
     qmin = min(q(:));
     qmax = max(q(:));
     
-    qmin = -0.1;
-    qmax = 0.1;
+    qmin = 0.0;
+    qmax = 0.390;
     
     q(q < qmin) = qmin;
     q(q > qmax) = qmax;
@@ -88,7 +111,8 @@ function setcolors(p,x,y,z,q)
     
     idx = 0*q + nan;
     idx(m1) = 1;
-    idx(m2) = round(2 + slope(m2)*(N-1));
+    idx(m2) = round(2 + slope(m2)*(N-2));
+    % idx(idx>N) = N;
     
     set(p,'cdata',idx);
     fv = get(p,'FaceVertexCData');
