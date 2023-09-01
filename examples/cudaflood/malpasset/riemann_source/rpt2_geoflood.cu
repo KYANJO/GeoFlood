@@ -5,6 +5,7 @@
 topography
 */
 
+#include "../malpasset_user.h"
 #include <fc2d_cudaclaw.h>
 #include <fc2d_cudaclaw_check.h>
 #include <fc2d_cudaclaw_options.h>
@@ -226,11 +227,11 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     }
 }
 
-__device__ cudaclaw_cuda_rpt2_t geoflood_rpt2 = cudaflood_rpt2;
+__device__ cudaclaw_cuda_rpt2_t malpasset_rpt2 = cudaflood_rpt2;
 
-void geoflood_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
+void malpasset_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
 {
-    cudaError_t ce = cudaMemcpyFromSymbol(rpt2, geoflood_rpt2, sizeof(cudaclaw_cuda_rpt2_t));
+    cudaError_t ce = cudaMemcpyFromSymbol(rpt2, malpasset_rpt2, sizeof(cudaclaw_cuda_rpt2_t));
 
     if(ce != cudaSuccess)
     {

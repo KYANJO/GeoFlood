@@ -26,7 +26,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "malpasset_user.h"
 #include <fclaw2d_include_all.h>
 #include <fclaw2d_clawpatch.h>
-#include <fc2d_geoclaw.h>
+// #include <fc2d_geoclaw.h>
 
 static
 void malpasset_problem_setup(fclaw2d_global_t* glob)
@@ -47,7 +47,6 @@ void malpasset_problem_setup(fclaw2d_global_t* glob)
         }
         else
         {
-            fprintf(f,  "%-24d   %s",   user->example,"\% example\n");
             fprintf(f,  "%-24.16f   %s",user->gravity,"\% gravity\n");
         }
          fclose(f);
@@ -58,10 +57,10 @@ void malpasset_problem_setup(fclaw2d_global_t* glob)
     {
         setprob_cuda();
     }
-    else
-    {
-       SETPROB(); 
-    }
+    // else
+    // {
+    //    SETPROB(); 
+    // }
 }
 
 
@@ -74,11 +73,11 @@ void malpasset_link_solvers(fclaw2d_global_t *glob)
     if(user->cuda == 0)
     {
         // confirm if this is correct
-        fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
-        geoclaw_vt->qinit     = &FC2D_GEOCLAW_QINIT;
-        geoclaw_vt->rpn2      = &FC2D_GEOCLAW_RPN2;
-        geoclaw_vt->rpt2      = &FC2D_GEOCLAW_RPT2;
-        geoclaw_vt->rpn2_cons = &RPN2_CONS_UPDATE;
+        // fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+        // geoclaw_vt->qinit     = &FC2D_GEOCLAW_QINIT;
+        // geoclaw_vt->rpn2      = &FC2D_GEOCLAW_RPN2;
+        // geoclaw_vt->rpt2      = &FC2D_GEOCLAW_RPT2;
+        // geoclaw_vt->rpn2_cons = &RPN2_CONS_UPDATE;
     }
     else
     {
@@ -91,8 +90,8 @@ void malpasset_link_solvers(fclaw2d_global_t *glob)
         malpasset_assign_rpt2(&cuclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(cuclaw_vt->cuda_rpt2 != NULL);
 
-        malpasset_assign_speeds(&cuclaw_vt->cuda_speeds);
-        FCLAW_ASSERT(cuclaw_vt->cuda_speeds != NULL);
+        // malpasset_assign_speeds(&cuclaw_vt->cuda_speeds);
+        // FCLAW_ASSERT(cuclaw_vt->cuda_speeds != NULL);
     }
 }
 

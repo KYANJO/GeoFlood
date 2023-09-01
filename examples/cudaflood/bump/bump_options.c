@@ -34,8 +34,7 @@ bump_register (user_options_t* user, sc_options_t * opt)
                            "[user] Example [0]");
     /* [user] User options */
     sc_options_add_double (opt, 0, "gravity", &user->gravity, 1.0, 
-                           "[user] gravity [1.0]");
-
+                           "[user] gravity [1.0]");             
     sc_options_add_int (opt, 0, "claw-version", &user->claw_version, 4,
                            "Clawpack_version (4 only) [4]");
     sc_options_add_bool (opt, 0, "cuda", &user->cuda, 0,

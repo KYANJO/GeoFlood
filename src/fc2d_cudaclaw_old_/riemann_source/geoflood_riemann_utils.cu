@@ -14,18 +14,19 @@
          with instabilities that arise (with any solver) as flow becomes transcritical 
          over variable topography due to loss of hyperbolicity. 
 */
-__device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, double hR,
-                 double huL, double huR, double hvL, double hvR, double bL, double bR, 
-                 double uL, double uR, double vL, double vR, double phiL, double phiR,
-                 double sE1, double sE2, double drytol, double g, double sw[], double fw[][])
+__device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
+                 double hR, double huL, double huR, double hvL, double hvR, 
+                 double bL, double bR, double uL, double uR, double vL, 
+                 double vR, double phiL, double phiR, double sE1, double sE2, 
+                 double drytol, double g, double* sw, double* fw)
 {
     // Local variables
     int m, mw, k, iter;
-    double A[2][2];
-    double r[2][2];
-    double lambda[2];
-    double del[2];
-    double beta[2];
+    double A[9];
+    double r[9];
+    double lambda[3];
+    double del[3];
+    double beta[3];
 
     double delh,delhu,delphi,delb,delnorm;
     double rare1st,rare2st,sdelta,raremin,raremax;
@@ -52,7 +53,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
     lambda[2] = fmax(sE2,s1m); // Modified Einfeldt speed
     sE1 = lambda[0];
     sE2 = lambda[2];
-    lambda[1] = 0.0 // Fix to avoid uninitialized value in loop on mw
+    lambda[1] = 0.0; // Fix to avoid uninitialized value in loop on mw
 
     hstarHLL = fmax((huL-huR+sE2*hR-sE1*hL)/(sE2-sE1),0.0); // middle state in a HLL solver
 
@@ -91,19 +92,20 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         if (hstarHLL < fmin(hL,hR)/5.0) rarecorrector = false;
     }
 
+    k = 0; // counter for data packing
     for (mw = 0; mw < mwaves; mw++)
-    {
-        r[0][mw] = 1.0;
-        r[1][mw] = lambda[mw];
-        r[2][mw] = pow(lambda[mw],2);
+    {   
+        r[k] = 1.0; k = k+1;
+        r[k] = lambda[mw]; k = k+1;
+        r[k] = pow(lambda[mw],2.0); k = k+1;
     }
 
     if (!rarecorrector)
     {
         lambda[1]= 0.5*(lambda[0] + lambda[2]);
-        r[0][1] = 0.0;
-        r[1][1] = 0.0;
-        r[2][1] = 1.0;
+        r[0] = 1.0; // r[0,1]
+        r[4] = 0.0; // r[1,1]
+        r[5] = 0.0; // r[2,1]
     }
 
     // determine the steady state wave
@@ -121,7 +123,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
 
     // iterate to better determine steady state wave
     convergencetol = 1.0e-6;
-    for (iter=0; iter < maiter; iter++)
+    for (iter=0; iter < maxiter; iter++)
     {
         // determine steady state wave (this will be subtracted from the delta vectors)
         if (fmin(hLstar,hRstar) < drytol && rarecorrector)
@@ -134,13 +136,13 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
             huLstar = uLstar*hLstar;
             huRstar = uRstar*hRstar;
             lambda[1] = 0.5*(lambda[0] + lambda[2]);
-            r[0][1] = 0.0;
-            r[1][1] = 0.0;
-            r[2][1] = 1.0;
+            r[3] = 0.0; // r[0,1]
+            r[4] = 0.0; // r[1,1]
+            r[5] = 0.0; // r[2,1]
         }
 
         hbar = fmax(0.5*(hLstar+hRstar),0.0);
-        s1s2bar = 0.25*pow((uLstar+uRstar),2) - g*hbar;
+        s1s2bar = 0.25*pow((uLstar+uRstar),2.0) - g*hbar;
         s1s2tilde = fmax(0.0,uLstar*uRstar) - g*hbar;
 
         //  find if sonic problem
@@ -199,34 +201,35 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         del[1] = delhu;
         del[2] = delphi - deldelphi;
 
-        //--- determine determinant of eigen matrix ----
-        det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
-        det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
-        det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
+        //--- determine determinant of eigen matrix ----    
+        det1 = r[0]*(r[4]*r[8] - r[7]*r[5]);
+        det2 = r[3]*(r[1]*r[8] - r[7]*r[2]);
+        det3 = r[6]*(r[1]*r[5] - r[4]*r[2]);
         determinant = det1 - det2 + det3;
 
         // --- solve for beta(k) using Cramers Rule ---
-        for(k=0; k < 2; k++)
-        {
-            for(mw=0; mw < 2; mw++)
+        for(k=0; k < 3; k++)
+        {   
+            int j = 0; // counter for data packing
+            for(mw=0; mw < 3; mw++)
             {
-                A[0][mw] = r[0][mw];
-                A[1][mw] = r[1][mw];
-                A[2][mw] = r[2][mw];
+                A[j] = r[j]; j = j + 1;
+                A[j] = r[j]; j = j + 1;
+                A[j] = r[j]; j = j + 1;
             }
-            A[0][k] = del[0];
-            A[1][k] = del[1];
-            A[2][k] = del[2];
-            det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
-            det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
-            det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+            A[meqn*k + 0] = del[0];
+            A[meqn*k + 1] = del[1];
+            A[meqn*k + 2] = del[2];
+            det1 = A[0]*(A[4]*A[8] - A[7]*A[5]);
+            det2 = A[3]*(A[1]*A[8] - A[7]*A[2]);
+            det3 = A[6]*(A[1]*A[5] - A[4]*A[2]);
             beta[k] = (det1 - det2 + det3)/determinant;
         }
 
         //  exit if things aren't changing
-        if (fabs(pow(del[0],2)+pow(del[2],2) - delnorm) < convergencetol) break;
+        if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) break;
 
-        delnorm = pow(del[0],2)+pow(del[2],2);
+        delnorm = pow(del[0],2)+pow(del[2],2.0);
 
         // find new states qLstar and qRstar on either side of the interface
         hLstar = hL;
@@ -235,21 +238,23 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         uRstar = uR;
         huLstar = uLstar*hLstar;
         huRstar = uRstar*hRstar;
+        k = 0; // counter for data packing
         for (mw=0; mw < mwaves; mw++)
         {
             if (lambda[mw] < 0.0)
             {
-                hLstar = hLstar + beta[mw]*r[0][mw];
-                huLstar = huLstar + beta[mw]*r[1][mw];
+                hLstar = hLstar + beta[mw]*r[k]; k = k + 1;
+                huLstar = huLstar + beta[mw]*r[k]; k = k + 1;
             }
         }
 
+        k = 0; // counter for data packing
         for (mw = mwaves-1; mw >= 0; mw--)
         {
-            if (lambda[mq] > 0.0)
+            if (lambda[mw] > 0.0)
             {
-                hRstar = hRstar - beta[mw]*r[0][mw];
-                huRstar = huRstar - beta[mw]*r[1][mw];
+                hRstar = hRstar - beta[mw]*r[k]; k = k + 1;
+                huRstar = huRstar - beta[mw]*r[k]; k = k + 1;
             }
         }
 
@@ -274,18 +279,19 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
         }
     } // --end iteration on Riemann problem
 
+    k = 0; // counter for data packing
     for (mw=0; mw < mwaves; mw++)
     {
         sw[mw] = lambda[mw];
-        fw[0,mw] = beta[mw]*r[1][mw];
-        fw[1,mw] = beta[mw]*r[2][mw];
-        fw[2,mw] = beta[mw]*r[1][mw];
+        fw[k] = beta[mw]*r[k+1]; k = k + 1;
+        fw[k] = beta[mw]*r[k+1]; k = k + 1;
+        fw[k] = beta[mw]*r[k-1]; k = k + 1;
     }
 
     // find transverse components (ie huv jumps)
-    fw[2][0] = fw[2][0]*vL;
-    fw[2][2] = fw[2][2]*vR;
-    fw[2][2] = hR*uR*vR - hL*uL*vL - fw[2][0] - fw[2][2];
+    fw[2] = fw[2]*vL;
+    fw[8] = fw[8]*vR;
+    fw[5] = hR*uR*vR - hL*uL*vL - fw[2] - fw[8];
 }// === end function riemann_aug_JCP ========================================================
 
 
@@ -295,10 +301,10 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL, do
 __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL, 
                  double hR, double huL, double huR, double hvL, double hvR, double bL, 
                  double bR, double uL, double uR, double vL, double vR, double phiL, 
-                 double phiR, double sE1, double sE2, double drytol, double g, double sw[], double fw[][])
+                 double phiR, double sE1, double sE2, double drytol, double g, double* sw, double* fw)
 {
     // Local variables
-    double delh, delhu, delphi, delb, delhdecomp, delphidecomp, deldelh;
+    double delh, delhu, delphi, delb, delhdecomp, delphidecomp;
     double s1s2bar,s1s2tilde,hbar,hLstar,hRstar,hustar;
     double uRstar,uLstar,hstarHLL;
     double deldelh, deldelphi;
@@ -340,14 +346,14 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
         {
             // determine steady state wave (this will be subtracted from delta vectors)
             hbar = fmax(0.5*(hLstar + hRstar),0.0);
-            s1s2bar = 0.25*pow((uLstar + uRstar),2) - g*hbar;
+            s1s2bar = 0.25*pow((uLstar + uRstar),2.0) - g*hbar;
             s1s2tilde = fmax(0.0,uLstar*uRstar) - g*hbar;
 
             // find if sonic problem
             sonic = false;
             if (fabs(s1s2bar) <= criticaltol) sonic = true;
             if (s1s2bar*s1s2tilde <= criticaltol) sonic = true;
-            if (s1s2bar*sE1*sE2*E2 <= criticaltol) sonic = true;
+            if (s1s2bar*sE1*sE2 <= criticaltol) sonic = true;
             if (fmin(fabs(sE1),fabs(sE2)) < criticaltol) sonic = true;
 
             // find jump in h, deldelh
@@ -405,7 +411,7 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
             beta1 = (sE2*delhu - delphidecomp)/(sE2-sE1);
             beta2 = (delphidecomp - sE1*delhu)/(sE2-sE1);
 
-            if ((pow(delalpha2,2) + pow(delalpha1,2)) < pow(convergencetol,2)) break;
+            if ((pow(delalpha2,2.0) + pow(delalpha1,2.0)) < pow(convergencetol,2.0)) break;
 
             if (sE2 > 0.0 && sE1 < 0.0)
             {
@@ -460,19 +466,19 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
     beta2 = (delphidecomp - sE1*delhu)/(sE2-sE1);
 
     //  1st nonlinear wave
-    fw[0][0] = alpha1*sE1;
-    fw[1][0] = beta1*sE1;
-    fw[2][0] = fw[0][0]*vL;
+    fw[0] = alpha1*sE1;
+    fw[1] = beta1*sE1;
+    fw[2] = fw[0]*vL;
 
     //  2nd nonlinear wave
-    fw[0][2] = alpha2*sE2;
-    fw[1][2] = beta2*sE2;
-    fw[2][2] = fw[0][2]*vR;
-
+    fw[6] = alpha2*sE2;
+    fw[7] = beta2*sE2;
+    fw[8] = fw[6]*vR;
+    
     //  advection of transverse wave
-    fw[0][1] = 0.0;
-    fw[1][1] = 0.0;
-    fw[2][1] = hR*uR*vR - hL*uL*vL - fw[2][1] - fw[2][2];
+    fw[3] = 0.0;
+    fw[4] = 0.0;
+    fw[5] = hR*uR*vR - hL*uL*vL - fw[2] - fw[8];
 
     //  speeds
     sw[0] = sE1;
@@ -487,7 +493,7 @@ __device__ void riemann_ssqfwave(int maxiter, int meqn, int mwaves, double hL,
 //               - flux - source is decomposed
 __device__ void riemann_fwaves(int meqn, int mwaves, double hL, double hR, double huL, 
                 double huR, double hvL, double hvR, double bL, double bR, double uL, double uR, 
-                double vL, double vR, double phiL, double phiR, double s1, double s2, double drytol, double g, double sw[], double fw[][])
+                double vL, double vR, double phiL, double phiR, double s1, double s2, double drytol, double g, double* sw, double* fw)
 {
     // Local variables
     double delh, delhu, delphi, delb, delhdecomp, delphidecomp, deldelh, deldelphi;
@@ -511,19 +517,19 @@ __device__ void riemann_fwaves(int meqn, int mwaves, double hL, double hR, doubl
     sw[2] = s2;
 
     // 1st nonlinear wave
-    fw[0][0] = beta1;
-    fw[1][0] = beta1*s1;
-    fw[2][0] = beta*vL;
+    fw[0] = beta1;
+    fw[1] = beta1*s1;
+    fw[2] = beta1*vL;
 
     // 2nd nonlinear wave
-    fw[0][2] = beta2;
-    fw[1][2] = beta2*s2;
-    fw[2][2] = beta2*vR;
+    fw[6] = beta2;
+    fw[7] = beta2*s2;
+    fw[8] = beta2*vR;
 
-    // advsction of transverse wave
-    fw[0][1] = 0.0;
-    fw[1][1] = 0.0;
-    fw[2][1] = hR*uR*vR - hL*uL*vL -fw[2][0] - fw[2][2];
+    // advection of transverse wave
+    fw[3] = 0.0;
+    fw[4] = 0.0;
+    fw[5] = hR*uR*vR - hL*uL*vL - fw[2] - fw[8];
 }
 // === end function Riemann_fwaves ========================================================
 
@@ -535,7 +541,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double h
                  double drytol, double g)
 {
     // Local variables
-    double u1m, u2m, delu;
+    double u1m, u2m, um, delu;
     double h_max, h_min, h0, F_max, F_min, dfdh, F0, slope, gL, gR;
     int iter;
 
@@ -568,7 +574,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double h
 
         if (F_min > 0.0) //2-rarefactions
         {
-            hm = (1/(16*g))*pow(fmax(0.0,-delu+2*(sqrt(g*hL)+srt(g*hR))),2);
+            hm = (1/(16*g))*pow(fmax(0.0,-delu+2*(sqrt(g*hL)+sqrt(g*hR))),2);
             double sign_hm = (hm >= 0.0) ? 1.0 : -1.0;
             um = sign_hm*(uL+2*(sqrt(g*hL)-sqrt(g*hm)));
 

@@ -19,7 +19,7 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
        
 @reference: David L. George
 */
-
+#include "../malpasset_user.h"
 #include <fc2d_cudaclaw.h>
 #include <fc2d_cudaclaw_check.h>
 #include <fc2d_cudaclaw_options.h>
@@ -309,11 +309,11 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
    
 }
 
-__device__ cudaclaw_cuda_rpn2_t geoflood_rpn2 = cudaflood_rpn2;
+__device__ cudaclaw_cuda_rpn2_t malpasset_rpn2 = cudaflood_rpn2;
 
-void geoflood_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
+void malpasset_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
 {
-    cudaError_t ce = cudaMemcpyFromSymbol(rpn2, geoflood_rpn2, sizeof(cudaclaw_cuda_rpn2_t));
+    cudaError_t ce = cudaMemcpyFromSymbol(rpn2, malpasset_rpn2, sizeof(cudaclaw_cuda_rpn2_t));
     if(ce != cudaSuccess)
     {
         fclaw_global_essentialf("ERROR (cudaflood_rpn2): %s\n",cudaGetErrorString(ce));

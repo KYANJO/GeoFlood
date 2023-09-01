@@ -31,8 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_clawpatch.h>
 
-#include <fc2d_geoclaw.h>
-#include <fc2d_geoclaw_options.h>
+// #include <fc2d_geoclaw.h>
+// #include <fc2d_geoclaw_options.h>
 
 static
 fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, 
@@ -90,14 +90,14 @@ void run_program(fclaw2d_global_t* glob)
     }
     else
     {
-        fc2d_geoclaw_solver_initialize(glob);
+        // fc2d_geoclaw_solver_initialize(glob);
     }   
 
     malpasset_link_solvers(glob);
 
     if(user_opt->cuda != 0)
     {
-         fc2d_geoclaw_module_setup(glob);
+        //  fc2d_geoclaw_module_setup(glob);
     }
 
     /* ---------------------------------------------------------------
@@ -135,7 +135,7 @@ main (int argc, char **argv)
     fclaw_options_t             *fclaw_opt;
     fclaw2d_clawpatch_options_t *clawpatch_opt;
     fc2d_cudaclaw_options_t     *cuclaw_opt;
-    fc2d_geoclaw_options_t      *geoclaw_opt;
+    // fc2d_geoclaw_options_t      *geoclaw_opt;
 
     fclaw2d_global_t            *glob;
     fclaw2d_domain_t            *domain;
@@ -150,7 +150,7 @@ main (int argc, char **argv)
     fclaw_opt =                   fclaw_options_register(app,"fclaw_options.ini");
     clawpatch_opt =   fclaw2d_clawpatch_options_register(app,"fclaw_options.ini");
     cuclaw_opt =          fc2d_cudaclaw_options_register(app,"fclaw_options.ini");
-    geoclaw_opt     =      fc2d_geoclaw_options_register(app,"fclaw_options.ini");
+    // geoclaw_opt     =      fc2d_geoclaw_options_register(app,"fclaw_options.ini");
     user_opt =                malpasset_options_register(app,"fclaw_options.ini");  
     
 
@@ -175,7 +175,7 @@ main (int argc, char **argv)
         fclaw2d_options_store           (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
         fc2d_cudaclaw_options_store     (glob, cuclaw_opt);
-        fc2d_geoclaw_options_store      (glob, geoclaw_opt);
+        // fc2d_geoclaw_options_store      (glob, geoclaw_opt);
         malpasset_options_store         (glob, user_opt);
        
         run_program(glob);

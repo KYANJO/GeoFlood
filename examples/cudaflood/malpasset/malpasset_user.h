@@ -47,11 +47,13 @@ extern "C"
 typedef struct user_options
 {
     int cuda;
+    int example;
     double gravity;
     double dry_tolerance;
     double earth_radius;
     int coordinate_system;
     int mcapa;
+    int is_registered;
 } user_options_t;
 
 
@@ -59,7 +61,7 @@ typedef struct user_options
 
   void malpasset_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
   void malpasset_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
-  void malpasset_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
+  // void malpasset_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
 
   void setprob_cuda();
 

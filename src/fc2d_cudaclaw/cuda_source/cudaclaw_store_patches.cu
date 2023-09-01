@@ -8,8 +8,6 @@
 #include "cudaclaw_allocate.h"
 #include <fc2d_cuda_profiler.h>
 
-#include"data_swap.h"
-
 void cudaclaw_store_buffer(fclaw2d_global_t* glob,
                            fclaw2d_patch_t *this_patch,
                            int this_patch_idx,
@@ -22,7 +20,6 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 
     const fc2d_cudaclaw_options_t *cuclaw_opt = fc2d_cudaclaw_get_options(glob);
 
-
     cudaclaw_fluxes_t *fluxes = (cudaclaw_fluxes_t*) 
                fclaw2d_patch_get_user_data(glob,this_patch);
 
@@ -30,26 +27,27 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 
     fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
     fclaw2d_clawpatch_soln_data(glob,this_patch,&qold,&meqn);
-
-    // data cpoying between geoclaw and cudaclaw
+    
+    // qold
+    // <---- will have to uncomment this when we get to the real code
     // fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
     // int mx = clawpatch_opt->mx;
     // int my = clawpatch_opt->my;
     // int mbc = clawpatch_opt->mbc;
     
     // double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
+    // // Write a fortran routine that transposes data form (m,i,j)-geoclaw  to (i,j,m)-cudaclaw
+    
+    // // aux
     // double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
-
-    // swap mij to ijm
-    // swap_mij2ijm(mx,my,mbc,meqn,maux,qold,qold_transpose,aux,aux_transpose);
-
+     // Write a fortran routine that transposes data form (m,i,j)-geoclaw  to (i,j,m)-cudaclaw
 
     // fluxes->qold = qold_transpose;
     // fluxes->aux = aux_transpose;
-
+    // ----- upto here --------------
+    
     fluxes->qold = qold;
     fluxes->aux = aux;
-
 
     flux_array[iter % cuclaw_opt->buffer_len] = *fluxes;
 }

@@ -6,6 +6,7 @@
 #SBATCH -N 1
 #SBATCH --job-name=bump
 #SBATCH --output=bump_00016.o%j
+#SBATCH --gres=gpu:1
 #SBATCH -p gpu # queue (partition) -- defq, eduq, gpuq, shortq
 
 module load slurm

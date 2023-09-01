@@ -1,23 +1,5 @@
 # -- fortran library
-add_library(cudaclaw_f OBJECT
-	amrlib_source/amr_module.f90 
-	geolib_source/utility_module.f90 
-	geolib_source/geoclaw_module.f90 
-	amrlib_source/regions_module.f90 
-	geolib_source/topo_module.f90 
-	geolib_source/qinit_module.f90 
-	geolib_source/fixedgrids_module.f90 
-	geolib_source/refinement_module.f90 
-	geolib_source/friction_module.f90 
-	amrlib_source/opendatafile.f 
-    amrlib_source/check4nans.f90 
-    amrlib_source/quick_sort1.f 
-    geolib_source/topointegral.f 
-    geolib_source/topo_update.f90 
-    geolib_source/cellgridintegrate2.f 
-    geolib_source/allowflag.f
-    geolib_source/bilinearintegral.f
-    hydrograph/hydrograh_module.f90
+add_library(geocuda_f OBJECT
 	fortran_source/cudaclaw_inlinelimiter.f
 	fortran_source/cudaclaw_set_capacity.f
 	fortran_source/cudaclaw_block.f
@@ -26,28 +8,26 @@ add_library(cudaclaw_f OBJECT
 	fortran_source/cudaclaw_flux2fw.f
 	fortran_source/cudaclaw_step2.f
 	fortran_source/cudaclaw_step2_wrap.f
+	# fortran_source/fc2d_geoclaw_output_ascii_fort.f 
 )
 
-set_target_properties(cudaclaw_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
+set_target_properties(geocuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # -- add library
-add_library(cudaclaw STATIC)
-set_target_properties(cudaclaw PROPERTIES EXPORT_NAME CUDACLAW)
+add_library(geocuda STATIC)
+set_target_properties(geocuda PROPERTIES EXPORT_NAME CUDACLAW)
 
 # device code needs to relcoateable since it is in a shared library
-target_compile_options(cudaclaw PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
-                       --relocatable-device-code=true
-                       >)
+# target_compile_options(cudaclaw PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+#                       --relocatable-device-code=true
+#                       >)
 # needed because we have device code in a library
-set_target_properties(cudaclaw PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(geocuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-target_sources(cudaclaw PRIVATE 
+target_sources(geocuda PRIVATE
+$<TARGET_OBJECTS:geocuda_f>
   fc2d_cudaclaw.cpp
 	fc2d_cudaclaw_options.c
-	riemann_source/geoflood_riemann_utils.cu
-	riemann_source/rpn2_geoflood.cu
-	riemann_source/rpt2_geoflood.cu
-	riemann_source/variables.cu
 	cuda_source/cudaclaw_step2.cu
 	cuda_source/cudaclaw_initialize.cu
 	cuda_source/cudaclaw_limiters.cu
@@ -55,18 +35,19 @@ target_sources(cudaclaw PRIVATE
 	cuda_source/cudaclaw_flux2.cu
 	fc2d_cuda_profiler.cu
 	cuda_source/cudaclaw_store_patches.cu
-  $<TARGET_OBJECTS:cudaclaw_f>
+	# fc2d_geoclaw_output_ascii.c
 )
 
-target_link_libraries(cudaclaw PUBLIC FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
-target_include_directories(cudaclaw
+target_link_libraries(geocuda PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
+
+target_include_directories(geocuda
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include>
 )
 
 if(CUDAToolkit_VERSION_MAJOR LESS 11)
-	target_include_directories(cudaclaw PRIVATE ${PROJECT_SOURCE_DIR}/cub)
+	target_include_directories(geocuda PRIVATE ${PROJECT_SOURCE_DIR}/cub)
 endif()
 
 # -- install
@@ -81,11 +62,21 @@ install(FILES
   DESTINATION include
 )
 
-install(TARGETS cudaclaw
+install(TARGETS geocuda
   EXPORT ${PROJECT_NAME}Targets
   ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib)
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
 
 # imported target, for use from FetchContent
 add_library(GEOFLOOD::CUDACLAW INTERFACE IMPORTED GLOBAL)
-target_link_libraries(GEOFLOOD::CUDACLAW INTERFACE cudaclaw)
+target_link_libraries(GEOFLOOD::CUDACLAW INTERFACE geocuda)
+
+if(BUILD_TESTING)
+  add_executable(fc2d_cudaclaw.TEST
+    fc2d_cudaclaw.h.TEST.cpp
+    fc2d_cudaclaw_options.h.TEST.cpp
+  )
+  target_link_libraries(fc2d_cudaclaw.TEST testutils geocuda)
+#   register_unit_tests(fc2d_cudaclaw.TEST)
+endif(BUILD_TESTING)
