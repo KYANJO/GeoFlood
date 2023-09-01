@@ -54,6 +54,7 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
+
 mx = 50 # Number of x grids per block
 my = 50 # Number of y grids per block
 

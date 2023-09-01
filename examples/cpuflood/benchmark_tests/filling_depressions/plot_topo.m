@@ -42,15 +42,22 @@ hold on;
 % Add contour lines
 contour3(X, Y, elevation, 20, 'k'); % Change the number 20 to adjust the number of contour lines
 
-colormap(parula); % Use the parula colormap for the surface
-colorbar;
+colormap(white); % Use the parula colormap for the surface
+% colorbar;
 % 
 % draw the square boundary
 hold on
-plot3([0,0],[0,2000],interp2(X, Y, elevation, [0,0],[0,2000], 'linear'),'m','LineWidth',1);
-plot3([0,2000],[2000,2000],interp2(X, Y, elevation, [0,2000],[2000,2000], 'linear'),'m','LineWidth',1);
-plot3([2000,2000],[2000,0],interp2(X, Y, elevation, [2000,2000],[2000,0], 'linear'),'m','LineWidth',1);
-plot3([2000,0],[0,0],interp2(X, Y, elevation, [2000,0],[0,0], 'linear'),'m','LineWidth',1);
+s = linspace(0,2000,100);
+plot3(0*s,s,interp2(X,Y,elevation,0*s,s,'linear'),'m','LineWidth',2);
+plot3(s,0*s,interp2(X,Y,elevation,s,0*s,'linear'),'m','LineWidth',2);
+plot3(0*s+2000,s,interp2(X,Y,elevation,0*s+2000,s,'linear'),'m','LineWidth',2);
+plot3(s,0*s+2000,interp2(X,Y,elevation,s,0*s+2000,'linear'),'m','LineWidth',2);
+
+
+% plot3([0,0],[0,2000],interp2(X, Y, elevation, [0,0],[0,2000], 'linear'),'m','LineWidth',1);
+% plot3([0,2000],[2000,2000],interp2(X, Y, elevation, [0,2000],[2000,2000], 'linear'),'m','LineWidth',1);
+% plot3([2000,2000],[2000,0],interp2(X, Y, elevation, [2000,2000],[2000,0], 'linear'),'m','LineWidth',1);
+% plot3([2000,0],[0,0],interp2(X, Y, elevation, [2000,0],[0,0], 'linear'),'m','LineWidth',1);
 
 % Define the boundary conditions
 startRow = 1900;
@@ -63,24 +70,34 @@ line_x = [startCol, endCol];
 line_y = [startRow, endRow];
 line_z = interp2(X, Y, elevation, line_x, line_y, 'linear');
 hold on;
-plot3(line_x, line_y, line_z, 'r', 'LineWidth', 4);
+plot3(line_x, line_y, line_z, 'b', 'LineWidth', 8);
 
 % drawing control points 1,4,10,12
 hold on;
 plot_points(X,Y,250,250, 'Point 1',elevation);
-plot_points(X,Y,250,1750, 'Point 4',elevation);
+plot_points(X,Y,250, 1750, 'Point 4',elevation);
 plot_points(X,Y,1250,750, 'Point 10',elevation);
 plot_points(X,Y,1250,1750, 'Point 12',elevation);
 
 % Adjust the viewing angle and perspective
-xlabel('X');
-ylabel('Y');
-zlabel('Elevation');
+xlabel('X (m)');
+ylabel('Y (m)');
+zlabel('Elevation (m)');
 % title('3D Plot of DEM');
-view(3);
+
 % camlight;
-% setviews;
-axis equal
+zlim([7,11]);
+axis on
+setviews;
+% view(3);
+% [az,el] = view;
+% view([-29.1972,68.2975]);
+light               % create a light
+lighting gouraud    % preferred method for lighting curved surfaces
+shg
+% axis equal
+% daspect([1 1 0.0015]); view([-29.1972,68.2975]);
+daspect([1 1 1])
 
 % rotate3d on
 
@@ -90,17 +107,17 @@ set(gca, 'FontWeight', 'bold');
 % Adjust the size and position of the figure
 fig = gcf;
 fig.Units = 'inches';
-fig.Position = [0 0 6 4]; % Adjust the width and height according to your requirements
+% fig.Position = [0 0 6 4]; % Adjust the width and height according to your requirements
 
 % Save the figure as a PDF file
-filename = 'figure';
+filename = 'figure_flat';
 exportgraphics(fig, [filename '.jpeg'], 'ContentType', 'vector', 'Resolution', '700');
 
 function [a] = plot_points(X,Y,x,y,point, elevation)
 
 %     p1 = elevation(y,x); %(y,x)
     p1 = interp2(X, Y, elevation, x, y);
-    scatter3(x,y,p1+10,'white','filled')
+    scatter3(x,y,p1+10,'red','filled')
     text(x, y, p1 + 75, point, 'FontSize', 12, 'FontWeight', 'bold');
 
 end
