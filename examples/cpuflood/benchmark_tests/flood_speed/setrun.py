@@ -41,7 +41,7 @@ if output_style == 1:
     n_hours = 5.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 1/30   # (1 frame every 25 mins)
+    frames_per_minute = 1/30   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -54,14 +54,15 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 50
-my = 50
 
-mi = 4  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mx = 50 # Number of x grids per block
+my = 50 # Number of y grids per block
 
-minlevel = 0 
-maxlevel = 2 #resolution based on levels 
+mi = 2  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+
+minlevel = 1 
+maxlevel = 4 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -467,6 +468,21 @@ def setrun(claw_pkg='geoclaw'):
     for i in range(gaugeno):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
+
+    # -----------------------------------------------
+    # == setflowgrades data values ==
+    flowgrades_data = geoflood.Flowgradesdata()
+    # this can be used to specify refinement criteria, for Overland flow problems.
+    # for using flowgrades for refinement append lines of the form
+    # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+    # where:
+    #flowgradevalue: floating point relevant flowgrade value for following measure:
+    #flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
+    #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
+    #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
+    # flowgrades_data.flowgrades.append([1.e-6, 1, 1, maxlevel])
+    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, maxlevel-1])
+
     #
     # -------------------------------------------------------
     # For developers
@@ -484,7 +500,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, hydrographdata
+    return rundata, geoflooddata, hydrographdata, flowgrades_data
     # end of function setrun
     # ----------------------
 
@@ -520,7 +536,7 @@ def setgeo(rundata):
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
-    refinement_data.speed_tolerance = [1.e-1]*6
+    refinement_data.speed_tolerance = [1.e-1]*maxlevel
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = True
@@ -554,7 +570,7 @@ def generate_topo_file():
     xupper = 1100
     yupper = 2100
     ylower = -100
-    outfile= "bathy2.topotype2"   
+    outfile= "flood_topo.asc"   
 
     z = 0.0 # Dry bed  
 
@@ -563,14 +579,15 @@ def generate_topo_file():
     topography = Topography(topo_func=topo)
     topography.x = np.linspace(xlower,xupper,nxpoints)
     topography.y = np.linspace(ylower,yupper,nypoints)
-    topography.write(outfile, topo_type=2, Z_format="%22.15e")
+    topography.write(outfile, topo_type=3, Z_format="%22.15e")
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    # generate_topo_file()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
+    generate_topo_file()         # generate topo file (generated before running setrun.py)
+    rundata,geoflooddata, hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
     hydrographdata.write()       # writes a geoflood hydrograph file
+    flowgrades_data.write()  # writes a geoflood flowgrades file
     

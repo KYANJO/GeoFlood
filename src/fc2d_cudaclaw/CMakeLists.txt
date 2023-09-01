@@ -18,7 +18,7 @@ add_library(geocuda STATIC)
 set_target_properties(geocuda PROPERTIES EXPORT_NAME CUDACLAW)
 
 # device code needs to relcoateable since it is in a shared library
-# target_compile_options(cudaclaw PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
+#target_compile_options(cudaclaw PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
 #                       --relocatable-device-code=true
 #                       >)
 # needed because we have device code in a library
