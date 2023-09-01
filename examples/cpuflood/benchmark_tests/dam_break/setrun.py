@@ -34,7 +34,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 0.01  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -43,9 +43,9 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 30/60          #<-- 2 minutes for test 6A and 30 minutes for test 6B
+    n_hours = 0.5         #<-- 2 minutes for test 6A and 30 minutes for test 6B
     
-    frames_per_minute = 60/3   # (1 frame every 30 seconds)
+    frames_per_minute = 1  # (1 frame every 30 seconds)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -58,14 +58,14 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 18  #<--- 18 for test 6A and 55 for test 6B
-my = 18  #<--- 18 for test 6A and 2 for test 6B
+mx = 27  #<--- 18 for test 6A and 55 for test 6B
+my = 27  #<--- 18 for test 6A and 2 for test 6B
 
-mi = 55  #<--- 54 for test 6A and 55 for test 6B
-mj = 3   #<--- 3 for test 6A and 3 for test 6B
+mi = 36  #<--- 54 for test 6A and 55 for test 6B
+mj = 2   #<--- 3 for test 6A and 3 for test 6B
 
 minlevel = 1 
-maxlevel = 2 #resolution based on levels 
+maxlevel = 3 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -277,7 +277,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.8
+    clawdata.cfl_desired = 0.9
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
@@ -373,7 +373,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
-    geoflooddata.smooth_refine = False
+    geoflooddata.smooth_refine = True
     geoflooddata.regrid_interval = 3
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
@@ -388,6 +388,14 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.mi = mi
     geoflooddata.mj = mj
 
+    # -----------------------------------------------
+    # Tikz output parameters:
+    # -----------------------------------------------
+    geoflooddata.tikz_out = True
+    geoflooddata.tikz_figsize = "36 2"
+    geoflooddata.tikz_plot_prefix = "dam_break"
+    geoflooddata.tikz_plot_suffix = "png"
+
     geoflooddata.user = {'example'     : 1}
 
     # Clawpatch tagging criteria
@@ -396,7 +404,7 @@ def setrun(claw_pkg='geoclaw'):
     # difference  : difference (e.g. dqx = q(i+1,j)-q(i-1,j)) exceeds threshold
     # gradient    : gradient exceeds threshold
     # user        : User defined criteria     
-    geoflooddata.refinement_criteria = 'minmax' 
+    geoflooddata.refinement_criteria = 'difference' 
 
     # geoflood verbosity choices : 
     # 0 or 'silent'      : No output to the terminal
@@ -427,7 +435,7 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center']
+    amrdata.aux_type = ['capacity']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -446,7 +454,9 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    # regions.append([maxlevel,maxlevel,0, 1e10, -40,100,-20,33]) # Test6A reservior -> 7.5m out of 99m in x and 3.6m in y. Test6B reservior -> 140m out of 1823m in x and 53m  in y 
+    # Test6A reservior -> 7.5m out of 99m in x and 3.6m in y. Test6B reservior -> 140m out of 1823m in x and 53m  in y 
+    # regions.append([maxlevel,maxlevel,0, 1e10, -128.0,-128.0,-55.11250000,53.11250000]) #<-- Reservior minus gate
+    # regions.append([maxlevel,maxlevel,0, 1e10, 0,16,26,46]) #<-- dam gate
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -455,6 +465,22 @@ def setrun(claw_pkg='geoclaw'):
     for i in range(gaugeno):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
+
+
+    # -----------------------------------------------
+    # == setflowgrades data values ==
+    flowgrades_data = geoflood.Flowgradesdata()
+    # this can be used to specify refinement criteria, for Overland flow problems.
+    # for using flowgrades for refinement append lines of the form
+    # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+    # where:
+    #flowgradevalue: floating point relevant flowgrade value for following measure:
+    #flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
+    #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
+    #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
+    flowgrades_data.flowgrades.append([1.e-3, 2, 1, 3])
+    flowgrades_data.flowgrades.append([1.e-4, 1, 1, 3])
+
     #
     # -------------------------------------------------------
     # For developers
@@ -472,7 +498,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, hydrographdata
+    return rundata, geoflooddata, hydrographdata,flowgrades_data
     # end of function setrun
     # ----------------------
 
@@ -499,8 +525,8 @@ def setgeo(rundata):
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 0.0
-    geo_data.dry_tolerance = 1.e-3
+    geo_data.sea_level = 0
+    geo_data.dry_tolerance = 0.0001
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
@@ -509,7 +535,7 @@ def setgeo(rundata):
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
     refinement_data.speed_tolerance = [1.e-1]*6
-    refinement_data.deep_depth = 1e2
+    refinement_data.deep_depth = 0.4
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = True
 
@@ -517,16 +543,16 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([3, minlevel, maxlevel, 0, 1e10, topo_file])
+    topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, topo_file])
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4
+    rundata.qinit_data.qinit_type = 0
     rundata.qinit_data.qinitfiles = []
     rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
 
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'init.xyz'])
+    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'init.xyz'])
 
     return rundata
     # end of function setgeo
@@ -540,11 +566,11 @@ def generate_qinit():
     """
     nxpoints = 2021
     nypoints = 112
-    xlower = -128    #<-- -6.575 for test 6A and -128 for test 6B
-    xupper =  0   #<-- 0 for test 6A and 0 for test 6B
-    yupper = 35      #<-- 5.4 for test 6A and 53 for test 6B
-    ylower = -37     #<-- -7.31 for test 6A and -55 for test 6B
-    outfile= "init.xyz"   
+    xlower = -146.25   #<-- -6.575 for test 6A and -128 for test 6B
+    xupper =  1823.25000000   #<-- 0 for test 6A and 0 for test 6B
+    yupper = 53.11250000      #<-- 5.4 for test 6A and 53 for test 6B
+    ylower = -55.11250000     #<-- -7.31 for test 6A and -55 for test 6B
+    outfile= "init.xyz"      
 
     qinitA = lambda x,y: np.where(x<0, 0.4, 0.02)
     qinitB = lambda x,y: np.where(x<0, 8, 0.4)
@@ -558,9 +584,10 @@ def generate_qinit():
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     generate_qinit()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
+    rundata,geoflooddata,hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
     hydrographdata.write()       # writes a geoflood hydrograph file
+    flowgrades_data.write()  # writes a geoflood flowgrades file
     

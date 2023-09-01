@@ -132,7 +132,7 @@ class GeoFlooddata(object):
         '# File and console IO' : None,
         '   output' : self.output,
         '   output-gauges' : self.output_gauges,
-        '   smooth-refine' : "False",
+        '   smooth-refine' : self.smooth_refine,
         '   advance-one-step' : self.advance_one_step,
         '   outstyle-uses-maxlevel' : self.outstyle_uses_maxlevel,
         '   ghost_patch_pack_aux' : self.ghost_patch_pack_aux,
@@ -311,10 +311,10 @@ class Hydrographdata(object):
         self.froude = 1.0
         
         # initial conditions
-        self.intial_velocity = 0.0
+        self.initial_velocity = 0.0
         self.initial_elevation = 0.0
         self.initial_discharge = 0.0
-        self.initial_depth = 0.1
+        self.initial_depth = 0.001
 
     def write(self): 
         
@@ -323,7 +323,7 @@ class Hydrographdata(object):
        
         # hydrograph.write('# initial condition\n')
         # hydrograph.write('# discharge (m^3/s) elevation (m) velocity (m/s)\n')
-        hydrograph.write('%f %f %f %f\n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.intial_velocity,self.initial_depth))
+        hydrograph.write('%f %f %f %f\n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.initial_velocity,self.initial_depth))
 
         # hydrograph.write('\n# channel width\n')
         # hydrograph.write('%f\n' % self.channel_width)
@@ -334,6 +334,7 @@ class Hydrographdata(object):
             hydrograph.write('False\n')
             if self.hydrograph_type == 'discharge':
                 hydrograph.write('discharge\n')
+                hydrograph.write('%d\n' % self.froude)
                 hydrograph.write('%d\n' % len(self.time))
                 # hydrograph.write('# time (s) discharge (m^3/s)\n')
                 for i in range(len(self.time)):
@@ -348,6 +349,7 @@ class Hydrographdata(object):
             hydrograph.write('True\n')
             if self.hydrograph_type == 'discharge':
                 hydrograph.write('discharge\n')
+                hydrograph.write('%d\n' % self.froude)
                 with open(self.hydrograph_filename,'r') as hydrographfile:
                     data = [line.split() for line in hydrographfile]
                     hydrograph.write('%d\n' % len(data))
@@ -366,8 +368,21 @@ class Hydrographdata(object):
 
         hydrograph.close()
 
-        
-    
- 
+# write out flowgrades data
+class Flowgradesdata(object):
+
+    def __init__(self):
+        self.flowgrades = [] # list of flowgrades
+        self.nflowgrades = len(self.flowgrades) # number of flowgrades
+
+    def write(self):
+
+        # write flowgrades data to file
+        flow_grades = open('setflowgrades.data','w')
+        flow_grades.write('%d\n' % len(self.flowgrades))
+        for i in self.flowgrades:
+            flow_grades.write(4*"%g " % tuple(i) + "\n")
+        flow_grades.close()
+
 
         

@@ -61,7 +61,7 @@ mi = 2  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 4  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
 minlevel = 0 
-maxlevel = 1 #resolution based on levels 
+maxlevel = 2 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -382,7 +382,7 @@ def setrun(claw_pkg='geoclaw'):
     # Tikz output parameters:
     # -----------------------------------------------
     geoflooddata.tikz_out = True
-    geoflooddata.tikz_figsize = "2 4"
+    geoflooddata.tikz_figsize = "4 8"
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
 
@@ -458,7 +458,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, -86.28446115,-86.28446115,990,1010]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)

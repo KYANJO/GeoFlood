@@ -40,16 +40,13 @@ extern "C"
 void dam_break_link_solvers(fclaw2d_global_t *glob);
 
 //  BC (Fortran to c)
-// #define DAM_BREAK_BC2   FCLAW_F77_FUNC(dam_break_bc2, DAM_BREAK_BC2)
+#define DAM_BREAK_QINIT   FCLAW_F77_FUNC(dam_break_qinit, DAM_BREAK_QINIT)
 
-// void DAM_BREAK_BC2(const int* meqn, const int* mbc,
-//                     const int* mx, const int* my,
-//                     const double* xlower, const double* ylower,
-//                     const double* dx, const double* dy,
-//                     const double q[], const int* maux,
-//                     const double aux[], const double* t,
-//                     const double* dt, const int mthbc[]);
-
+void DAM_BREAK_QINIT(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    double q[], const int* maux, double aux[]);
 
 /* Mappings */
 fclaw2d_map_context_t* fclaw2d_map_new_nomap();

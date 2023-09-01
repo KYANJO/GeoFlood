@@ -4,7 +4,7 @@
 ## Cudaflood examples
 ## ----------------------------------
 
-include examples/cudaflood/bowl_radial/Makefile.am
+include examples/cudaflood/bump/Makefile.am
 include examples/cudaflood/teton/Makefile.am
-include examples/cudaflood/malpasset/Makefile.am
-include examples/cudaflood/triton/Makefile.am
+#include examples/cudaflood/malpasset/Makefile.am
+#include examples/cudaflood/triton/Makefile.am

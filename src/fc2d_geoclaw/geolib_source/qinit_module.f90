@@ -41,6 +41,9 @@ module qinit_module
     real(kind=8) :: etain_dx, etain_dy
     real(kind=8), allocatable :: etain_x(:), etain_y(:), etain_eta(:,:)
 
+    integer :: mqinitfiles
+    integer, allocatable :: minlevel_qinit(:), maxlevel_qinit(:)
+
 
 contains
 

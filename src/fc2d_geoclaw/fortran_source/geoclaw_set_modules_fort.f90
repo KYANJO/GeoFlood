@@ -9,7 +9,7 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
     USE topo_module, ONLY: read_topo_settings, read_dtopo_settings
     USE qinit_module, ONLY: set_qinit
     USE fixedgrids_module, ONLY: set_fixed_grids
-    USE refinement_module, ONLY: set_refinement
+    USE refinement_module, ONLY: set_refinement, set_flow_grades
     USE storm_module, only: set_storm
     USE friction_module, only: setup_variable_friction
     USE hydrograph_module, only: read_hydrograph_data
@@ -54,6 +54,7 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
     CALL set_regions()
     ! CALL set_gauges(restart,meqn,fname)
     CALL set_refinement()             !# sets refinement control parameters
+    CALL set_flow_grades()            !# sets flow grades for each level
     CALL read_dtopo_settings()        !# specifies file with dtopo from earthquake
     CALL read_topo_settings(.false.)           !# specifies topography (bathymetry) files
     CALL set_qinit()                  !# specifies file with dh if this used instead

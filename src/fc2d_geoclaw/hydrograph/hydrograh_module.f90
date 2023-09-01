@@ -1,7 +1,8 @@
 ! Module containing hydrograph data
 module hydrograph_module
     
-    use geoclaw_module, only: grav
+    use geoclaw_module, only: grav,dry_tolerance
+
     
     implicit none
     
@@ -12,8 +13,9 @@ module hydrograph_module
     ! ========================================================================
     character(len=20) :: hydrograph_type
     real(kind=8), dimension(4) :: q0         ! q0 = [h0,hu0,hv0,b0] ghost data
-    real(kind=8), dimension(4) :: q1         ! q1 = [h,hu,hv,b] cell data (initial conditions) just inside the boundary
-    real(kind=8) :: u1            ! u1 = initial velocity (cell data) just inside the boundary
+    real(kind=8), dimension(4) :: q1         ! q1 = [h,hu,hv,b] first interior cell data (initial conditions) just inside the boundary
+    real(kind=8) :: u1            ! u1 = initial velocity (first cell data) just inside next to the boundary
+    real(kind=8) :: froude         ! froude number
     real(kind=8), allocatable :: time(:), eta(:), hu(:)
     integer, parameter :: GEO_PARM_UNIT = 78
     integer :: num_rows
@@ -68,7 +70,10 @@ contains
             !  read the third line (hydrograph type)
             read(unit,*) hydrograph_type
 
-            !  read the third line (number of rows)
+            ! read the fourth line (froude number)
+            read(unit,*) froude
+
+            !  read the fifth line (number of rows)
             read(unit,*) num_rows
 
             if (num_rows == 0) then
@@ -104,7 +109,7 @@ contains
             end if
 
             !  write out data to parameter file
-            write(GEO_PARM_UNIT,*) ' initial_conditons:', q1(2), q1(1), u1, q1(4)
+            ! write(GEO_PARM_UNIT,*) ' initial_conditons:', q1(2), q1(1), u1, q1(4)
             write(GEO_PARM_UNIT,*) ' read_file:', read_file
             write(GEO_PARM_UNIT,*) ' hydrograph_type:', hydrograph_type
             write(GEO_PARM_UNIT,*) ' num_rows:', num_rows
@@ -118,34 +123,36 @@ contains
     end subroutine read_hydrograph_data
 
 
-    subroutine inflow_interpolate(t,q0)
+    subroutine inflow_interpolate(t,q0,q1)
 
         implicit none
 
         ! Arguments
         real(kind=8), intent(in) :: t
-        real(kind=8), dimension(4), intent(out) :: q0
+        real(kind=8), dimension(4) :: q0,q1
 
         if (hydrograph_type == 'discharge') then
-            call interpolation(t,hu,q0(1))
+            call interpolation(t,hu,q0,q1)
         else
-            call interpolation(t,eta,q0(4))
+            call interpolation(t,eta,q0,q1)
         end if
 
+        ! call newton_raphson(q0) ! solve for the h or hu at the boundary
 
     end subroutine inflow_interpolate
 
     ! ========================================================================
     ! Interpolates the hydrograph data to the current time step
     ! ========================================================================
-    subroutine interpolation(t,inflow,interpolated_value)
+    subroutine interpolation(t,inflow,q0,q1)
 
         implicit none
 
         ! Arguments
         real(kind=8), intent(in) :: t
         real(kind=8), dimension(:), intent(in) :: inflow
-        real(kind=8), intent(out) :: interpolated_value
+        real(kind=8) :: interpolated_value
+        real(kind=8), dimension(4) :: q0,q1
 
         ! Local variables
         integer :: i
@@ -166,50 +173,53 @@ contains
                 end if
             end do
         end if
+
+         if (hydrograph_type == 'discharge') then
+            q0(2) = interpolated_value
+            call Riemann_invariants(q0,q1)
+        else
+            q0(4) = interpolated_value
+            call Riemann_invariants(q0,q1)
+
+        end if
+
     end subroutine interpolation
 
-
-    ! subroutine newton_raphson(h0,xn,h1,u1)
-    subroutine newton_raphson(q0)
+    ! ========================================================================
+    subroutine Riemann_invariants(q0,q1)
 
         implicit none
 
         ! declare variables
-        real(kind=8) :: tol, x0
+        real(kind=8) :: tol,u1
         real(kind=8) :: func,fxn,dfxn,dfunc_hu0,dfunc_h0
-        real(kind=8), dimension(4), intent(out) :: q0
+        real(kind=8), dimension(4) :: q0,q1
 
         integer :: i, max_iter
 
         ! initialize variables
         tol = 1.0e-6    ! tolerance for convergence
         max_iter = 100  ! maximum number of iterations
-        x0 = 0.001d0    ! initial guess for the inflow discharge
+        u1 = q1(2)/q1(1) ! velocity of the first interior cells
 
         ! solve Riemann invariants
         if (hydrograph_type == 'discharge') then
-            if (q0(2) == 0.0) then
-                q0(1) = 0.0
-            else
-                q0(1) = x0
-                do i = 1, max_iter
-                    fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
-                    if (abs(fxn) < tol) then
-                        return 
-                    end if
-                    dfxn = -q0(2)/(q0(1)**2) - sqrt(grav/q0(1)) !dfunc_h0()
-                    q0(1) = q0(1) - fxn/dfxn
-                end do
-                write(*,*) 'Newton-Raphson did not converge'
-                q0(1) = 0.0  
-            end if
-
+            q0(1) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+            do i = 1, max_iter
+                fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
+                if (abs(fxn) < tol) then
+                    return 
+                end if
+                dfxn = -q0(2)/(q0(1)**2) - sqrt(grav/q0(1)) !dfunc_h0()
+                q0(1) = q0(1) - fxn/dfxn
+            end do
+            write(*,*) 'Newton-Raphson did not converge'
+            q0(1) = 0.0  
         else
-
-            if (q0(1) == 0.0) then
+            if (q0(1) == 0.0) then ! if h == 0 => hu == 0
                 q0(2) = 0.0
             else
-                q0(2) = x0
+                q0(2) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
                 do i = 1, max_iter
                     fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
                     if (abs(fxn) < tol) then
@@ -223,6 +233,61 @@ contains
             end if
         endif
 
-     end subroutine newton_raphson  
+     end subroutine Riemann_invariants
 
+
+    ! ======================================================================== 
+    subroutine two_shock(q0,q1)
+
+        implicit none
+
+        ! declare variables
+        real(kind=8) :: tol
+        real(kind=8) :: fxn,dfxn,num,deno
+        real(kind=8), dimension(4) :: q0,q1
+
+        integer :: i, max_iter
+
+        ! initialize variables
+        tol = 1.0e-6    ! tolerance for convergence
+        max_iter = 100  ! maximum number of iterations
+        u1 = q1(2)/q1(1) ! velocity of the first interior cells
+
+        ! solve Riemann invariants
+        if (hydrograph_type == 'discharge') then
+            q0(1) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+            do i = 1, max_iter
+
+                fxn = q0(2)/q0(1) - (q0(1) - q1(1))*sqrt((grav/2.0d0)*(1.0d0/q0(1) + 1.0d0/q1(1)))
+
+                if (abs(fxn) < tol) then
+                    return 
+                end if
+                num =  sqrt(grav*(1.0d0/q0(1) + 1.0d0/q1(1)))
+                deno = 2*sqrt(2.0d0)*(q0(1)**2)*num
+                dfxn = -q0(2)/(q0(1)**2) - num/sqrt(2.0d0) + grav*(q0(1) - q1(1))/deno
+                q0(1) = q0(1) - fxn/dfxn
+            end do
+            write(*,*) 'Newton-Raphson did not converge'
+            q0(1) = 0.0  
+        else
+            if (q0(1) == 0.0) then ! if h == 0 => hu == 0
+                q0(2) = 0.0
+            else
+                q0(2) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+                do i = 1, max_iter
+                    fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
+                    if (abs(fxn) < tol) then
+                        return 
+                    end if
+                    dfxn =1/q0(1) !dfunc_hu0()
+                    q0(2) = q0(2) - fxn/dfxn
+                end do
+                write(*,*) 'Newton-Raphson did not converge'
+                q0(2) = 0.0  
+            end if
+        endif
+
+     end subroutine two_shock
+     
 end module hydrograph_module

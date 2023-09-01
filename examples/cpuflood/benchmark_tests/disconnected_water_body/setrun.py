@@ -41,7 +41,7 @@ if output_style == 1:
     # n_hours = 1.0              # Total number of hours in simulation
     
 
-    frames_per_minute = 8/60   # (1 frame every 25 mins)
+    frames_per_minute = 60/250   # (1 frame every 25 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -61,7 +61,7 @@ mi = 7  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
 mj = 1  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
 minlevel = 1
-maxlevel = 2 #resolution based on levels 
+maxlevel = 3 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)

@@ -63,6 +63,7 @@ def setplot(plotdata):
     from clawpack.visclaw import colormaps, geoplot
 
     plotdata.clearfigures()
+    plotdata.format = "forestclaw"
 
     def set_drytol(current_data):
         # The drytol parameter is used in masking land and water and
@@ -70,14 +71,14 @@ def setplot(plotdata):
         # The cell will be plotted as dry if h < drytol.
         # The best value to use often depends on the application and can
         # be set here (measured in meters):
-        current_data.user["drytol"] = 1.e-3
+        current_data.user["drytol"] = 1.e-4
 
     plotdata.beforeframe = set_drytol
 
     #-----------------------------------------
     # Figure for pcolor plot
     #-----------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Malpasset Dam', figno=0)
+    plotfigure = plotdata.new_plotfigure(name='Filling depressions', figno=0)
 
     # Set up for axes in this figure:
     plotaxes = plotfigure.new_plotaxes('pcolor')
@@ -93,6 +94,7 @@ def setplot(plotdata):
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     plotitem.plot_var = geoplot.depth
     plotitem.pcolor_cmap = flooding_colormap
+    # plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = 0
     plotitem.pcolor_cmax = 30
     plotitem.add_colorbar = True
@@ -105,23 +107,23 @@ def setplot(plotdata):
     plotitem.pcolor_cmap = geoplot.land_colors
     plotitem.pcolor_cmin = 0.0
     plotitem.pcolor_cmax = 900.0
-    plotitem.add_colorbar = True
+    plotitem.add_colorbar = False
     plotitem.amr_celledges_show = [0,0,0]
     plotitem.patchedges_show = 0
-    plotaxes.xlimits = 'auto'
-    plotaxes.ylimits = 'auto'
+    # plotaxes.xlimits = 'auto'
+    # plotaxes.ylimits = 'auto'
 
     # Add contour lines of bathymetry:
-    # plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
-    # plotitem.plot_var = geoplot.topo
-    # from numpy import arange, linspace
-    # plotitem.contour_levels = linspace(0,900,40)
-    # plotitem.amr_contour_colors = ['k']  # color on each level
-    # plotitem.kwargs = {'linestyles':'solid'}
-    # plotitem.amr_contour_show = [1]
-    # plotitem.celledges_show = 0
-    # plotitem.patchedges_show = 0
-    # plotitem.show = True
+    plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
+    plotitem.plot_var = geoplot.topo
+    from numpy import arange, linspace
+    plotitem.contour_levels = linspace(0,900,40)
+    plotitem.amr_contour_colors = ['k']  # color on each level
+    plotitem.kwargs = {'linestyles':'solid'}
+    plotitem.amr_contour_show = [1]
+    plotitem.celledges_show = 0
+    plotitem.patchedges_show = 0
+    plotitem.show = True
 
 
     def addgauges(current_data):
