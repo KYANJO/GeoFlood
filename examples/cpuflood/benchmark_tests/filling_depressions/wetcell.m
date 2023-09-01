@@ -6,6 +6,6 @@ function eta = wetcell(data)
     
     eta = data(:,4);
     
-    dry_tol = 0.001;
+    dry_tol = 0.0001;
     eta(h <= dry_tol) = nan;
     end
