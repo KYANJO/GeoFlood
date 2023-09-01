@@ -58,11 +58,11 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 27  #<--- 18 for test 6A and 55 for test 6B
-my = 27  #<--- 18 for test 6A and 2 for test 6B
+mx = 54  #<--- 18 for test 6A and 55 for test 6B
+my = 54  #<--- 18 for test 6A and 2 for test 6B
 
-mi = 36  #<--- 54 for test 6A and 55 for test 6B
-mj = 2   #<--- 3 for test 6A and 3 for test 6B
+mi = 18  #<--- 54 for test 6A and 55 for test 6B
+mj = 1   #<--- 3 for test 6A and 3 for test 6B
 
 minlevel = 1 
 maxlevel = 3 #resolution based on levels 
@@ -404,7 +404,7 @@ def setrun(claw_pkg='geoclaw'):
     # difference  : difference (e.g. dqx = q(i+1,j)-q(i-1,j)) exceeds threshold
     # gradient    : gradient exceeds threshold
     # user        : User defined criteria     
-    geoflooddata.refinement_criteria = 'difference' 
+    geoflooddata.refinement_criteria = 'minmax' 
 
     # geoflood verbosity choices : 
     # 0 or 'silent'      : No output to the terminal
@@ -441,7 +441,7 @@ def setrun(claw_pkg='geoclaw'):
     # Flag using refinement routine flag2refine rather than richardson error
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
-    amrdata.flag2refine_tol = 0.5
+    amrdata.flag2refine_tol = 0.05
     amrdata.regrid_interval = 3
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
@@ -455,7 +455,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Region containing initial reservoir
     # Test6A reservior -> 7.5m out of 99m in x and 3.6m in y. Test6B reservior -> 140m out of 1823m in x and 53m  in y 
-    # regions.append([maxlevel,maxlevel,0, 1e10, -128.0,-128.0,-55.11250000,53.11250000]) #<-- Reservior minus gate
+    regions.append([maxlevel,maxlevel,0, 1e10, -128.0,0,-55.11250000,53.11250000]) #<-- Reservior minus gate
     # regions.append([maxlevel,maxlevel,0, 1e10, 0,16,26,46]) #<-- dam gate
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
@@ -478,8 +478,9 @@ def setrun(claw_pkg='geoclaw'):
     #flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
     #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
     #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
-    flowgrades_data.flowgrades.append([1.e-3, 2, 1, 3])
-    flowgrades_data.flowgrades.append([1.e-4, 1, 1, 3])
+    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, maxlevel])
+    # flowgrades_data.flowgrades.append([1e-3, 1, 1, maxlevel])
+    flowgrades_data.flowgrades.append([0.4, 3, 1, maxlevel])
 
     #
     # -------------------------------------------------------

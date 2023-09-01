@@ -124,7 +124,7 @@ def setplot(plotdata):
     # plotitem.amr_celledges_show = [0,0,0]
     plotitem.add_colorbar = True
     plotitem.colorbar_label = 'meters'
-    plotitem.patchedges_show = False       # Show patch edges
+    plotitem.patchedges_show = True       # Show patch edges
     # plotitem.amr_patchedges_color = ['m','g','w'] #green background colour
      # Land
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
@@ -133,7 +133,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmap = geoplot.land_flood_colormap
     plotitem.pcolor_cmin = 0.0
     plotitem.pcolor_cmax = 3
-    plotitem.add_colorbar = False
+    plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
 
     def kml_colorbar(filename):

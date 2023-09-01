@@ -39,6 +39,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
     real(kind=8) :: h1, u_1
     ! real(kind=8) :: h1 = 0.001d0, u_1=0.0001d0
     g = 9.81d0
+    ! F = 0.50d0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -62,7 +63,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
                 
             do ibc=1,mbc
                 if (q(1,1,j) < dry_tolerance) then
-                    h_0 = max((hu_0/sqrt(g))**(2.0d0/3.0d0), 0.001d0) 
+                    h_0 = max((hu_0/sqrt(g))**(2.0d0/3.0d0), 0.001d0)
                     q(1,1-ibc,j) = h_0
                     q(2,1-ibc,j) = hu_0
                     q(3,1-ibc,j) = 0.0d0
@@ -90,10 +91,11 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
                         q(2,1-ibc,j) = hu_0
                         q(3,1-ibc,j) = 0.0d0
                     else
-                        aux(1,1-ibc,j) = aux(1,1,j)
-                        do m=1,meqn
-                            q(m,1-ibc,j) = q(m,1,j)
-                        enddo
+                            aux(1,1-ibc,j) = aux(1,ibc,j)
+                            do m=1,meqn
+                                q(m,1-ibc,j) = q(m,ibc,j)
+                            enddo
+                            q(2,1-ibc,j) = -q(2,ibc,j)
                     endif
                 endif 
             enddo
@@ -487,7 +489,7 @@ subroutine two_shock(h0,hu0,hr,ur)
     integer :: i, max_iter
 
     ! initialize variables
-    tol = 1.0e-8 ! tolerance for convergence
+    tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
     ! x0 = 0.1d0 ! initial guess for the inflow depth
     epi = 1.0e-11 ! tolerance for the derivativeF = 0.50d ! Froude number
