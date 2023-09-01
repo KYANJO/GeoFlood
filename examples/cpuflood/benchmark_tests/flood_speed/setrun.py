@@ -54,11 +54,11 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 50
-my = 50
+mx = 20*5
+my = 20*5
 
-mi = 4  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 2  # Number of x grids per block  <-- mx = mi*mx = 20*10 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 20*20 = 400
 
 minlevel = 0 
 maxlevel = 2 #resolution based on levels 
