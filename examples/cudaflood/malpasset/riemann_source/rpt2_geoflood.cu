@@ -48,6 +48,56 @@ topography
 // __device__ __constant__ double pi = 3.14159265358979323846;
 // __device__ __constant__ double deg2rad = pi/180.0;
 
+// __device__ void malpasset_compute_speeds(int idir, int meqn, int mwaves, int maux,
+//                                          double ql[], double  qr[],
+//                                          double auxl[], double auxr[],
+//                                          double s[])
+// {
+//     int mu,mv;
+
+//     double hhat,uhat,vhat,chat,hsq2;
+//     double roe1,roe3,s1l,s3r,s1,s3,s2;
+    
+//     mu = 1+idir;
+//     mv = 2-idir;
+
+//     hhat = (ql[0] + qr[0])/2.0;
+//     hsq2 = sqrt(ql[0]) + sqrt(qr[0]);
+//     uhat = (ql[mu]/sqrt(ql[0]) + qr[mu]/sqrt(qr[0]))/hsq2;
+//     vhat = (ql[mv]/sqrt(ql[0]) + qr[mv]/sqrt(qr[0]))/hsq2;
+//     chat = sqrt(s_grav*hhat);
+
+//     // Roe wave speeds
+//     roe1 = vhat - chat;
+//     roe3 = vhat + chat;
+
+//     // left and right state wave speeds
+//     s1l = ql[mv]/ql[0] - sqrt(s_grav*ql[0]);
+//     s3r = qr[mv]/qr[0] + sqrt(s_grav*qr[0]);
+
+//     // Einfeldt wave speeds
+//     s1 = fmin(s1l,roe1);
+//     s3 = fmax(s3r,roe3);
+
+//     s2 = 0.5*(s1+s3);
+    
+//     s[0] = s1;
+//     s[1] = s2;
+//     s[2] = s3;
+// }
+
+// __device__ cudaclaw_cuda_speeds_t malpasset_speeds = malpasset_compute_speeds;
+
+// void malpasset_assign_speeds(cudaclaw_cuda_speeds_t *speeds)
+// {
+//     cudaError_t ce = cudaMemcpyFromSymbol(speeds, malpasset_speeds, sizeof(cudaclaw_cuda_speeds_t));
+//     if(ce != cudaSuccess)
+//     {
+//         fclaw_global_essentialf("ERROR (malpasset_compute_speeds): %s\n",cudaGetErrorString(ce));
+//         exit(0);
+//     }
+// }
+
 __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                                 double ql[], double qr[], double aux1[], 
                                 double aux2[], double aux3[], int imp, 
@@ -120,6 +170,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     if (hl > abs_tol && hr > abs_tol) 
     {
         // check and see if cell that transverse waves are going in is high and dry
+        // needs to be fixed (aux)
         if (imp == 0)
         {
             eta = qr[0] + aux2[0];
@@ -144,10 +195,11 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                     dxdcm = dxdcp;
                 }
                 else
-                {
+                {   
+                    // needs to be fixed (aux)
                     if (imp == 0)
                     {
-                        dxdcp = earth_radius*cos(aux3[2])*deg2rad;
+                        dxdcp = earth_radius*cos(aux3[2])*deg2rad; 
                         dxdcm = earth_radius*cos(aux1[2])*deg2rad;
                     }
                     else
