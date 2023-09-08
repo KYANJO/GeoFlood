@@ -5,9 +5,10 @@
 #SBATCH -n 16
 #SBATCH -N 1
 #SBATCH --job-name=bump
-#SBATCH --output=swe_00016.o%j
-#SBATCH --gres=gpu:2
-#SBATCH -p gpuq # queue (partition) -- defq, eduq, gpuq, shortq
+#SBATCH --output=bump_00016.o%j
+#SBATCH --gres=gpu:1
+#SBATCH -p gpu # queue (partition) -- defq, eduq, gpuq, shortq
+
 
 module load slurm
 module load cuda11.2
