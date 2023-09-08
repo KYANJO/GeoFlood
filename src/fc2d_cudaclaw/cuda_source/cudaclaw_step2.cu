@@ -18,6 +18,8 @@
 #include <fc2d_cuda_profiler.h>
 #include <cub/cub.cuh>
 
+// #include"data_swap.h"
+
 #define thread_count 224
 
 
@@ -106,7 +108,18 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
             fluxes = &(array_fluxes_struct[i]);    
 
             I_q = i*fluxes->num;
-            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold ,fluxes->num_bytes); //replace with a fortran routine that takes swaps m,i,j to i,j,m and then copy it to membuffer_cpu
+            /* swap (m,i,j) to (i,j,m)
+            double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
+            double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
+            
+            swap (m,i,j) to (i,j,m)
+            swap_mij2ijm(mx,my,mbc,meqn,maux,fluxes->qold,qold_transpose,fluxes->aux,aux_transpose);
+
+            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold_transpose ,fluxes->num_bytes);
+
+             */
+
+            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold ,fluxes->num_bytes);  //<-- will be replaced by the above code
             fluxes->qold_dev = &membuffer_dev[I_q];
 
             if (fluxes->num_aux > 0)
@@ -261,7 +274,17 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
             fluxes = &(array_fluxes_struct[i]);
             I_q = i*fluxes->num;
 
-            memcpy(fluxes->qold,&membuffer_cpu[I_q],fluxes->num_bytes); // do another fortran rountine here (back to m,i,j)
+            /* swap (m,i,j) to (i,j,m)
+            double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
+            double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
+            
+            swap (i,j,m) to (m,i,j)
+            swap_ijm2mij(mx,my,mbc,meqn,maux,fluxes->qold,qold_transpose,fluxes->aux,aux_transpose);
+
+            memcpy(&fluxes->qold_transpose,&membuffer_cpu[I_q],fluxes->num_bytes);
+            */
+
+            memcpy(fluxes->qold,&membuffer_cpu[I_q],fluxes->num_bytes); //<-- will be replaced by the above code
         }        
     }
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_CUDA_MEMCOPY_H2H]);       
