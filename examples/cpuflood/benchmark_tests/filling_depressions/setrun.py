@@ -29,7 +29,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 15  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -157,12 +157,18 @@ def setrun(claw_pkg='geoclaw'):
         mdpt_topo = ll_topo + 0.5*dim_topo
 
         dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+        # print(mdpt_topo, dim_comp)
+        clawdata.lower[0] = mdpt_topo[0]+170 - dim_comp[0]/2.0 #<-- -170 to match hec-ras domain
+        clawdata.upper[0] = mdpt_topo[0]-170 + dim_comp[0]/2.0
 
-        clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
-        clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+        clawdata.lower[1] = mdpt_topo[1]+170 - dim_comp[1]/2.0
+        clawdata.upper[1] = mdpt_topo[1]-170 + dim_comp[1]/2.0
 
-        clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
-        clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+        # clawdata.lower[0] = mdpt_topo[0]- dim_comp[0]/2.0
+        # clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+
+        # clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+        # clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
 
         return dim_topo, clawdata.lower,clawdata.upper
 
@@ -464,7 +470,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, -170.00000000, -170.00000000,1900,2000]) # left wall
+    regions.append([maxlevel,maxlevel,0, 1e10, 0.00000000, 0.00000000,1900,2000]) # left wall
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
