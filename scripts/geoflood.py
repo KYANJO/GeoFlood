@@ -257,7 +257,7 @@ class GeoFlooddata(object):
             '   # Source term splitting' : None,
             '   src_term': src_split,"\n"
 
-            '   # Use an f-waves update (default : True)'
+            '   # Use an f-waves update (default : True)': None,
             '   use_fwaves' : clawdata.use_fwaves,"\n"
 
             '   # Number of waves': None,
