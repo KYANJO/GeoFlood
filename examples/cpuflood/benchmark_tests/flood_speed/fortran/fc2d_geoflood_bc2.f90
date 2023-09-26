@@ -39,6 +39,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
     real(kind=8) :: h1, u_1
     ! real(kind=8) :: h1 = 0.001d0, u_1=0.0001d0
     g = 9.81d0
+    ! F = 0.50d0
 
     ! -------------------------------------------------------------------
     !  left boundary
@@ -55,52 +56,60 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
         y = ylower + (j-0.5d0)*dy
         
         if (abs(y-1000.0d0) <= 10.0d0) then
-        
-            q(1,1,j) = max(q(1,1,j), 0.001d0)
 
-            if (hu_0 .ge. 0.0d0) then 
+            ! q(1,1,j) = max(q(1,1,j), 0.001d0)
+
+            ! if (hu_0 .ge. 0.0d0) then 
                 
-                do ibc=1,mbc
-
-                    u_1 = q(2,1,j)/q(1,1,j)
-                    
-                    ! if (hu_0 .ne. 0.0d0) then
-                        ! call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
-                        ! if (h_0 > q(1,1,j)) then
-                        !     call two_shock(h_0,hu_0,q(1,1,j),u_1)
-                        ! end if
-                    h1 = q(1,1,j)
-                    u_0 = hu_0/h1
-                    do i = 1,100
-                        h_0 = ((u_0 - u_1 + 2*sqrt(g*h1))**2)/(4.0d0*g)
-                        if (h_0 .le. 0) then
-                            h_0 = 0
-                            u_0 = 0
-                        else
-                            if (abs((hu_0/h_0) - u_0) < 1.0d-6) exit
-                                u_0 = hu_0/h_0
-                        end if
-                    enddo
-
+            do ibc=1,mbc
+                if (q(1,1,j) < dry_tolerance) then
+                    h_0 = max((hu_0/sqrt(g))**(2.0d0/3.0d0), 0.001d0)
                     q(1,1-ibc,j) = h_0
                     q(2,1-ibc,j) = hu_0
                     q(3,1-ibc,j) = 0.0d0
-            
-                enddo
-            end if
+                else 
+                    u_1 = q(2,1,j)/q(1,1,j)
+                    if (hu_0 .ne. 0.0d0) then
+                        call newton_raphson(h_0,hu_0,q(1,1,j),u_1)
+                        if (h_0 > q(1,1,j)) then
+                            call two_shock(h_0,hu_0,q(1,1,j),u_1) ! entropy fix
+                        end if
+                        ! h1 = q(1,1,j)
+                        ! u_0 = hu_0/h1
+                        ! do i = 1,100
+                        !     h_0 = ((u_0 - u_1 + 2*sqrt(g*h1))**2)/(4.0d0*g)
+                        !     if (h_0 .le. 0) then
+                        !         h_0 = 0
+                        !         u_0 = 0
+                        !     else
+                        !         if (abs((hu_0/h_0) - u_0) < 1.0d-6) exit
+                        !             u_0 = hu_0/h_0
+                        !     end if
+                        ! enddo
+
+                        q(1,1-ibc,j) = h_0
+                        q(2,1-ibc,j) = hu_0
+                        q(3,1-ibc,j) = 0.0d0
+                    else
+                            aux(1,1-ibc,j) = aux(1,ibc,j)
+                            do m=1,meqn
+                                q(m,1-ibc,j) = q(m,ibc,j)
+                            enddo
+                            q(2,1-ibc,j) = -q(2,ibc,j)
+                    endif
+                endif 
+            enddo
 
         ! ---------- end working bc -------------
         else
             do ibc=1,mbc
-                    
+                aux(1,1-ibc,j) = aux(1,ibc,j)
+                do m=1,meqn
+                    q(m,1-ibc,j) = q(m,ibc,j)
+                enddo
 
-                        aux(1,1-ibc,j) = aux(1,ibc,j)
-                        do m=1,meqn
-                            q(m,1-ibc,j) = q(m,ibc,j)
-                        enddo
-
-                        ! c     # negate the normal velocity:   
-                        q(2,1-ibc,j) = -q(2,ibc,j)
+                ! c     # negate the normal velocity:   
+                q(2,1-ibc,j) = -q(2,ibc,j)
                 ! end if
             enddo
         endif
@@ -331,7 +340,10 @@ subroutine read_file_interpolate(file_name, t, hu0,dx)
 
     ! write(*,*) 'The value of zinterp' , zinterp
     ! ----- end of linear interpolation ------------------------
+    ! b = 10.0d0
     b = 20.0d0
+    ! b = 25.0d0
+
     ! hu0 = zinterp/(b+2*dx)
     hu0 = zinterp/b 
 
@@ -480,7 +492,7 @@ subroutine two_shock(h0,hu0,hr,ur)
     integer :: i, max_iter
 
     ! initialize variables
-    tol = 1.0e-8 ! tolerance for convergence
+    tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
     ! x0 = 0.1d0 ! initial guess for the inflow depth
     epi = 1.0e-11 ! tolerance for the derivativeF = 0.50d ! Froude number

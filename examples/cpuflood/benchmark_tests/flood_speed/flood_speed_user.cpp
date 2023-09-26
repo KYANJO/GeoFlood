@@ -37,5 +37,6 @@ void flood_speed_link_solvers(fclaw2d_global_t *glob)
        can set these with customized functions, if desired. */
     fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
 
+    // geoclaw_vt->qinit = &FLOOD_SPEED_QINIT; /* initial conditions */
     geoclaw_vt->bc2 = &FLOOD_SPEED_BC2; /* special BC at the left boundary */
 }

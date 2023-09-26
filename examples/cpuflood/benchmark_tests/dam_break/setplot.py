@@ -97,7 +97,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmax = 30
     plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = True
+    plotitem.patchedges_show = False
 
     # Land
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
@@ -105,7 +105,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmap = geoplot.land_colors
     plotitem.pcolor_cmin = 0.0
     plotitem.pcolor_cmax = 900.0
-    plotitem.add_colorbar = True
+    # plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
     plotitem.patchedges_show = 0
     plotaxes.xlimits = 'auto'

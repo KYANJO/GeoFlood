@@ -297,6 +297,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int I = (iy + 1)*ys + (ix + 1);  /* Start at one cell from left/bottom */
 
             double *const qr     = start;   
+            // double *const qr;
             for(int mq = 0; mq < meqn; mq++)
             {
                 int I_q = I + mq*zs;
@@ -304,6 +305,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
 
             double *const auxr   = qr      + meqn;   
+            // double *const auxr;
             for(int m = 0; m < maux; m++)
             {
                 /* In case aux is already set */
@@ -374,9 +376,15 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             {
                 int I_aux = I + m*zs;
                 auxl[m] = aux[I_aux - 1];
-            }               
-
+            }         
+            // printf("Now calling rpn2\n"); 
+            
             rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq);
+            // printf("Now finished calling rpn2\n");
+            // return;
+            // print size of amdq and apdq
+            // printf("Now printing size of amdq and apdq\n");
+            // printf("amdq_size: %d, apdq_size: %d\n", sizeof(amdq), sizeof(apdq));
 
             for (int mq = 0; mq < meqn; mq++) 
             {

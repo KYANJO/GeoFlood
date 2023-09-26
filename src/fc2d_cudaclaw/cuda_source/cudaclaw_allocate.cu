@@ -46,7 +46,6 @@ void cudaclaw_allocate_fluxes(fclaw2d_global_t *glob,
     fc2d_cudaclaw_options_t* cuda_opt = fc2d_cudaclaw_get_options(glob);
     int mwaves = cuda_opt->mwaves;
 
-
     size_t size = (2*mbc+mx)*(2*mbc+my);
  
     fluxes->num        = meqn*size;

@@ -25,6 +25,11 @@ class GeoFlooddata(object):
         self.output = True
         self.output_gauges = True
         self.cuda = False
+        self.gravity = 9.81
+        self.dry_tolerance = 1e-3
+        self.earth_radius = 6371220.0
+        self.coordinate_system = 1
+        self.mcapa = 0
         self.verbosity = 'essential'
         self.refinement_criteria = 'value'
         self.smooth_refine = False
@@ -52,8 +57,13 @@ class GeoFlooddata(object):
         amrdata = rundata.amrdata
 
         user = {
-        '   # User defined parameters' : None,
+        '   # User defined parameters' : None, 
         '   cuda' : self.cuda,
+        '   gravity' : self.gravity,
+        '   dry_tolerance' : self.dry_tolerance,
+        '   earth_radius' : self.earth_radius,
+        '   coordinate_system' : self.coordinate_system,
+        '   mcapa' : self.mcapa
         }
         for k in self.user.keys():
             user[f'   {k:}'] = self.user[k]
@@ -75,7 +85,7 @@ class GeoFlooddata(object):
         '   # Number of equations' : None,
         '   meqn': clawdata.num_eqn ,  "\n"   
         '   refinement-criteria' : self.refinement_criteria  
-            }
+        }
 
         if clawdata.output_step_interval is None:
             clawdata.output_step_interval = 1
@@ -247,7 +257,7 @@ class GeoFlooddata(object):
             '   # Source term splitting' : None,
             '   src_term': src_split,"\n"
 
-            '   # Use an f-waves update (default : True)'
+            '   # Use an f-waves update (default : True)': None,
             '   use_fwaves' : clawdata.use_fwaves,"\n"
 
             '   # Number of waves': None,

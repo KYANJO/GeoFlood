@@ -56,10 +56,10 @@ mi = 1  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
 mj = 2  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
 
 minlevel = 1
-maxlevel = 5 #resolution based on levels
-ratios_x = [2]*(maxlevel)
-ratios_y = [2]*(maxlevel)
-ratios_t = [2]*(maxlevel)
+maxlevel = 6 #resolution based on levels
+ratios_x = [2]*(maxlevel+1)
+ratios_y = [2]*(maxlevel+1)
+ratios_t = [2]*(maxlevel+1)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.03333
@@ -500,7 +500,9 @@ def setrun(claw_pkg='geoclaw'):
     # for i in range(len(gauges[0])):
     #     print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
     #     rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
-
+    # -----------------------------------------------
+    # == setflowgrades data values ==
+    flowgrades_data = geoflood.Flowgradesdata()
     # -----------------------------------------------
     # Hydrograph data:
     # -----------------------------------------------
@@ -522,7 +524,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.tprint = True      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-    return rundata,geoflooddata, hydrographdata
+    return rundata,geoflooddata, hydrographdata, flowgrades_data
     # end of function setrun
     # ----------------------
 
@@ -595,12 +597,14 @@ if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     # generate_qinit()         # generate topo file (generated before running setrun.py)
 
-    rundata,geoflooddata,hydrographdata = setrun(*sys.argv[1:])
+    rundata,geoflooddata,hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
 
     hydrographdata.write()  # writes a geoflood hydrograph file
+
+    flowgrades_data.write()  # writes a geoflood flowgrades file
 
 # if __name__ == '__main__':
 #     # Set up run-time parameters and write all data files.
