@@ -29,7 +29,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 30  # Initial time step
+initial_dt = 1  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -55,17 +55,17 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 50 # Number of x grids per block
-my = 50 # Number of y grids per block
+mx = 20 # Number of x grids per block
+my = 20 # Number of y grids per block
 
-mi = 2  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 1  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 3  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 1 
-maxlevel = 4 #resolution based on levels 
-ratios_x = [2]*(maxlevel)
-ratios_y = [2]*(maxlevel)
-ratios_t = [2]*(maxlevel)
+minlevel = 0 
+maxlevel = 0 #resolution based on levels 
+ratios_x = [2]*(maxlevel+1)
+ratios_y = [2]*(maxlevel+1)
+ratios_t = [2]*(maxlevel+1)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
@@ -151,13 +151,19 @@ def setrun(claw_pkg='geoclaw'):
             dim_topo = ur_topo - ll_topo
             mdpt_topo = ll_topo + 0.5*dim_topo
 
-            dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+            # dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+            dim_comp = np.array([1000.0,2000.0])   # Shrink domain inside of given bathymetry.
 
-            clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
-            clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+            clawdata.lower[0] =mdpt_topo[0] - dim_comp[0]/2.0
+            clawdata.upper[0] = mdpt_topo[0]+ dim_comp[0]/2.0
 
-            clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
-            clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+            clawdata.lower[1] = mdpt_topo[1]+25 - dim_comp[1]/2.0
+            clawdata.upper[1] = mdpt_topo[1]+25 + dim_comp[1]/2.0
+            # clawdata.lower[0] = 0.0
+            # clawdata.upper[0] = 1000.0
+
+            # clawdata.lower[1] = 0.0
+            # clawdata.upper[1] = 2000.0
 
             return dim_topo, clawdata.lower,clawdata.upper
 
@@ -268,7 +274,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.8
+    clawdata.cfl_desired = 0.75
     clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
@@ -459,7 +465,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, -86.28446115,-86.28446115,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,1000,990,1010]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -481,7 +487,7 @@ def setrun(claw_pkg='geoclaw'):
     #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
     #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
     # flowgrades_data.flowgrades.append([1.e-6, 1, 1, maxlevel])
-    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, maxlevel-1])
+    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, minlevel])
 
     #
     # -------------------------------------------------------
@@ -536,7 +542,7 @@ def setgeo(rundata):
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
-    refinement_data.speed_tolerance = [1.e-1]*maxlevel
+    refinement_data.speed_tolerance = [1.e-2]*6
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = True
@@ -564,22 +570,24 @@ def generate_topo_file():
     """
     Generate topo file for the current run
     """
-    nxpoints = 200
-    nypoints = 400
-    xlower = -100
-    xupper = 1100
-    yupper = 2100
-    ylower = -100
-    outfile= "flood_topo.asc"   
+    buffer = 50
+    cellsize = 5
+    xlower = -buffer
+    xupper = 1000 + buffer
+    ylower = -50-buffer
+    yupper = 2000 + buffer
+    nxpoints =  int((xupper - xlower)/cellsize) + 1
+    nypoints =  int((yupper - ylower)/cellsize) + 1
+    outfile= "bathy2.topotype2"   
 
     z = 0.0 # Dry bed  
 
-    topo = lambda x,y: (x**2 + y**2)*z
+    topo = lambda x,y: 0*x**2 + 0*y**2 + z
 
     topography = Topography(topo_func=topo)
     topography.x = np.linspace(xlower,xupper,nxpoints)
     topography.y = np.linspace(ylower,yupper,nypoints)
-    topography.write(outfile, topo_type=3, Z_format="%22.15e")
+    topography.write(outfile, topo_type=2, Z_format="%22.15e")
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.

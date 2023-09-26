@@ -51,7 +51,7 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
 
            ! check to see if refinement is forced in any topo domain
            DO m=1,mtopofiles
-                IF (level .lt. 1 .and. &
+                IF (level .lt. 0 .and. &
                     t.ge.tlowtopo(m) .and. t.le.thitopo(m)) THEN
                     xlow = xlowtopo(m)
                     xhi = xhitopo(m)

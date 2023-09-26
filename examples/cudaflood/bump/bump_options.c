@@ -24,6 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "bump_user.h"
+#include <fclaw_pointer_map.h>
 
 static int s_user_options_package_id = -1;
 
@@ -135,16 +136,28 @@ user_options_t* bump_options_register (fclaw_app_t * app,
     return user;
 }
 
+// void bump_options_store (fclaw2d_global_t* glob, user_options_t* user)
+// {
+//     FCLAW_ASSERT(s_user_options_package_id == -1);
+//     int id = fclaw_package_container_add_pkg(glob,user);
+//     s_user_options_package_id = id;
+// }
+
+// user_options_t* bump_get_options(fclaw2d_global_t* glob)
+// {
+//     int id = s_user_options_package_id;
+//     return (user_options_t*) fclaw_package_get_options(glob, id);    
+// }
+
+user_options_t* bump_get_options(fclaw2d_global_t *glob)
+{
+    user_options_t* user = (user_options_t*) fclaw_pointer_map_get(glob->options,"bump");
+    FCLAW_ASSERT(user != NULL);
+    return user;
+}
+
 void bump_options_store (fclaw2d_global_t* glob, user_options_t* user)
 {
-    FCLAW_ASSERT(s_user_options_package_id == -1);
-    int id = fclaw_package_container_add_pkg(glob,user);
-    s_user_options_package_id = id;
+    FCLAW_ASSERT(fclaw_pointer_map_get(glob->options,"bump") == NULL);
+    fclaw_pointer_map_insert(glob->options,"bump",user,NULL);
 }
-
-user_options_t* bump_get_options(fclaw2d_global_t* glob)
-{
-    int id = s_user_options_package_id;
-    return (user_options_t*) fclaw_package_get_options(glob, id);    
-}
-

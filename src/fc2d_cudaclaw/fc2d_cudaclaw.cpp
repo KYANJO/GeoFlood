@@ -287,7 +287,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     double maxcfl;
 
     /* ------------------------------- Call b4step2 ----------------------------------- */
-#if 0
+#if 1
     if (cudaclaw_vt->b4step2 != NULL)
     {
         fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       

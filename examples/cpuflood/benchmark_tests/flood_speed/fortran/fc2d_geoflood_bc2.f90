@@ -56,7 +56,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
         y = ylower + (j-0.5d0)*dy
         
         if (abs(y-1000.0d0) <= 10.0d0) then
-        
+
             ! q(1,1,j) = max(q(1,1,j), 0.001d0)
 
             ! if (hu_0 .ge. 0.0d0) then 
@@ -340,7 +340,10 @@ subroutine read_file_interpolate(file_name, t, hu0,dx)
 
     ! write(*,*) 'The value of zinterp' , zinterp
     ! ----- end of linear interpolation ------------------------
+    ! b = 10.0d0
     b = 20.0d0
+    ! b = 25.0d0
+
     ! hu0 = zinterp/(b+2*dx)
     hu0 = zinterp/b 
 

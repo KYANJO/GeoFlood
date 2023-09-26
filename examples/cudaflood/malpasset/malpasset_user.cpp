@@ -66,7 +66,7 @@ void malpasset_problem_setup(fclaw2d_global_t* glob)
 
 void malpasset_link_solvers(fclaw2d_global_t *glob)
 {
-    fclaw2d_vtable_t *vt = fclaw2d_vt();
+    fclaw2d_vtable_t *vt = fclaw2d_vt(glob);
     vt->problem_setup = &malpasset_problem_setup;  /* Version-independent */
 
     const user_options_t* user = malpasset_get_options(glob);
@@ -81,7 +81,7 @@ void malpasset_link_solvers(fclaw2d_global_t *glob)
     }
     else
     {
-        fc2d_cudaclaw_vtable_t *cuclaw_vt = fc2d_cudaclaw_vt();
+        fc2d_cudaclaw_vtable_t *cuclaw_vt = fc2d_cudaclaw_vt(glob);
         cuclaw_vt->fort_qinit  = &CUDACLAW_QINIT;
 
         malpasset_assign_rpn2(&cuclaw_vt->cuda_rpn2);

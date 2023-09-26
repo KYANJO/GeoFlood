@@ -90,13 +90,13 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 16
-    mi = 2
-    mj = 5
-    minlevel = 3
+    mx = 32
+    mi = 1
+    mj = 2
+    minlevel = 1
     maxlevel = 6
     p = 1
-    plotfigure.kml_figsize = [2,5]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_figsize = [2,4]  #[mx*2**p*mi,mx*2**p*mj]
     plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2  
 
     # --------------------------------------------------

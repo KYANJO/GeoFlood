@@ -68,6 +68,8 @@ __device__ void bump_rpn2shallow(int idir, int meqn, int mwaves,
     //assert(qr[0] > 0);
     //assert(ql[0] > 0);
 
+    printf("rpn2shallow : %d %d %d %d\n",idir,meqn,mwaves,maux);
+
 	double h = (qr[0] + ql[0])/2.0;
 	double hsqrtr = sqrt(qr[0]);
 	double hsqrtl = sqrt(ql[0]);
@@ -122,13 +124,16 @@ __device__ void bump_rpn2shallow(int idir, int meqn, int mwaves,
 __device__ cudaclaw_cuda_rpn2_t bump_rpn2 = bump_rpn2shallow;
 
 void bump_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
-{
+{   
     cudaError_t ce = cudaMemcpyFromSymbol(rpn2, bump_rpn2, sizeof(cudaclaw_cuda_rpn2_t));
+    printf("rpn2 = %p, bump_rpn2 = %p\n",rpn2,bump_rpn2);
     if(ce != cudaSuccess)
-    {
+    {   
+        printf("check cuda error\n");
         fclaw_global_essentialf("ERROR (bump_rpn2shallow): %s\n",cudaGetErrorString(ce));
         exit(0);
     }    
+    
 }
 
 
@@ -138,6 +143,7 @@ __device__ void bump_rpt2shallow(int idir, int meqn, int mwaves, int maux,
                                  int imp, double asdq[],
                                  double bmasdq[], double bpasdq[])
 {
+    
     int mu = 1+idir;
     int mv = 2-idir;    
 

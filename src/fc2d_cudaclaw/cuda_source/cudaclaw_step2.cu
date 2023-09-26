@@ -79,6 +79,8 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
     clawopt = fc2d_cudaclaw_get_options(glob);
     mwaves = clawopt->mwaves;
 
+    printf("\nmwaves = %d\n\n",mwaves);
+
     fc2d_cudaclaw_vtable_t*  cuclaw_vt = fc2d_cudaclaw_vt(glob);
     FCLAW_ASSERT(cuclaw_vt->cuda_rpn2 != NULL);
     if (clawopt->order[1] > 0)
@@ -201,16 +203,17 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
 
         /* Determine shared memory size */
         int block_size = FC2D_CUDACLAW_BLOCK_SIZE;
-        //int block_size = thread_count;
+        // int block_size = 512;
+        // int block_size = thread_count;
         dim3 block(block_size,1,1);
         dim3 grid(1,1,batch_size);
-
+        
         int mwork1 = 4*meqn + 2*maux + mwaves + meqn*mwaves;
         int mwork2 = 5*meqn + 6*maux;
         mwork = (mwork1 > mwork2) ? mwork1 : mwork2;
         bytes_per_thread = sizeof(double)*mwork;
         bytes = bytes_per_thread*block_size;
-
+        printf("meqn = %d; maux = %d; mwaves = %d; mwork = %d\n",meqn,maux,mwaves,mwork);
         bytes_kb = bytes/1024.0;
         //fclaw_global_essentialf("[fclaw] Shared memory  : %0.2f kb\n\n",bytes_kb);
 
