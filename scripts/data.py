@@ -470,7 +470,9 @@ class ClawRunData(ClawData):
 
         elif pkg.lower() in ['amrclaw', 'amr']:
 
-            import clawpack.amrclaw.data as amrclaw
+            # import amrclaw.data as amrclaw
+
+            import amrclaw.data as amrclaw
 
             self.xclawcmd = 'xamr'
             self.add_data(amrclaw.AmrclawInputData(self.clawdata),'amrdata')
@@ -481,8 +483,9 @@ class ClawRunData(ClawData):
 
         elif pkg.lower() in ['geoclaw']:
 
-            import clawpack.amrclaw.data as amrclaw
-            import clawpack.geoclaw.data as geoclaw
+            import amrclaw.data as amrclaw
+            import geoclaw.data as geoclaw
+            # import clawpack.geoclaw.data as geoclaw
 
             self.xclawcmd = 'xgeoclaw'
 
@@ -537,7 +540,8 @@ class ClawRunData(ClawData):
     def write(self, out_dir = ''):
         r"""Write out each data objects in datalist """
         
-        import clawpack.amrclaw.data as amrclaw
+        import amrclaw.data as amrclaw
+
 
         for data_object in self.data_list:
             # UserData doesn't naturally have an "out_file" parameter

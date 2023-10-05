@@ -127,10 +127,10 @@ class RefinementData(clawpack.clawutil.data.ClawData):
         # check if user set deprecated parameters:
         if self.deep_depth is not None:
             w = '\n  *** WARNING: deep_depth parameter ignored as of v5.8.0'
-            warnings.warn(w, UserWarning)
+            # warnings.warn(w, UserWarning)
         if self.max_level_deep is not None:
             w = '\n  *** WARNING: max_level_deep parameter ignored as of v5.8.0'
-            warnings.warn(w, UserWarning)
+            # warnings.warn(w, UserWarning)
 
         if not isinstance(self.speed_tolerance,list):
             self.speed_tolerance = [self.speed_tolerance]
@@ -182,7 +182,7 @@ class TopographyData(clawpack.clawutil.data.ClawData):
                 if len(tfile) == 6:
                     w = '\n  *** WARNING: topofile specs changed in v5.8.0 -- ' + \
                           'Flag level info now ignored'
-                    warnings.warn(w, UserWarning)
+                    # warnings.warn(w, UserWarning)
                     tfile = [tfile[0], tfile[-1]] # drop minlevel,maxlevel,t1,t2
                 elif len(tfile) == 2:
                     pass  # now expect only topo_type, filename
