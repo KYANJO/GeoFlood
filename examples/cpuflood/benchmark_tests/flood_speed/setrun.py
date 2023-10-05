@@ -9,7 +9,7 @@ import os
 import sys
 import numpy as np
 from pdb import *
-from clawpack.geoclaw.topotools import Topography
+# from clawpack.geoclaw.topotools import Topography
 
 
 import tools
@@ -19,6 +19,8 @@ import tools
 #===============================================================================
 sys.path.append('../../../../scripts')
 import geoflood # -- importing geoflood.py
+import data
+from geoclaw_python.topotools import Topography
 
 #===============================================================================
 # scratch directory
@@ -62,10 +64,7 @@ mi = 1  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
 mj = 3  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 0 
-maxlevel = 0 #resolution based on levels 
-ratios_x = [2]*(maxlevel+1)
-ratios_y = [2]*(maxlevel+1)
-ratios_t = [2]*(maxlevel+1)
+maxlevel = 0 #resolution based on levels
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
@@ -93,7 +92,7 @@ def setrun(claw_pkg='geoclaw'):
 
     """
 
-    from clawpack.clawutil import data
+    # from clawpack.clawutil import data
 
     assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
 
@@ -436,9 +435,9 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = ratios_x
-    amrdata.refinement_ratios_y = ratios_y
-    amrdata.refinement_ratios_t = ratios_t
+    # amrdata.refinement_ratios_x = ratios_x
+    # amrdata.refinement_ratios_y = ratios_y
+    # amrdata.refinement_ratios_t = ratios_t
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
