@@ -28,6 +28,30 @@
 % add gauges
 % add_gauges('geoclaw');
 
+if PlotType == 4
+    hecras = load('hecras_45.m');
+    hold on
+    plot(hecras(:,1),hecras(:,2),'r',LineWidth=2);
+    grid on
+    yourplots = get(gca, 'children');
+    legend(yourplots([1 2]), {'HEC-RAS', 'GeoFlood'});
+    xlabel('Distance (m)');
+    ylabel('Depth (m)') 
+    xlim([0,500]);
+    title('Cross-section of depths at time T = 1 hour')
+    shg
+    fig = gcf;
+    fig.Units = 'inches';
+    % fig.Position = [0 0 6 4]; % Adjust the width and height according to your requirements
+
+    % Save the figure as a PDF file
+    filename = 'transect_1_5';
+    exportgraphics(fig, [filename '.jpeg'], 'ContentType', 'vector', 'Resolution', '700');
+    return 
+
+end
+
+
 fprintf('%20s %12.4e\n','qmin',qmin);
 fprintf('%20s %12.4e\n','qmax',qmax);
 
@@ -40,8 +64,9 @@ by = 2000;
 axis([ax bx ay by])
 daspect([0.50,0.502,0.505])
 % daspect([1,1,1])
-set(gca,'xtick',[]);
-set(gca,'YTick',[]);
+% set(gca,'xtick',[]);
+% set(gca,'YTick',[]);
+
 
 
 % title(sprintf('malpasset Dam (%d) : t = %.2f (%.2f,%.2f)',Frame,t,qmin,qmax),'fontsize',18);
@@ -49,8 +74,9 @@ title('')
 ylabel('')
 xlabel('')
 
+
 NoQuery = 0;
-prt = true;
+prt = false;
 MaxFrames = 1000;
 if (prt)
     % hidepatchborders(6);

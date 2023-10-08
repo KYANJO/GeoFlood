@@ -48,17 +48,20 @@
 
 function [r,q] = map1d(xgrid,ygrid,qgrid)
 
-    x = linspace(0,1000,4000);
+    x = linspace(0,1000,1000);
+    xdiag = sqrt(x.^2 + x.^2);
     dy = (1000/128);
-    y1 =  0*x + 1000+dy;
+    % y1 =  0*x + 1000+dy;
     % y1 = x + 1000;
+    y1 = ((2000-(1000+dy))/1000)*x + (1000+dy);
     % y2 = ((990 - 1000)/1000)*x + 1000;
     % y3 = ((1010 - 1000)/(983.52 + 86.28))*x + 1000;
     q1 = interp2(xgrid,ygrid,qgrid,x,y1,'linear',nan);
     % q2 = interp2(xgrid,ygrid,qgrid,x,y2,'linear',nan);
     % q = 0.5*(q1+q2);
     % m = ~isnan(q);
-    r = x';
+    % r = x';
+    r = xdiag';
     q = q1';
 
 end

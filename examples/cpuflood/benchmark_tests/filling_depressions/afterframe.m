@@ -23,7 +23,7 @@
 % hold on
 % camlight
 
-colorbar 
+% colorbar 
 % showpatchborders;
 fprintf('%20s %12.4e\n','qmin',qmin);
 fprintf('%20s %12.4e\n','qmax',qmax);
@@ -46,7 +46,7 @@ ylabel('')
 xlabel('')
 
 NoQuery = 0;
-prt = false;
+prt = true;
 MaxFrames = 1000;
 if (prt)
     % hidepatchborders(6);
