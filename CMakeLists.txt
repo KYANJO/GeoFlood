@@ -2,7 +2,7 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
-# @version: 1.0
+# @version: 1.4
 # 
 # List of available applications and examples
 #
@@ -22,7 +22,7 @@ project(GEOFLOOD
     DESCRIPTION "Flood inundation model"
     HOMEPAGE_URL https://github.com/KYANJO/GeoFlood
     LANGUAGES C CXX Fortran
-    VERSION 1.2)
+    VERSION 1.4)
 
 # --- ctest
 include(CTest)
