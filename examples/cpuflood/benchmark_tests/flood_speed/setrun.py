@@ -2,15 +2,13 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
-# @version: 1.0
+# @version: 2.0
 # ------------------------------------------------
 
 import os
 import sys
 import numpy as np
 from pdb import *
-# from clawpack.geoclaw.topotools import Topography
-
 
 import tools
 
@@ -20,7 +18,7 @@ import tools
 sys.path.append('../../../../scripts')
 import geoflood # -- importing geoflood.py
 import data
-from geoclaw_python.topotools import Topography
+from geoclaw.topotools import Topography
 
 #===============================================================================
 # scratch directory
@@ -91,8 +89,6 @@ def setrun(claw_pkg='geoclaw'):
         rundata - object of class ClawRunData
 
     """
-
-    # from clawpack.clawutil import data
 
     assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
 
