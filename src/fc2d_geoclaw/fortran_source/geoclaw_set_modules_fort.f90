@@ -10,7 +10,6 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
     USE qinit_module, ONLY: set_qinit
     USE fixedgrids_module, ONLY: set_fixed_grids
     USE refinement_module, ONLY: set_refinement, set_flow_grades
-    USE storm_module, only: set_storm
     USE friction_module, only: setup_variable_friction
     USE hydrograph_module, only: read_hydrograph_data
 
@@ -58,8 +57,6 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
     CALL read_dtopo_settings()        !# specifies file with dtopo from earthquake
     CALL read_topo_settings(.false.)           !# specifies topography (bathymetry) files
     CALL set_qinit()                  !# specifies file with dh if this used instead
-!   CALL set_fixed_grids()            !# Fixed grid settings (deprecated form clawpack v5.9.0)
-    CALL set_storm()                  ! Set storm parameters
     CALL setup_variable_friction()    ! Set variable friction parameters
     CALL read_hydrograph_data()       ! Set hydrograph parameters
 

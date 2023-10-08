@@ -8,9 +8,6 @@ add_library(geoflood_f OBJECT
     geolib_source/qinit_module.f90 
     geolib_source/fixedgrids_module.f90 
     geolib_source/refinement_module.f90 
-    geolib_source/surge/model_storm_module.f90 
-    geolib_source/surge/data_storm_module.f90 
-    geolib_source/surge/storm_module.f90 
     geolib_source/friction_module.f90 
     hydrograph/hydrograh_module.f90
     riemann_source/rpn2_geoclaw.f 

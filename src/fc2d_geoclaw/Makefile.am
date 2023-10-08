@@ -21,9 +21,6 @@ libgeoclaw_compiled_sources = \
 	src/solvers/fc2d_geoclaw/geolib_source/qinit_module.f90 \
 	src/solvers/fc2d_geoclaw/geolib_source/fixedgrids_module.f90 \
 	src/solvers/fc2d_geoclaw/geolib_source/refinement_module.f90 \
-	src/solvers/fc2d_geoclaw/geolib_source/surge/model_storm_module.f90 \
-	src/solvers/fc2d_geoclaw/geolib_source/surge/data_storm_module.f90 \
-	src/solvers/fc2d_geoclaw/geolib_source/surge/storm_module.f90 \
 	src/solvers/fc2d_geoclaw/geolib_source/friction_module.f90 \
 	src/solvers/fc2d_geoclaw/riemann_source/rpn2_geoclaw.f \
 	src/solvers/fc2d_geoclaw/riemann_source/rpt2_geoclaw.f \

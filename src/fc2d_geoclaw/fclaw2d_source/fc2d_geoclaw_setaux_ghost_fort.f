@@ -16,10 +16,6 @@ SUBROUTINE fc2d_geoclaw_fort_ghostaux(mbc,mx,my,mint,xlow,ylow,dx,dy,maux,aux)
   USE geoclaw_module, ONLY: coordinate_system, earth_radius, deg2rad
   USE geoclaw_module, ONLY: sea_level
 
-  USE storm_module, ONLY: wind_forcing, pressure_forcing
-  USE storm_module, ONLY: wind_index, pressure_index, set_storm_fields
-  USE storm_module, ONLY: ambient_pressure
-
   USE friction_module, ONLY: variable_friction, friction_index
   USE friction_module, ONLY: set_ghost_friction_field
 
@@ -85,32 +81,6 @@ SUBROUTINE fc2d_geoclaw_fort_ghostaux(mbc,mx,my,mint,xlow,ylow,dx,dy,maux,aux)
      aux(friction_index,mx-mint+1:mx+1,mint+1:my+1) = 0.d0
      !!face 3
      aux(friction_index,0:mx-mint,my-mint+1:my+1) = 0.d0     
-  ENDIF
-
-  !! Storm fields if used
-  IF (wind_forcing) THEN
-     !!face 0
-     aux(wind_index,0:mint,0:my-mint) = 0.d0
-     aux(wind_index+1,0:mint,0:my-mint) = 0.d0
-     !!face 2
-     aux(wind_index,mint+1:mx+1,0:mint) = 0.d0
-     aux(wind_index+1,mint+1:mx+1,0:mint) = 0.d0
-     !!face 1
-     aux(wind_index,mx-mint+1:mx+1,mint+1:my+1) = 0.d0
-     aux(wind_index+1,mx-mint+1:mx+1,mint+1:my+1) = 0.d0
-     !!face 3
-     aux(wind_index,0:mx-mint,my-mint+1:my+1) = 0.d0  
-     aux(wind_index+1,0:mx-mint,my-mint+1:my+1) = 0.d0    
-  ENDIF
-  IF (pressure_forcing) THEN
-     !!face 0
-     aux(pressure_index,0:mint,0:my-mint) = ambient_pressure
-     !!face 2
-     aux(pressure_index,mint+1:mx+1,0:mint) = ambient_pressure
-     !!face 1
-     aux(pressure_index,mx-mint+1:mx+1,mint+1:my+1) = ambient_pressure
-     !!face 3
-     aux(pressure_index,0:mx-mint,my-mint+1:my+1) = ambient_pressure
   ENDIF
 
 
