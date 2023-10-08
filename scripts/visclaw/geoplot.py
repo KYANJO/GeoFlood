@@ -6,10 +6,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 import numpy
 import warnings
+import sys
 
-from clawpack.visclaw import colormaps
+sys.path.append('../../../../scripts')
+from visclaw import colormaps
 from matplotlib.colors import Normalize
-from clawpack.geoclaw import topotools
+from geoclaw import topotools
 from six.moves import range, zip
 
 
@@ -71,6 +73,9 @@ googleearth_flooding = colormaps.make_colormap({ -1:transparent,
 tsunami_colormap = colormaps.make_colormap({-TSUNAMI_MAX_AMPLITUDE:blue,
                                             0.0:blue_green,
                                             TSUNAMI_MAX_AMPLITUDE:red})
+
+land_flood_colormap = colormaps.make_colormap({0.0:brown,
+                                               5:[153/255,76/255,0]})
 
 land1_colormap = colormaps.make_colormap({0.0:dark_green,
                                           1000.0:green,
