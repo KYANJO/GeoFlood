@@ -94,7 +94,7 @@ tsunami_colormap = colormaps.make_colormap({-TSUNAMI_MAX_AMPLITUDE:blue,
                                             TSUNAMI_MAX_AMPLITUDE:red})
 # HEC-RAS colormap
 # WSE colormap from HEC-RAS
-wse_hec_ras_colormap = colormaps.make_colormap({0.04:wse[0,:],
+wse_hecras_colormap = colormaps.make_colormap({0.04:wse[0,:],
                                                 3.25:wse[1,:],
                                                 6.46:wse[2,:],
                                                 9.67:wse[3,:],
@@ -103,7 +103,7 @@ wse_hec_ras_colormap = colormaps.make_colormap({0.04:wse[0,:],
                                                 19.29:wse[6,:]})
 
 # Terrain colormap from HEC-RAS
-terrain_hec_ras_colormap = colormaps.make_colormap({0.00:terrain[0,:],
+terrain_hecras_colormap = colormaps.make_colormap({0.00:terrain[0,:],
                                                     0.01:terrain[1,:],
                                                     0.02:terrain[2,:],
                                                     0.03:terrain[3,:],
