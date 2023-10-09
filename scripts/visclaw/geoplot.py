@@ -4,7 +4,7 @@ Useful things for plotting GeoClaw results.
 
 from __future__ import absolute_import
 from __future__ import print_function
-import numpy
+import numpy 
 import warnings
 import sys
 
@@ -43,6 +43,25 @@ white_a = [1.0,1.0,1.0,1.0]
 biscay = '#203469'   # Dark blue
 lightblue = '#4E6498'
 
+# colors taken from HEC-RAS colormap RGBA
+wse = numpy.array([[127, 255, 0, 255],
+                    [0, 128, 0, 255],
+                    [255, 255, 0, 255],
+                    [255, 165, 9, 255],
+                    [255, 0, 0, 255],
+                    [255, 192, 203, 255],
+                    [255, 0, 255, 255]])/255
+
+# terrain
+terrain = numpy.array([[102, 205, 170, 255],
+                       [255, 255, 0, 255],
+                        [0, 128, 0, 255],
+                        [255, 165, 0, 255],
+                        [139, 0, 0, 255],
+                        [165, 42, 42, 255],
+                        [128, 128, 128, 255],
+                        [255, 250, 250, 255]])/255
+
 
 # Colormaps
 TSUNAMI_MAX_AMPLITUDE = 0.6
@@ -73,6 +92,25 @@ googleearth_flooding = colormaps.make_colormap({ -1:transparent,
 tsunami_colormap = colormaps.make_colormap({-TSUNAMI_MAX_AMPLITUDE:blue,
                                             0.0:blue_green,
                                             TSUNAMI_MAX_AMPLITUDE:red})
+# HEC-RAS colormap
+# WSE colormap from HEC-RAS
+wse_hec_ras_colormap = colormaps.make_colormap({0.04:wse[0,:],
+                                                3.25:wse[1,:],
+                                                6.46:wse[2,:],
+                                                9.67:wse[3,:],
+                                                12.87:wse[4,:],
+                                                16.08:wse[5,:],
+                                                19.29:wse[6,:]})
+
+# Terrain colormap from HEC-RAS
+terrain_hec_ras_colormap = colormaps.make_colormap({0.00:terrain[0,:],
+                                                    0.01:terrain[1,:],
+                                                    0.02:terrain[2,:],
+                                                    0.03:terrain[3,:],
+                                                    0.09:terrain[4,:],
+                                                    9.97:terrain[5,:],
+                                                    9.98:terrain[6,:],
+                                                    10.00:terrain[7,:]})
 
 land_flood_colormap = colormaps.make_colormap({0.0:brown,
                                                5:[153/255,76/255,0]})
