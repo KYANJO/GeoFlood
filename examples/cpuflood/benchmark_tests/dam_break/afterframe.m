@@ -1,44 +1,73 @@
+% hidepatchborders(6);
+% showpatchborders;
+% setpatchborderprops('linewidth',0.5);
 
-fprintf("qmin = %12.4e\n",qmin);
-fprintf("qmax = %12.4e\n",qmax);
+% colormap(flipud(parula));
+% % % colorbar;
+% tol = -0.8;
+% c1 = 0;
+% c2 = 30;
+% caxis([c1,c2]);
+% 
+% % add gauges
+% add_gauges('geoclaw');
+
+% Load DEM data
+% filename = 'scratch/test2DEM.asc'; 
+% 
+% % plot topography
+% plot_topo(filename)
+% hold on;
+% image_data = imread('/Users/mathadmin/Project/geoflood-project/post_processing/geoflood_hec-ras/filling_depressions/geoflood/filling/filling_2_hec.png'); % Replace with your image file path
+% imshow(image_data);
+% hold on
+% camlight
+
+% colorbar 
+% showpatchborders;
+fprintf('%20s %12.4e\n','qmin',qmin);
+fprintf('%20s %12.4e\n','qmax',qmax);
+
+% Axes
+% ax = 0;
+% bx = 2000;
+% ay = 0;
+% by = 2000;
+% 
+% axis([ax bx ay by])
+daspect([18,18,18])
+% set(gca,'xtick',[]);
+% set(gca,'YTick',[]);
 
 
-plot_soln = true;
-if plot_soln
-    N = 500;
-    if (t > 0)
-        [xout,yout] = filament_soln(N,t);
-    else
-        th = linspace(0,2*pi,N+1);
-        xout = 0.25*cos(th) + 0.5;
-        yout = 0.25*sin(th) + 1;
-    end
-    hold on;
-    plot(xout,yout,'k','linewidth',2);
-    hold off;
-end
-
-
-% Colormap and axis
-colormap(yrbcolormap);
-caxis([0,1])
-colorbar;
-
-% grids and borders
-showpatchborders(1:7);
-setpatchborderprops('linewidth',1)
-
-% axes
-axis([0 2 0 2])
-daspect([1 1 1]);
-view(2);
-shg;
-
+% title(sprintf('malpasset Dam (%d) : t = %.2f (%.2f,%.2f)',Frame,t,qmin,qmax),'fontsize',18);
+title('')
+ylabel('')
+xlabel('')
 
 NoQuery = 0;
-prt = false;
+prt = true;
+MaxFrames = 1000;
 if (prt)
-  MaxFrames = 32;
-  filename = sprintf('filament_%04d.png',Frame)
-  print('-dpng',filename);
+    % hidepatchborders(6);
+    % setpatchborderprops('linewidth',0.5);
+    % % showpatchborders(1:5)
+    figsize=[36,1.9782];
+    maxlevel = 3;    %  eff. res. = 2^maxlevel
+    mx = 54;
+    mi = 18;
+    mj = 1;
+    maxres = mi*mx*2^maxlevel;
+    dpi = maxres/figsize(1)
+    prefix = 'filling';
+    plot_tikz_fig(Frame,figsize,prefix,dpi)
+    % filename = sprintf('flo_%04d.png',Frame)
+    % print('-dpng',filename);
 end
+
+shg
+
+clear afterframe;
+clear mapc2m;
+
+
