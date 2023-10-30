@@ -12,16 +12,40 @@
 % % add gauges
 % add_gauges('geoclaw');
 
-% Load DEM data
-% filename = 'scratch/test2DEM.asc'; 
-% 
-% % plot topography
-% plot_topo(filename)
-% hold on;
-% image_data = imread('/Users/mathadmin/Project/geoflood-project/post_processing/geoflood_hec-ras/filling_depressions/geoflood/filling/filling_2_hec.png'); % Replace with your image file path
-% imshow(image_data);
-% hold on
-% camlight
+% extracting colorbar;
+f = figure;
+ax = axes;
+mymap = [ 127 255 0 
+    0 128 0 
+    255 255 0
+    255 165 9
+    255 0 0
+    255 192 203
+    255 0 255]/255;
+Ncm = 256;
+fine_pos = linspace(0, 1, Ncm)';
+pos = linspace(0, 1, size(mymap, 1));
+mymap = interp1(pos, mymap, fine_pos);
+colormap(mymap)
+caxis([7.95, 10.36]);
+c = colorbar(ax,'eastoutside');
+c.Label.String = '(m)';
+c.Label.VerticalAlignment = 'middle';
+% pos = get(c,'Position');
+c.Label.Position = [0.5 7];
+% ylabel(c,'(m)');
+title(c,'(m)')
+c.FontSize = 12;
+
+hec_color_range = [7.95,8.35,8.76,9.16,9.56,9.96,10.36];
+c.Ticks = hec_color_range; %create ticks
+c.TickLabels = num2cell(hec_color_range); 
+c.YAxisLocation = 'left';
+% tix = c.Ticks;
+% c.TickLabels = compose('%9.6f',tix);          
+ax.Visible = 'off';
+exportgraphics(gcf, 'test.eps', ...
+    'ContentType', 'vector')
 
 % colorbar 
 % showpatchborders;
