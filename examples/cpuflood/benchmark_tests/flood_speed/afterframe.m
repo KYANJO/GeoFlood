@@ -2,28 +2,43 @@
 % showpatchborders;
 % setpatchborderprops('linewidth',0.5);
 
-% colormap(flipud(parula));
-% mymap = [ 0.498 1 0 
-%     0 0.5 0 
-%     1 1 0 
-%     1 0.647 0 
-%     1 0 0 
-%     1 0.752 0.796 
-%     1 0 1];
-% 
-% pos = linspace(0, 1, size(mymap, 1));
-% 
-% % Create a fine-grained colormap using interpolation
-% fine_pos = linspace(0, 1, 256);
-% fine_mymap = interp1(pos, mymap, fine_pos);
-% % Set the stretched colormap
-% colormap(fine_mymap);
-% colorbar;
-
-% tol = -0.8;
-% c1 = 0;
-% c2 = 30;
-% caxis([c1,c2]);
+% extracting colorbar;
+extract_colorbar = false;
+if (extract_colorbar)
+    f = figure;
+    ax = axes;
+    mymap = [ 127 255 0 
+        0 128 0 
+        255 255 0
+        255 165 9
+        255 0 0
+        255 192 203
+        255 0 255]/255;
+    Ncm = 256;
+    fine_pos = linspace(0, 1, Ncm)';
+    pos = linspace(0, 1, size(mymap, 1));
+    mymap = interp1(pos, mymap, fine_pos);
+    colormap(mymap)
+    caxis([0.000, 0.545]);
+    c = colorbar(ax,'eastoutside');
+    c.Label.String = '(m)';
+    c.Label.VerticalAlignment = 'middle';
+    % pos = get(c,'Position');
+    c.Label.Position = [0.5 7];
+    % ylabel(c,'(m)');
+    title(c,'(m)')
+    c.FontSize = 12;
+    
+    hec_color_range = [0.000,0.091,0.182,0.272,0.363,0.454,0.545];
+    c.Ticks = hec_color_range; %create ticks
+    c.TickLabels = num2cell(hec_color_range); 
+    c.YAxisLocation = 'left';
+    tix = c.Ticks;
+    c.TickLabels = compose('%9.3f',tix);   %strictly 3dp
+    ax.Visible = 'off';
+    exportgraphics(gcf, 'test.eps', ...
+        'ContentType', 'vector')
+end
 
 % add gauges
 % add_gauges('geoclaw');
@@ -76,7 +91,7 @@ xlabel('')
 
 
 NoQuery = 0;
-prt = false;
+prt = true;
 MaxFrames = 1000;
 if (prt)
     % hidepatchborders(6);
