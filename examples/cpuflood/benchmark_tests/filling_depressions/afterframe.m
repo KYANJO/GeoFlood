@@ -29,17 +29,20 @@ mymap = interp1(pos, mymap, fine_pos);
 colormap(mymap)
 caxis([7.95, 10.36]);
 c = colorbar(ax,'eastoutside');
-% c.Label.String = '(m)';
-% c.Label.VerticalAlignment = 'middle';
+c.Label.String = '(m)';
+c.Label.VerticalAlignment = 'middle';
 % pos = get(c,'Position');
-% c.Label.Position = [0.5 7];
+c.Label.Position = [0.5 7];
 % ylabel(c,'(m)');
 title(c,'(m)')
+c.FontSize = 12;
 
 hec_color_range = [7.95,8.35,8.76,9.16,9.56,9.96,10.36];
 c.Ticks = hec_color_range; %create ticks
 c.TickLabels = num2cell(hec_color_range); 
 c.YAxisLocation = 'left';
+% tix = c.Ticks;
+% c.TickLabels = compose('%9.6f',tix);          
 ax.Visible = 'off';
 exportgraphics(gcf, 'test.eps', ...
     'ContentType', 'vector')

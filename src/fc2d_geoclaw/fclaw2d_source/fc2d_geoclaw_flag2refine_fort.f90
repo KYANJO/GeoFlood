@@ -51,7 +51,7 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
 
            ! check to see if refinement is forced in any topo domain
            DO m=1,mtopofiles
-                IF (level .lt. 0 .and. &
+                IF (level .lt. 1 .and. &
                     t.ge.tlowtopo(m) .and. t.le.thitopo(m)) THEN
                     xlow = xlowtopo(m)
                     xhi = xhitopo(m)
@@ -82,7 +82,7 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
             ENDDO
 
             DO m = 1,qinit_type
-                if (abs(t) .lt. 1.0d0) then
+                if (abs(t) == 0.0d0) then
                     ! check if we are in the region where initial perturbation is specified and need to force refinement
                     if (level < 1 .and. x2 > x_low_qinit .and. x1 < x_hi_qinit .and. &
                         y2 > y_low_qinit .and. y1 < y_hi_qinit) then
@@ -138,38 +138,38 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
                         cycle x_loop
                     else
                         IF (depth > dry_tolerance) THEN
-                                IF (abs(eta - sea_level) > th_factor*wave_tolerance) THEN
-                                    IF (level .lt. maxlevel) THEN
-                                        ! refine to this level in deep water
-                                        fc2d_geoclaw_flag2refine = 1
-                                        ! write(*,*) 'eta = ',eta
-                                        cycle x_loop
-                                    ENDIF
+                                ! IF (abs(eta - sea_level) > th_factor*wave_tolerance) THEN
+                                    ! IF (level .lt. maxlevel) THEN
+                                    !     ! refine to this level in deep water
+                                    !     fc2d_geoclaw_flag2refine = 1
+                                    !     ! write(*,*) 'eta = ',eta
+                                    !     cycle x_loop
+                                    ! ENDIF
 
-                                    IF (dabs(auxvec(1)).lt. deep_depth ) THEN
-                                        ! refine to this level in shallow water (shoreregion or river banks or flood edges) 
-                                        fc2d_geoclaw_flag2refine = 1
-                                        ! write(*,*) 'mx,my = ',mx1,my1
-                                        cycle x_loop
-                                    ENDIF
+                    !                 IF (dabs(auxvec(1)).lt. deep_depth ) THEN
+                    !                     ! refine to this level in shallow water (shoreregion or river banks or flood edges) 
+                    !                     fc2d_geoclaw_flag2refine = 1
+                    !                     ! write(*,*) 'mx,my = ',mx1,my1
+                    !                     cycle x_loop
+                    !                 ENDIF
 
-                                    fc2d_geoclaw_flag2refine = 0
-                                    cycle x_loop
-                                ENDIF
+                                !     fc2d_geoclaw_flag2refine = 0
+                                !     cycle x_loop
+                                ! ENDIF
 
-                                ! don't refine in deep water if already at maxlevel
-                                if (abs(auxvec(1))> deep_depth .and. speed < 0.01) then
-                                    fc2d_geoclaw_flag2refine = 0
-                                    cycle x_loop
-                                endif
+                    !             ! don't refine in deep water if already at maxlevel
+                    !             if (abs(auxvec(1))> deep_depth .and. speed < 0.01) then
+                    !                 fc2d_geoclaw_flag2refine = 0
+                    !                 cycle x_loop
+                    !             endif
 
-                                ! refine at maximum velocity-depth product is 0.5 m/s
-                                if (speed/qvec(1) > 0.5) then
-                                    fc2d_geoclaw_flag2refine = 1
-                                    cycle x_loop
-                                endif
+                    !             ! refine at maximum velocity-depth product is 0.5 m/s
+                    !             if (speed/qvec(1) > 0.5) then
+                    !                 fc2d_geoclaw_flag2refine = 1
+                    !                 cycle x_loop
+                    !             endif
 
-                                ! Check speed criteria
+                    !             ! Check speed criteria
                                 DO m = 1,max_num_speeds
                                     IF (speed > th_factor*speed_tolerance(m) .AND. level <= m) THEN
                                         fc2d_geoclaw_flag2refine = 1

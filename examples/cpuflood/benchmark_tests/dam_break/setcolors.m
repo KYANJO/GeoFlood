@@ -99,7 +99,7 @@ function setcolors(p,x,y,z,q)
     %     mymap(6,:),mymap(7,:));
    
     qmin = 0.4;
-    qmax = 8.0;
+    qmax = 7.93;
     
     q(q < qmin) = qmin;
     q(q > qmax) = qmax;
@@ -107,18 +107,22 @@ function setcolors(p,x,y,z,q)
     slope = (q - qmin)./(qmax-qmin);
     
     idx(mq) = round(Ncm +1 + slope(mq)*(Ncm - 1));
+    % idx(mq) = round(2 + slope(mt)*(Ncm - 1));
+
     
     
     % Map nan values to brown (land)
     % cnew = [[153,76,0]/255; cm];
-    terrain = [102 205 170
-        255 255 0
-        0 128 0
-        255 165 0
-        139 0 0
-        165 42 42
-        128 128 128
-        255 250 250]/255;
+    % terrain = [102 205 170
+    %     255 255 0
+    %     0 128 0
+    %     255 165 0
+    %     139 0 0
+    %     165 42 42
+    %     128 128 128
+    %     255 250 250]/255;
+    terrain = [128 128 128
+        153 76 0]/255;
     alpha = 0.0;
     terrain  = (1-alpha)*terrain + alpha;
     pos_t = linspace(0,1,size(terrain,1));
@@ -127,8 +131,8 @@ function setcolors(p,x,y,z,q)
     % t_map = createcolormap(Ncm,terrain(1,:),terrain(2,:),terrain(3,:),terrain(4,:),terrain(5,:), ...
     %     terrain(6,:),terrain(7,:),terrain(8,:)); % 256x3 array
 
-    tmin = 0;
-    tmax = 10;
+    tmin = 0.0;
+    tmax = 10.0;
 
     Z(Z < tmin) = tmin;
 
@@ -137,6 +141,7 @@ function setcolors(p,x,y,z,q)
     slope = (Z - tmin)./(tmax-tmin);
     
     idx(mt) = round(1 + slope(mt)*(Ncm - 1));
+    % idx(mt) = 1;
 
     % done with mapping indices
     cm = [t_map;q_mymap];

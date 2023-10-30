@@ -97,7 +97,7 @@ function setcolors(p,x,y,z,q)
     qmax = max(q(:));
     
     qmin = 0.0;
-    qmax = 0.390;
+    qmax = 0.545;
     
     q(q < qmin) = qmin;
     q(q > qmax) = qmax;

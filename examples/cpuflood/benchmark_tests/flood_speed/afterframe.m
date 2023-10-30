@@ -77,7 +77,8 @@ ay = 0;
 by = 2000;
 
 axis([ax bx ay by])
-daspect([0.50,0.502,0.505])
+% daspect([0.50,0.502,0.505])
+daspect([0.5,0.5,0.5])
 % daspect([1,1,1])
 % set(gca,'xtick',[]);
 % set(gca,'YTick',[]);
