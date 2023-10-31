@@ -18,9 +18,6 @@ SUBROUTINE fc2d_geoclaw_setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux, &
   USE geoclaw_module, ONLY: coordinate_system, earth_radius, deg2rad
   USE geoclaw_module, ONLY: sea_level, ambient_pressure
 
-  USE storm_module, ONLY: wind_forcing, pressure_forcing
-  USE storm_module, ONLY: wind_index, pressure_index, set_storm_fields
-
   USE friction_module, ONLY: variable_friction, friction_index
   USE friction_module, ONLY: set_friction_field
 
@@ -87,30 +84,6 @@ SUBROUTINE fc2d_geoclaw_setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux, &
           cycle
         endif
         aux(friction_index,ii,jj) = 0.d0
-      enddo
-    enddo
-  ENDIF
-
-    !! Storm fields if used
-  IF (wind_forcing) THEN
-    do jj = 1-mbc,my+mbc
-      do ii = 1-mbc,mx+mbc
-        if (is_ghost .and. ghost_invalid(ii,jj,mx,my,nghost,mint)) then
-          cycle
-        endif
-        aux(wind_index,ii,jj) = 0.d0
-        aux(wind_index + 1,ii,jj) = 0.d0
-      enddo
-    enddo
-  ENDIF
-
-  IF (pressure_forcing) THEN
-    do jj = 1-mbc,my+mbc
-      do ii = 1-mbc,mx+mbc
-        if (is_ghost .and. ghost_invalid(ii,jj,mx,my,nghost,mint)) then
-          cycle
-        endif
-        aux(pressure_index,ii,jj) = ambient_pressure
       enddo
     enddo
   ENDIF

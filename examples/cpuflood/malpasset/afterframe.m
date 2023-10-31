@@ -5,7 +5,7 @@ colormap(flipud(parula));
 tol = -0.8;
 c1 = 0;
 c2 = 30;
-caxis([c1,c2]);
+% caxis([c1,c2]);
 
 fprintf('%20s %12.4e\n','qmin',qmin);
 fprintf('%20s %12.4e\n','qmax',qmax);

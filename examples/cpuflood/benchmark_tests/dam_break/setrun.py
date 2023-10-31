@@ -2,7 +2,7 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
-# @version: 1.0 
+# @version: 1.4
 # ------------------------------------------------
 
 '''
@@ -14,8 +14,6 @@ import os
 import sys
 import numpy as np
 from pdb import *
-from clawpack.geoclaw.topotools import Topography
-
 
 import tools
 
@@ -24,6 +22,8 @@ import tools
 #===============================================================================
 sys.path.append('../../../../scripts')
 import geoflood # -- importing geoflood.py
+import data
+from geoclaw.topotools import Topography
 
 #===============================================================================
 # scratch directory
@@ -66,9 +66,6 @@ mj = 1   #<--- 3 for test 6A and 3 for test 6B
 
 minlevel = 1 
 maxlevel = 3 #resolution based on levels 
-ratios_x = [2]*(maxlevel)
-ratios_y = [2]*(maxlevel)
-ratios_t = [2]*(maxlevel)
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05 # <-- 0.01 for test 6A and 0.05 for test 6B
@@ -100,11 +97,7 @@ def setrun(claw_pkg='geoclaw'):
 
     """
 
-    from clawpack.clawutil import data
-
     assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
-
-   
 
     rundata = data.ClawRunData(claw_pkg, num_dim)
 
@@ -143,10 +136,6 @@ def setrun(claw_pkg='geoclaw'):
             ll_topo = np.array([xllcorner, yllcorner])
             ur_topo = np.array([xurcorner, yurcorner])
 
-            # ll_topo = np.array([957738.41,  1844520.8])
-            # ur_topo = np.array([957987.1, 1844566.5])
-
-        
             print("")
             print("Topo domain for %s:" % topofile)
             print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
@@ -158,7 +147,8 @@ def setrun(claw_pkg='geoclaw'):
             dim_topo = ur_topo - ll_topo
             mdpt_topo = ll_topo + 0.5*dim_topo
 
-            dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+            dim_comp = 0.995*dim_topo   # Shrink domain inside of given bathymetry.
+            # dim_comp = np.array([1848.500,54.5])
 
             clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
             clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
@@ -170,6 +160,7 @@ def setrun(claw_pkg='geoclaw'):
 
     dims_topo, clawdata.lower, clawdata.upper = get_topo(topo_file)
 
+    # Try to match aspect ratio of topo map
     clawdata.num_cells[0] = mx
     clawdata.num_cells[1] = my
 
@@ -178,6 +169,9 @@ def setrun(claw_pkg='geoclaw'):
     print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
     print("%-12s (%14.8f, %12.8f)" % ("Upper right",clawdata.upper[0],clawdata.upper[1]))
     print("")
+
+    print("Approximate aspect ratio : {0:16.8f}".format(float(clawdata.num_cells[0]*mi)/clawdata.num_cells[1]*mj))
+    print("Actual      aspect ratio : {0:16.8f}".format(dims_topo[0]/dims_topo[1]))
 
     dims_computed = np.array([clawdata.upper[0]-clawdata.lower[0], clawdata.upper[1]-clawdata.lower[1]])
     print("Computed aspect ratio    : {0:20.12f}".format(dims_computed[0]/dims_computed[1]))
@@ -288,7 +282,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -425,9 +419,6 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = ratios_x
-    amrdata.refinement_ratios_y = ratios_y
-    amrdata.refinement_ratios_t = ratios_t
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -455,8 +446,8 @@ def setrun(claw_pkg='geoclaw'):
 
     # Region containing initial reservoir
     # Test6A reservior -> 7.5m out of 99m in x and 3.6m in y. Test6B reservior -> 140m out of 1823m in x and 53m  in y 
-    regions.append([maxlevel,maxlevel,0, 1e10, -128.0,0,-55.11250000,53.11250000]) #<-- Reservior minus gate
-    # regions.append([maxlevel,maxlevel,0, 1e10, 0,16,26,46]) #<-- dam gate
+    regions.append([maxlevel,maxlevel,0, 1e10, -85,-10,-28.25,26.25]) #<-- Reservior minus gate
+    # regions.append([maxlevel,maxlevel,0, 1e10, -146.25,0,-55.1125,53.1125]) #<-- dam gate
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)

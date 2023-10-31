@@ -25,8 +25,6 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
 
     USE extract_dt, only: dt_extract
 
-    !!USE storm_module, ONLY: set_storm_fields
-
     IMPLICIT NONE
 
     !! Subroutine arguments
@@ -75,9 +73,6 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
         mint = 2*mbc    !! not used
         CALL fc2d_geoclaw_setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux,is_ghost,nghost,mint)
     endif
-
-    !! Set wind and pressure aux variables for this grid
-    !!CALL set_storm_fields(maux,mbc,mx,my,xlower,ylower,dx,dy,t,aux)
 
 END SUBROUTINE fc2d_geoclaw_b4step2
     

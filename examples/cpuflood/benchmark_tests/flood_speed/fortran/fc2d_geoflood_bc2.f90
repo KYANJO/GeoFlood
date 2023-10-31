@@ -383,7 +383,7 @@ subroutine bisection(h0, hu0, h1, u1)
     i = 1
     max_iter = 100
     h_0 = 0.001d0
-    tol = 1e-8
+    tol = 1e-6
 
     if (func(hu0, h_0, h1, u1) * func(hu0, h1, h1, u1) > 0.0d0) then
         call two_shock(h0,hu0,h1,u1)
@@ -426,7 +426,7 @@ subroutine newton_raphson(h0,hu0,h1,u1)
     tol = 1.0e-6 ! tolerance for convergence
     max_iter = 100 ! maximum number of iterations
     x0 = 0.01d0 ! initial guess for the inflow discharge
-    F = 1.0d0 ! Froude number
+    F = 1.5d0 ! Froude number
     g = 9.81d0 ! gravitational acceleration
 
     ! solve Riemann invariants
@@ -443,8 +443,8 @@ subroutine newton_raphson(h0,hu0,h1,u1)
         xn = xn - fxn/dfxn
         
     end do
-    write(*,*) 'Newton-Raphson did not converge'
-    xn = 0.0
+    ! write(*,*) 'Newton-Raphson did not converge'
+    ! xn = 0.0
     
 end subroutine newton_raphson
 
@@ -497,7 +497,7 @@ subroutine two_shock(h0,hu0,hr,ur)
     ! x0 = 0.1d0 ! initial guess for the inflow depth
     epi = 1.0e-11 ! tolerance for the derivativeF = 0.50d ! Froude number
     g = 9.81d0 ! gravitational acceleration
-    F = 1.0d0 ! Froude number
+    F = 1.50d0 ! Froude number
 
     ! solve Riemann invariants
     x0 = (hu0/sqrt(g)*F)**(2.0d0/3.0d0)
@@ -520,7 +520,7 @@ subroutine two_shock(h0,hu0,hr,ur)
         
         x0 = xn
     end do
-    write (*,*) 'Newton-Raphson did not converge for two-shock solution'
+    ! write (*,*) 'Newton-Raphson did not converge for two-shock solution'
     ! xn = 0.0
 
 end subroutine two_shock

@@ -1,5 +1,5 @@
 OutputFlag = 'ForestClaw';   % default value.
-OutputDir = './';            % Default (reassign them here anyway)
+OutputDir = './results_3_6';            % Default (reassign them here anyway)
 
 ForestClaw = 1;     % Plot using ForestClaw preferences.
 
@@ -11,7 +11,7 @@ PlotType = 1;    % type of plot to produce:
 
 mq = 1;                      % which component of q to plot
 UserVariable = 1;            % set to 1 to specify a user-defined variable
-UserVariableFile = 'bathy';      % name of m-file mapping data to q
+UserVariableFile = 'wetcell';      % name of m-file mapping data to q
 MappedGrid = 0;              % set to 1 if mapc2p.m exists for nonuniform grid
 Manifold = 0;
 ReadBlockNumber = 1;
@@ -38,7 +38,7 @@ UserMap1d = 1;
 ShowUnderOverShoots = 0;
 PlotParallelPartitions=0;
 
-UserColorMapping = 0;
+UserColorMapping = 1;
 
 
 
