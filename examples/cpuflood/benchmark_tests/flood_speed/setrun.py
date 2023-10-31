@@ -9,6 +9,8 @@ import os
 import sys
 import numpy as np
 from pdb import *
+# from clawpack.geoclaw.topotools import Topography
+
 
 import tools
 
@@ -40,7 +42,6 @@ if output_style == 1:
 
     n_hours = 5.0              # Total number of hours in simulation     
     
-
     frames_per_minute = 1/120   # (1 frame every 30 mins)
 
 if output_style == 2:
@@ -64,8 +65,10 @@ mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 minlevel = 1 
 maxlevel = 2 #resolution based on levels
 
+ 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
+# manning_coefficient = 0
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
@@ -131,10 +134,6 @@ def setrun(claw_pkg='geoclaw'):
             ll_topo = np.array([xllcorner, yllcorner])
             ur_topo = np.array([xurcorner, yurcorner])
 
-            # ll_topo = np.array([957738.41,  1844520.8])
-            # ur_topo = np.array([957987.1, 1844566.5])
-
-        
             print("")
             print("Topo domain for %s:" % topofile)
             print("%-12s (%14.8f, %12.8f)" % ("Lower left",ll_topo[0],ll_topo[1]))
@@ -461,6 +460,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Region containing initial reservoir
     regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -546,7 +546,7 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    topo_data.topofiles.append([2, minlevel, minlevel, 0, 1e10, 'bathy2.topotype2'])
+    topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, 'bathy2.topotype2'])
 
     # == setqinit.data values ==
     rundata.qinit_data.qinit_type = 0
@@ -565,6 +565,7 @@ def generate_topo_file():
     """
     Generate topo file for the current run
     """
+
     buffer = 200
     cellsize = 5
     xlower = -buffer
@@ -582,7 +583,7 @@ def generate_topo_file():
     topography = Topography(topo_func=topo)
     topography.x = np.linspace(xlower,xupper,nxpoints)
     topography.y = np.linspace(ylower,yupper,nypoints)
-    topography.write(outfile, topo_type=2, Z_format="%22.15e")
+    topography.write(outfile, topo_type=3, Z_format="%22.15e")
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.

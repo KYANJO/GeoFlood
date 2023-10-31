@@ -29,7 +29,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 15  # Initial time step
+initial_dt = 1  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -42,7 +42,7 @@ if output_style == 1:
     # n_hours = 1.0              # Total number of hours in simulation
     
 
-    frames_per_minute = 1/60   # (1 frame every 60 minutes)
+    frames_per_minute = 1/5   # (1 frame every 60 minutes)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -62,7 +62,7 @@ mi = 4  # Number of x grids per block  <-- mx = mi*mx = 5*20 = 100
 mj = 4  # Number of y grids per block   <-- my = mj*my = 5*20 = 100
 
 minlevel = 0
-maxlevel = 2 #resolution based on levels 
+maxlevel = 1 #resolution based on levels 
 ratios_x = [2]*(maxlevel)
 ratios_y = [2]*(maxlevel)
 ratios_t = [2]*(maxlevel)
@@ -156,13 +156,14 @@ def setrun(claw_pkg='geoclaw'):
         dim_topo = ur_topo - ll_topo
         mdpt_topo = ll_topo + 0.5*dim_topo
 
-        dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+        # dim_comp = 0.975*dim_topo   # Shrink domain inside of given bathymetry.
+        dim_comp = np.array([2000,2000])
         # print(mdpt_topo, dim_comp)
-        clawdata.lower[0] = mdpt_topo[0]+170 - dim_comp[0]/2.0 #<-- -170 to match hec-ras domain
-        clawdata.upper[0] = mdpt_topo[0]-170 + dim_comp[0]/2.0
+        clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0 #<-- -170 to match hec-ras domain
+        clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
 
-        clawdata.lower[1] = mdpt_topo[1]+170 - dim_comp[1]/2.0
-        clawdata.upper[1] = mdpt_topo[1]-170 + dim_comp[1]/2.0
+        clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+        clawdata.upper[1] = mdpt_topo[1]+ dim_comp[1]/2.0
 
         # clawdata.lower[0] = mdpt_topo[0]- dim_comp[0]/2.0
         # clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
@@ -292,7 +293,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
