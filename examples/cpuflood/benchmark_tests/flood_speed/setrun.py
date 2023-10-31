@@ -41,7 +41,7 @@ if output_style == 1:
     n_hours = 5.0              # Total number of hours in simulation     
     
 
-    frames_per_minute = 1/30   # (1 frame every 30 mins)
+    frames_per_minute = 1/120   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -55,11 +55,11 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 20 # Number of x grids per block
-my = 20 # Number of y grids per block
+mx = 50 # Number of x grids per block
+my = 50 # Number of y grids per block
 
-mi = 1  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 3  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
 maxlevel = 2 #resolution based on levels
@@ -150,10 +150,10 @@ def setrun(claw_pkg='geoclaw'):
             dim_comp = np.array([1000.0,2000.0])   # Shrink domain inside of given bathymetry.
 
             clawdata.lower[0] =mdpt_topo[0] - dim_comp[0]/2.0
-            clawdata.upper[0] = mdpt_topo[0]+ dim_comp[0]/2.0
+            clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
 
-            clawdata.lower[1] = mdpt_topo[1]+25 - dim_comp[1]/2.0
-            clawdata.upper[1] = mdpt_topo[1]+25 + dim_comp[1]/2.0
+            clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+            clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
             # clawdata.lower[0] = 0.0
             # clawdata.upper[0] = 1000.0
 
@@ -280,7 +280,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -460,7 +460,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,1000,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -565,14 +565,14 @@ def generate_topo_file():
     """
     Generate topo file for the current run
     """
-    buffer = 50
+    buffer = 200
     cellsize = 5
     xlower = -buffer
     xupper = 1000 + buffer
-    ylower = -50-buffer
+    ylower = -buffer
     yupper = 2000 + buffer
-    nxpoints =  int((xupper - xlower)/cellsize) + 1
-    nypoints =  int((yupper - ylower)/cellsize) + 1
+    nxpoints =  int((xupper - xlower)/cellsize) 
+    nypoints =  int((yupper - ylower)/cellsize) 
     outfile= "bathy2.topotype2"   
 
     z = 0.0 # Dry bed  
@@ -586,7 +586,7 @@ def generate_topo_file():
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    generate_topo_file()         # generate topo file (generated before running setrun.py)
+    # generate_topo_file()         # generate topo file (generated before running setrun.py)
     rundata,geoflooddata, hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
     rundata.write()
 
