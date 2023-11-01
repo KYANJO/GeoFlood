@@ -42,7 +42,7 @@ if output_style == 1:
 
     n_hours = 5.0              # Total number of hours in simulation     
     
-    frames_per_minute = 1/120   # (1 frame every 30 mins)
+    frames_per_minute = 1/30   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -56,14 +56,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 50 # Number of x grids per block
-my = 50 # Number of y grids per block
+mx = 100 # Number of x grids per block
+my = 100 # Number of y grids per block
 
 mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
 mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
-maxlevel = 2 #resolution based on levels
+maxlevel = 4 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
