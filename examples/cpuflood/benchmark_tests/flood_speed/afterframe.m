@@ -44,23 +44,37 @@ end
 % add_gauges('geoclaw');
 
 if PlotType == 4
-    hecras = load('hecras_45.m');
+    % hecras = load('hecras_45.m');
+    hecras = load('hecras_128.dat');
     hold on
-    plot(hecras(:,1),hecras(:,2),'r',LineWidth=2);
+    h_hec= plot(hecras(:,1),hecras(:,2),'g',LineWidth=2);
     grid on
-    yourplots = get(gca, 'children');
-    legend(yourplots([1 2]), {'HEC-RAS', 'GeoFlood'});
+    % yourplots = get(gca, 'children');
+    % legend(yourplots([1 2]), {'HEC-RAS', 'GeoFlood'});
+    set(gca(),'Box','on');
     xlabel('Distance (m)');
     ylabel('Depth (m)') 
     xlim([0,500]);
-    title('Cross-section of depths at time T = 1 hour')
+    % title('Cross-section of depths at time T = 1 hour')
+    title('')
     shg
     fig = gcf;
     fig.Units = 'inches';
     % fig.Position = [0 0 6 4]; % Adjust the width and height according to your requirements
 
+    % load geoclaw_data
+    [amrdata_ref,tref] = readamrdata_ascii(2,Frame,'./new_geoclaw_results/',false);  
+    if abs(t-tref) > 1e-6
+        error('times are not equal t = %g\n tref =%g',t,tref);
+    end
+
+    lstyle = {'b.','b.','b.','b.'};
+    href = plotframe2ez(amrdata_ref,1,lstyle,@map1d);
+    h = getlegendinfo;
+    % yourplots = get(gca, 'children');
+    legend([h_hec h href(1)], {'HEC-RAS', 'GeoFlood' 'GeoClaw'});
     % Save the figure as a PDF file
-    filename = 'transect_1_5';
+    filename = 'transect_90';
     exportgraphics(fig, [filename '.jpeg'], 'ContentType', 'vector', 'Resolution', '700');
     return 
 
@@ -101,7 +115,7 @@ if (prt)
 
     figsize=[4,8];
     maxlevel = 4;    %  eff. res. = 2^maxlevel
-    mx = 50;
+    mx = 100;
     mi = 2;
     mj = 4;
     maxres = mi*mx*2^maxlevel;
