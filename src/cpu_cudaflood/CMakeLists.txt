@@ -14,7 +14,7 @@ set_target_properties(cpu_cuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CUR
 
 # -- add library 
 add_library(cpu_cuda STATIC)
-set_target_properties(cpu_cuda PROPERTIES EXPORT_NAME CUDACLAW)
+set_target_properties(cpu_cuda PROPERTIES EXPORT_NAME CPU_CUDA)
 
 # device code needs to relcoateable since it is in a shared library
 #target_compile_options(cudaclaw PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
@@ -66,8 +66,8 @@ install(TARGETS cpu_cuda
 	RUNTIME DESTINATION bin)
 
 # imported target, for use from FetchContent
-add_library(GEOFLOOD::CUDACLAW INTERFACE IMPORTED GLOBAL)
-target_link_libraries(GEOFLOOD::CUDACLAW INTERFACE cpu_cuda)
+add_library(GEOFLOOD::CPU_CUDA INTERFACE IMPORTED GLOBAL)
+target_link_libraries(GEOFLOOD::CPU_CUDA INTERFACE cpu_cuda)
 
 if(BUILD_TESTING)
   add_executable(fc2d_cudaclaw.TEST
