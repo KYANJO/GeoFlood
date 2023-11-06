@@ -67,17 +67,21 @@ if (cpuflood)
   add_subdirectory(src/fc2d_geoclaw)
 endif(cpuflood)
 
-# --- cudaclaw
-if(cudaflood)
+# --- cudaflood and cpu_cuda
+if(cudaflood OR cpu_cuda)
   enable_language(CUDA)
   set(CMAKE_CUDA_STANDARD 14)
   find_package(CUDAToolkit REQUIRED)
-endif(cudaflood)
+endif()
  
 
   if(cudaflood)
     add_subdirectory(src/fc2d_cudaclaw)
   endif(cudaflood)
+
+  if(cpu_cuda)
+    add_subdirectory(src/cpu_cudaflood)
+  endif(cpu_cuda)
 
 # --- examples
 add_subdirectory(examples)
