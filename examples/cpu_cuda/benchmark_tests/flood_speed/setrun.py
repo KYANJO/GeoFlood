@@ -56,19 +56,18 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 128 # Number of x grids per block
-my = 128 # Number of y grids per block
+mx = 100 # Number of x grids per block
+my = 100 # Number of y grids per block
 
-mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 1  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
-maxlevel = 4 #resolution based on levels
+maxlevel = 2 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
-# manning_coefficient = 0
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
