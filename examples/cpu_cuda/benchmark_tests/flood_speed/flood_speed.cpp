@@ -72,7 +72,7 @@ void run_program(fclaw2d_global_t* glob)
        --------------------------------------------------------------- */
     fclaw2d_domain_data_new(glob->domain);
     user_options_t* user_opt = flood_speed_get_options(glob);
-    
+
     /* Initialize virtual table for ForestClaw */
     fclaw2d_vtables_initialize(glob);
 
@@ -144,10 +144,13 @@ main (int argc, char **argv)
     /* Initialize application */
     app = fclaw_app_new (&argc, &argv, NULL);
 
+     /* Create new options packages */
     fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
-    cuclaw_opt =          fc2d_cudaclaw_options_register(app,"cudaclaw","fclaw_options.ini");
     clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
+    cuclaw_opt =          fc2d_cudaclaw_options_register(app,"cudaclaw","fclaw_options.ini");
+    
     geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
+    user_opt =                flood_speed_options_register(app,"fclaw_options.ini"); 
 
     /* Read configuration file(s) and command line, and process options */
     options = fclaw_app_get_options (app);
@@ -169,6 +172,7 @@ main (int argc, char **argv)
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
         fc2d_cudaclaw_options_store     (glob, cuclaw_opt);
         fc2d_geoclaw_options_store      (glob, geoclaw_opt);
+        flood_speed_options_store       (glob, user_opt);
 
         run_program(glob);
         

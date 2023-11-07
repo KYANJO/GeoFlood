@@ -28,7 +28,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fc2d_cudaclaw.h>
 #include <fc2d_cudaclaw_options.h>
 #include <cudaclaw_user_fort.h>
+
 #include <fclaw2d_include_all.h>
+
+#include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -49,8 +53,18 @@ typedef struct user_options
     int mcapa;
     int is_registered;
 } user_options_t;
-void flood_speed_link_solvers(fclaw2d_global_t *glob);
 
+
+// --- will call the riemann solvers here ----
+
+
+
+// --------------------------------------------
+void flood_speed_link_solvers(fclaw2d_global_t *glob);
+user_options_t* flood_speed_options_register (fclaw_app_t * app,
+                                          const char *configfile);
+void flood_speed_options_store (fclaw2d_global_t* glob, user_options_t* user);
+user_options_t* flood_speed_get_options(fclaw2d_global_t* glob);
 #define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 
 void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
