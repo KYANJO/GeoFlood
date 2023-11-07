@@ -1,4 +1,9 @@
-! Module containing hydrograph data
+! ========================================================================
+! @author: Brian Kyanjo
+! @date: 2023-11-7
+! @brief: Module containing hydrograph data
+! ========================================================================
+
 module hydrograph_module
     
     use geoclaw_module, only: grav,dry_tolerance
@@ -16,6 +21,7 @@ module hydrograph_module
     real(kind=8), dimension(4) :: q1         ! q1 = [h,hu,hv,b] first interior cell data (initial conditions) just inside the boundary
     real(kind=8) :: u1            ! u1 = initial velocity (first cell data) just inside next to the boundary
     real(kind=8) :: froude         ! froude number
+    real(kind=8) :: b,x0,y0        ! channel_width, channel center x and y coordinates
     real(kind=8), allocatable :: time(:), eta(:), hu(:)
     integer, parameter :: GEO_PARM_UNIT = 78
     integer :: num_rows
@@ -57,6 +63,12 @@ contains
 
             !  read the first line (initial conditions)
             read(unit,*) q1(2), q1(4), u1, q1(1)
+
+            ! read the channel width
+            read(unit,*) b
+
+            ! read the channel center coordinates
+            read(unit,*) x0, y0
 
             !  asume momentum in y direction is zero
             q1(3) = 0.0d0
@@ -110,6 +122,9 @@ contains
 
             !  write out data to parameter file
             ! write(GEO_PARM_UNIT,*) ' initial_conditons:', q1(2), q1(1), u1, q1(4)
+            write(GEO_PARM_UNIT,*) ' channel_width:', b
+            write(GEO_PARM_UNIT,*) ' channel_center_x: ', x0
+            write(GEO_PARM_UNIT,*) ' channel_center_y: ', y0
             write(GEO_PARM_UNIT,*) ' read_file:', read_file
             write(GEO_PARM_UNIT,*) ' hydrograph_type:', hydrograph_type
             write(GEO_PARM_UNIT,*) ' num_rows:', num_rows
@@ -176,10 +191,16 @@ contains
 
          if (hydrograph_type == 'discharge') then
             q0(2) = interpolated_value
-            call Riemann_invariants(q0,q1)
+            ! if (q0(2) .ne. 0.0) then
+            !     call Riemann_invariants(q0,q1)
+            !     if (q0(1) > q1(1)) then
+            !         call two_shock(q0,q1)
+            !     end if
+            ! end if
+            
         else
-            q0(4) = interpolated_value
-            call Riemann_invariants(q0,q1)
+            q0(4) = interpolated_value  ! assuming eta is given
+            ! call Riemann_invariants(q0,q1)
 
         end if
 
@@ -192,7 +213,7 @@ contains
 
         ! declare variables
         real(kind=8) :: tol,u1
-        real(kind=8) :: func,fxn,dfxn,dfunc_hu0,dfunc_h0
+        real(kind=8) :: func,fxn,dfxn,dfunc_hu0,dfunc_h0,Fr
         real(kind=8), dimension(4) :: q0,q1
 
         integer :: i, max_iter
@@ -201,10 +222,11 @@ contains
         tol = 1.0e-6    ! tolerance for convergence
         max_iter = 100  ! maximum number of iterations
         u1 = q1(2)/q1(1) ! velocity of the first interior cells
+        Fr = u1/sqrt(grav*q1(1)) ! Froude number
 
         ! solve Riemann invariants
         if (hydrograph_type == 'discharge') then
-            q0(1) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+            q0(1) = (q0(2)/sqrt(grav)*Fr)**(2.0d0/3.0d0)
             do i = 1, max_iter
                 fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
                 if (abs(fxn) < tol) then
@@ -213,13 +235,12 @@ contains
                 dfxn = -q0(2)/(q0(1)**2) - sqrt(grav/q0(1)) !dfunc_h0()
                 q0(1) = q0(1) - fxn/dfxn
             end do
-            write(*,*) 'Newton-Raphson did not converge'
-            q0(1) = 0.0  
+             
         else
             if (q0(1) == 0.0) then ! if h == 0 => hu == 0
                 q0(2) = 0.0
             else
-                q0(2) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+                q0(2) = (q0(2)/sqrt(grav)*Fr)**(2.0d0/3.0d0)
                 do i = 1, max_iter
                     fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
                     if (abs(fxn) < tol) then
@@ -228,8 +249,7 @@ contains
                     dfxn =1/q0(1) !dfunc_hu0()
                     q0(2) = q0(2) - fxn/dfxn
                 end do
-                write(*,*) 'Newton-Raphson did not converge'
-                q0(2) = 0.0  
+                
             end if
         endif
 
@@ -243,7 +263,7 @@ contains
 
         ! declare variables
         real(kind=8) :: tol
-        real(kind=8) :: fxn,dfxn,num,deno
+        real(kind=8) :: fxn,dfxn,num,deno,Fr
         real(kind=8), dimension(4) :: q0,q1
 
         integer :: i, max_iter
@@ -252,13 +272,14 @@ contains
         tol = 1.0e-6    ! tolerance for convergence
         max_iter = 100  ! maximum number of iterations
         u1 = q1(2)/q1(1) ! velocity of the first interior cells
+        Fr = u1/sqrt(grav*q1(1)) ! Froude number
 
         ! solve Riemann invariants
         if (hydrograph_type == 'discharge') then
-            q0(1) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+            q0(1) = (q0(2)/sqrt(grav)*Fr)**(2.0d0/3.0d0)
             do i = 1, max_iter
 
-                fxn = q0(2)/q0(1) - (q0(1) - q1(1))*sqrt((grav/2.0d0)*(1.0d0/q0(1) + 1.0d0/q1(1)))
+                fxn = q0(2)/q0(1) - u1 - (q0(1) - q1(1))*sqrt((grav/2.0d0)*(1.0d0/q0(1) + 1.0d0/q1(1)))
 
                 if (abs(fxn) < tol) then
                     return 
@@ -268,13 +289,12 @@ contains
                 dfxn = -q0(2)/(q0(1)**2) - num/sqrt(2.0d0) + grav*(q0(1) - q1(1))/deno
                 q0(1) = q0(1) - fxn/dfxn
             end do
-            write(*,*) 'Newton-Raphson did not converge'
-            q0(1) = 0.0  
+        
         else
             if (q0(1) == 0.0) then ! if h == 0 => hu == 0
                 q0(2) = 0.0
             else
-                q0(2) = (q0(2)/sqrt(grav)*froude)**(2.0d0/3.0d0)
+                q0(2) = (q0(2)/sqrt(grav)*Fr)**(2.0d0/3.0d0)
                 do i = 1, max_iter
                     fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
                     if (abs(fxn) < tol) then
@@ -283,8 +303,7 @@ contains
                     dfxn =1/q0(1) !dfunc_hu0()
                     q0(2) = q0(2) - fxn/dfxn
                 end do
-                write(*,*) 'Newton-Raphson did not converge'
-                q0(2) = 0.0  
+            
             end if
         endif
 

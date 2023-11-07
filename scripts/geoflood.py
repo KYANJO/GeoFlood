@@ -313,6 +313,7 @@ class Hydrographdata(object):
 
         # channel data
         self.channel_width = 0.01
+        self.channel_position = [0.0,0.0]
         self.depth = 0.1
         self.area = 0.0
         self.wetted_perimeter = 0.1
@@ -336,7 +337,10 @@ class Hydrographdata(object):
         hydrograph.write('%f %f %f %f\n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.initial_velocity,self.initial_depth))
 
         # hydrograph.write('\n# channel width\n')
-        # hydrograph.write('%f\n' % self.channel_width)
+        hydrograph.write('%f\n' % self.channel_width)
+
+        # hydrograph.write('\n# channel position\n')
+        hydrograph.write('%f %f\n' % (self.channel_position[0],self.channel_position[1]))
 
         # hydrograph.write('\n# hydrograph data\n')
         # check if hydrograph file is provided or set in setrun.py

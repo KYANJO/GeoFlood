@@ -16,6 +16,7 @@ fucntion setplot is called to set the plot parameters.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 #--------------------------
 def setplot(plotdata):
@@ -28,8 +29,8 @@ def setplot(plotdata):
 
     """
 
-
-    from clawpack.visclaw import colormaps, geoplot
+    sys.path.append('../../../../scripts')
+    from visclaw import colormaps, geoplot
     from numpy import linspace
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
@@ -125,7 +126,7 @@ def setplot(plotdata):
 
 
     def addgauges(current_data):
-        from clawpack.visclaw import gaugetools
+        from visclaw import gaugetools
         gaugetools.plot_gauge_locations(current_data.plotdata, \
                                         gaugenos='5', format_string='ko', add_labels=True)
 
@@ -217,5 +218,6 @@ def setplot(plotdata):
     return plotdata
 
 if __name__=="__main__":
-    from clawpack.visclaw.plotclaw import plotclaw
+    sys.path.append('../../../../scripts')
+    from visclaw.plotclaw import plotclaw
     plotclaw(outdir='.',setplot=setplot,plotdir='_plots',format='forestclaw')    
