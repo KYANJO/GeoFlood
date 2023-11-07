@@ -42,7 +42,7 @@ if output_style == 1:
 
     n_hours = 5.0              # Total number of hours in simulation     
     
-    frames_per_minute = 1/30   # (1 frame every 30 mins)
+    frames_per_minute = 1/2.5   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -56,13 +56,13 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 50 # Number of x grids per block
-my = 50 # Number of y grids per block
+mx = 25 # Number of x grids per block
+my = 25 # Number of y grids per block
 
-mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 4 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 1 
+minlevel = 0 
 maxlevel = 2 #resolution based on levels
 
  
@@ -423,6 +423,7 @@ def setrun(claw_pkg='geoclaw'):
     # Hydrograph data:
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.use_hydrograph = True
     hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
     hydrographdata.initial_velocity = 0.0
     hydrographdata.initial_discharge = 0.0
@@ -430,6 +431,7 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.initial_depth = 0.0
     hydrographdata.channel_width = 20
     hydrographdata.channel_position = [0,1000]
+    hydrographdata.channel_boundary_location = ['left',None,None,None] # 'left', 'right', 'top', 'bottom'
     hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
     hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
@@ -484,21 +486,7 @@ def setrun(claw_pkg='geoclaw'):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
 
-    # -----------------------------------------------
-    # == setflowgrades data values ==
-    flowgrades_data = geoflood.Flowgradesdata()
-    # this can be used to specify refinement criteria, for Overland flow problems.
-    # for using flowgrades for refinement append lines of the form
-    # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
-    # where:
-    #flowgradevalue: floating point relevant flowgrade value for following measure:
-    #flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
-    #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
-    #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
-    # flowgrades_data.flowgrades.append([1.e-6, 1, 1, maxlevel])
-    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, minlevel])
-
-    #
+    
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -515,7 +503,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, hydrographdata, flowgrades_data
+    return rundata, geoflooddata, hydrographdata
     # end of function setrun
     # ----------------------
 
@@ -602,10 +590,10 @@ def generate_topo_file():
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     # generate_topo_file()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
     rundata.write()
 
     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
     hydrographdata.write()       # writes a geoflood hydrograph file
-    flowgrades_data.write()  # writes a geoflood flowgrades file
+
     

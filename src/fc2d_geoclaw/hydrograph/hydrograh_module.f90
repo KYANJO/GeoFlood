@@ -16,7 +16,9 @@ module hydrograph_module
     ! ========================================================================
     ! Hydrograph data
     ! ========================================================================
+    character(len=20) :: use_hydrograph
     character(len=20) :: hydrograph_type
+    character(len=100), dimension(4) :: boundary_location
     real(kind=8), dimension(4) :: q0         ! q0 = [h0,hu0,hv0,b0] ghost data
     real(kind=8), dimension(4) :: q1         ! q1 = [h,hu,hv,b] first interior cell data (initial conditions) just inside the boundary
     real(kind=8) :: u1            ! u1 = initial velocity (first cell data) just inside next to the boundary
@@ -40,7 +42,7 @@ contains
         character(len=20) :: read_file
 
         ! Local variables
-        integer :: i, unit = 127
+        integer :: i, unit = 127, iostat
         character(len=256) :: line
 
         if (.not. module_setup) then
@@ -56,10 +58,18 @@ contains
             ! end if
             ! open the file for reading
             if (present(hydrograph_file)) then
-                open(unit, file=hydrograph_file, status='old', action='read')
+                open(unit, file=hydrograph_file, status='old', action='read', iostat=iostat)
             else
-                open(unit, file='hydrograph.data', status='old', action='read')
+                open(unit, file='hydrograph.data', status='old', action='read', iostat=iostat)
             end if
+            
+            if (iostat /= 0) then
+                write(GEO_PARM_UNIT,*) ' No hydrograph data provided'
+                return
+            end if
+
+            !  read use hydrograph data
+            read(unit,*) use_hydrograph
 
             !  read the first line (initial conditions)
             read(unit,*) q1(2), q1(4), u1, q1(1)
@@ -69,6 +79,9 @@ contains
 
             ! read the channel center coordinates
             read(unit,*) x0, y0
+
+            ! read the boundary location
+            read(unit,*) boundary_location(1), boundary_location(2), boundary_location(3), boundary_location(4)
 
             !  asume momentum in y direction is zero
             q1(3) = 0.0d0
@@ -125,6 +138,7 @@ contains
             write(GEO_PARM_UNIT,*) ' channel_width:', b
             write(GEO_PARM_UNIT,*) ' channel_center_x: ', x0
             write(GEO_PARM_UNIT,*) ' channel_center_y: ', y0
+            write(GEO_PARM_UNIT,*) ' boundary_location:', boundary_location(:)
             write(GEO_PARM_UNIT,*) ' read_file:', read_file
             write(GEO_PARM_UNIT,*) ' hydrograph_type:', hydrograph_type
             write(GEO_PARM_UNIT,*) ' num_rows:', num_rows

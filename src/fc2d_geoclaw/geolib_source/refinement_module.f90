@@ -87,7 +87,8 @@ contains
 
         ! Locals
         integer, parameter :: iunit = 127
-        integer :: i
+        integer :: i, iostat
+        character(len=128) :: comment_marker = '=:'
 
         write(GEO_PARM_UNIT,*) ' '
         write(GEO_PARM_UNIT,*) '--------------------------------------------'
@@ -99,9 +100,14 @@ contains
             call opendatafile(iunit, file_name)
         else
             ! call opendatafile(iunit, 'setflowgrades.data')
-            open(iunit, file='setflowgrades.data', status='old', action='read')
+            open(iunit, file='setflowgrades.data', status='old', action='read', iostat=iostat)
         endif
         
+        if (iostat /= 0) then
+            write(GEO_PARM_UNIT,*) '  No setflowgrades.data file found'
+            return
+        endif
+
         read(iunit,*) num_flowgrades
 
         if (num_flowgrades == 0) then
