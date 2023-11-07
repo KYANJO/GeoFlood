@@ -31,11 +31,11 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
-fixed_dt = False  # Take constant time step
+initial_dt = 0.5  # Initial time step
+fixed_dt = True  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 1
+output_style = 3
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
@@ -48,19 +48,19 @@ if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
-    step_interval = 10   # Create output file every 10 steps
-    total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
+    step_interval = 1800   # Create output file every 10 steps
+    total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 100 # Number of x grids per block
-my = 100 # Number of y grids per block
+mx = 128 # Number of x grids per block
+my = 128 # Number of y grids per block
 
-mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 1  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
 maxlevel = 4 #resolution based on levels
@@ -415,7 +415,8 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
     hydrographdata.initial_depth = 0.0
-    hydrographdata.channel_width = 20
+    hydrographdata.channel_width = 20.0
+    hydrographdata.channel_position = [0,1000]
     hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
     hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]

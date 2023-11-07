@@ -1,5 +1,5 @@
 ! ==================================================================
-subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mthbc)
+subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mthbc)
 !  ==================================================================
 
 ! standard boundary condition choices
@@ -250,6 +250,4 @@ subroutine filling_depressions_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 499 continue
 
       return
-end subroutine filling_depressions_bc2
-
-
+end subroutine flood_speed_bc2
