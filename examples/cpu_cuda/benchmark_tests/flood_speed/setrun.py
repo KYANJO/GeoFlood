@@ -31,11 +31,11 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 0.5  # Initial time step
-fixed_dt = True  # Take constant time step
+initial_dt = 1  # Initial time step
+fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 3
+output_style = 1
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
@@ -56,14 +56,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 100 # Number of x grids per block
-my = 100 # Number of y grids per block
+mx = 50 # Number of x grids per block
+my = 50 # Number of y grids per block
 
 mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
 mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 0 
-maxlevel = 1 #resolution based on levels
+minlevel = 1 
+maxlevel = 2 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -75,7 +75,7 @@ num_dim = 2
 # ------------------  user options ---------------------------------------------------
 use_cuda = False
 gravity = 9.81
-dry_tolerance = 1e-3
+dry_tolerance = 1e-4
 earth_radius = 6367.5e3
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
