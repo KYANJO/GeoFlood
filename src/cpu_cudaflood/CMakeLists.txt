@@ -33,6 +33,7 @@ target_sources(cpu_cuda PRIVATE
 	cuda_source/cudaclaw_flux2.cu
 	fc2d_cuda_profiler.cu
 	cuda_source/cudaclaw_store_patches.cu
+	cuda_source/data_swap.c
   $<TARGET_OBJECTS:cpu_cuda_f>
 )
 
@@ -56,6 +57,7 @@ install(FILES
 	fc2d_cudaclaw_options.h
 	cudaclaw_user_fort.h
 	fc2d_cudaclaw_fort.h
+	cuda_source/data_swap.h
   DESTINATION include
 )
 
