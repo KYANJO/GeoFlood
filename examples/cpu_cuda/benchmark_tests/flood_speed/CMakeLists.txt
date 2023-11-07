@@ -1,5 +1,5 @@
 # Add boundary conditions as a library
-add_library(flood_speed_f OBJECT
+add_library(flood_speed_cpu_f OBJECT
   qinit.f90
   fortran/fc2d_geoflood_bc2.f90
   ../../../../src/fc2d_geoclaw/hydrograph/hydrograh_module.f90
@@ -13,7 +13,7 @@ add_executable(flood_speed_cpucuda
 	flood_speed_user.cpp
 	flood_speed_optins.c
 	flood_speed.cpp
-	$<TARGET_OBJECTS:flood_speed_f>
+	$<TARGET_OBJECTS:flood_speed_cpu_f>
 )
 
 target_include_directories(flood_speed_cpucuda PRIVATE 
