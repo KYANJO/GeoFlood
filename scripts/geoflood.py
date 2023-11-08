@@ -300,6 +300,7 @@ class Hydrographdata(object):
 
     def __init__(self):
         #  either read from file or set in setrun.py
+        self.use_hydrograph = False # if true, use hydrograph data
         self.read_data = False # if true, read from file instead of setrun.py
         self.hydrograph_filename = 'filename' # name of file to read from
         self.hydrograph_type = 'discharge' # 'discharge' or 'elevation'
@@ -313,12 +314,15 @@ class Hydrographdata(object):
 
         # channel data
         self.channel_width = 0.01
+        self.channel_position = [0.0,0.0]
+        self.channel_boundary_location = [None,None,None,None]
         self.depth = 0.1
         self.area = 0.0
         self.wetted_perimeter = 0.1
         self.friction_slope = 0.01
         self.bed_slope = 0.01
         self.froude = 1.0
+
         
         # initial conditions
         self.initial_velocity = 0.0
@@ -331,50 +335,67 @@ class Hydrographdata(object):
         # write and intial condition and hydrograph data to file
         hydrograph = open('hydrograph.data','w')
        
+        # hydrograph.write('# use hydrograph\n')
+        hydrograph.write('%s \t\t\t\t\t =: use_hydrograph \n' % self.use_hydrograph)
+        
         # hydrograph.write('# initial condition\n')
         # hydrograph.write('# discharge (m^3/s) elevation (m) velocity (m/s)\n')
-        hydrograph.write('%f %f %f %f\n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.initial_velocity,self.initial_depth))
+        hydrograph.write('%f %f %f %f \t =: discharge (m^3/s) elevation (m) velocity (m/s) \n' % (self.initial_discharge/max(self.channel_width,1e-8),self.initial_elevation,self.initial_velocity,self.initial_depth))
 
         # hydrograph.write('\n# channel width\n')
-        # hydrograph.write('%f\n' % self.channel_width)
+        hydrograph.write('%f \t\t\t\t =: channel_width (m) \n' % self.channel_width)
+
+        # hydrograph.write('\n# channel position\n')
+        hydrograph.write('%f %f \t\t\t =: channel_position (x,y) \n' % (self.channel_position[0],self.channel_position[1]))
+
+        # hydrograph.write('\n# channel boundary location\n')
+        if self.channel_boundary_location[0] in [0,'left','Left']:
+            self.channel_boundary_location[0] = 'left'
+        if self.channel_boundary_location[1] in [1,'right','Right']:
+            self.channel_boundary_location[1] = 'right'
+        if self.channel_boundary_location[2] in [2,'top','Top']:
+            self.channel_boundary_location[2] = 'top'
+        if self.channel_boundary_location[3] in [3,'bottom','Bottom']:
+            self.channel_boundary_location[3] = 'bottom'
+        hydrograph.write('%s %s %s %s  \t\t\t =: channel_boundary_location \n' % (self.channel_boundary_location[0],self.channel_boundary_location[1],self.channel_boundary_location[2],self.channel_boundary_location[3]))
 
         # hydrograph.write('\n# hydrograph data\n')
         # check if hydrograph file is provided or set in setrun.py
         if self.read_data == False:
-            hydrograph.write('False\n')
+            hydrograph.write('False \t\t\t\t\t =: read_data\n')
             if self.hydrograph_type == 'discharge':
-                hydrograph.write('discharge\n')
-                hydrograph.write('%d\n' % self.froude)
-                hydrograph.write('%d\n' % len(self.time))
+                hydrograph.write('discharge \t\t\t\t =: discharge_type\n')
+                hydrograph.write('%d \t\t\t\t\t =: Floude_number\n' % self.froude)
+                hydrograph.write('%d \t\t\t\t\t =: number of hydrograph inputs\n' % len(self.time))
                 # hydrograph.write('# time (s) discharge (m^3/s)\n')
                 for i in range(len(self.time)):
-                    hydrograph.write('%f %f\n' % (self.time[i],self.discharge[i]/max(self.channel_width,1e-8)))
+                    hydrograph.write('%f %f  \t\t\t =: time (s) hu (m^2/s) \n' % (self.time[i],self.discharge[i]/max(self.channel_width,1e-8)))
             else:
-                hydrograph.write('elevation\n')
-                hydrograph.write('%d\n' % len(self.time))
+                hydrograph.write('elevation \t\t\t\t\t =: elevation (m)\n')
+                hydrograph.write('%d \t\t\t\t\t =: number of  hydrograph inputs\n' % len(self.time))
                 # hydrograph.write('# time (s) elevation (m)\n')                
                 for i in range(len(self.time)):
-                    hydrograph.write('%f %f\n' % (self.time[i],self.elevation[i]))
+                    hydrograph.write('%f %f  \t\t\t =: time (s) elevation (m) \n' % (self.time[i],self.elevation[i]))
         else:
-            hydrograph.write('True\n')
+            hydrograph.write('True \t\t\t\t\t =: read_data\n')
             if self.hydrograph_type == 'discharge':
-                hydrograph.write('discharge\n')
-                hydrograph.write('%d\n' % self.froude)
+                hydrograph.write('discharge \t\t\t\t =: discharge_type \n')
+                hydrograph.write('%d \t\t\t\t\t =: Floude_number \n' % self.froude)
                 with open(self.hydrograph_filename,'r') as hydrographfile:
                     data = [line.split() for line in hydrographfile]
                     hydrograph.write('%d\n' % len(data))
                     # hydrograph.write('# time (s) hu (m^2/s) discharge (m^3/s)\n')
                     for d in data:
-                        hydrograph.write('%f %f %f\n' % (float(d[0]),float(d[1])/max(self.channel_width,1e-8),float(d[1]))) #h,hu,eta
+                        hydrograph.write('%f %f %f \t\t\t =: h (m) hu (m^2/s) eta (m)\n' % (float(d[0]),float(d[1])/max(self.channel_width,1e-8),float(d[1]))) #h,hu,eta
 
             else:
-                hydrograph.write('elevation\n')
+                hydrograph.write('elevation \t\t\t\t =: elevation (m) \n')
                 with open(self.hydrograph_filename,'r') as hydrographfile:
                     data = [line.split() for line in hydrographfile]
                     hydrograph.write('%d\n' % len(data))
                     # hydrograph.write('# time (s) elevation (m)\n')
                     for d in data:
-                        hydrograph.write('%f %f\n' % (float(d[0]),float(d[1])))
+                        hydrograph.write('%f %f \t\t\t =: time (s) elevation (m) \n' % (float(d[0]),float(d[1])))
 
         hydrograph.close()
 
@@ -387,11 +408,12 @@ class Flowgradesdata(object):
 
     def write(self):
 
-        # write flowgrades data to file
+        # write flowgrades data to file with comments of there meaning 
         flow_grades = open('setflowgrades.data','w')
-        flow_grades.write('%d\n' % len(self.flowgrades))
+        flow_grades.write('%d \t =: number of flowgrades\n' % len(self.flowgrades))
+        # flow_grades.write('%d\n' % len(self.flowgrades))
         for i in self.flowgrades:
-            flow_grades.write(4*"%g " % tuple(i) + "\n")
+            flow_grades.write(4*"%g " % tuple(i) + "\t =: flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel\n")
         flow_grades.close()
 
 

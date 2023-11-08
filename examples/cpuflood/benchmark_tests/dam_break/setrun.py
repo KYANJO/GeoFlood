@@ -58,10 +58,10 @@ if output_style == 3:
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
-mx = 54  #<--- 18 for test 6A and 55 for test 6B
-my = 54  #<--- 18 for test 6A and 2 for test 6B
+mx = 36  #<--- 18 for test 6A and 55 for test 6B
+my = 36  #<--- 18 for test 6A and 2 for test 6B
 
-mi = 18  #<--- 54 for test 6A and 55 for test 6B
+mi = 27  #<--- 54 for test 6A and 55 for test 6B
 mj = 1   #<--- 3 for test 6A and 3 for test 6B
 
 minlevel = 1 
@@ -130,6 +130,8 @@ def setrun(claw_pkg='geoclaw'):
             # Derived info from the topo map
             mx_topo = m_topo - 1
             my_topo = n_topo - 1
+            # my_topo = m_topo 
+            # mx_topo = n_topo
             xurcorner = xllcorner + cellsize*mx_topo
             yurcorner = yllcorner + cellsize*my_topo
 
@@ -147,14 +149,22 @@ def setrun(claw_pkg='geoclaw'):
             dim_topo = ur_topo - ll_topo
             mdpt_topo = ll_topo + 0.5*dim_topo
 
-            dim_comp = 0.995*dim_topo   # Shrink domain inside of given bathymetry.
-            # dim_comp = np.array([1848.500,54.5])
+            # dim_comp = 0.995*dim_topo   # Shrink domain inside of given bathymetry.
+            dim_comp = np.array([1980,54.5])
 
-            clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
-            clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
+            # clawdata.lower[0] = mdpt_topo[0] - dim_comp[0]/2.0
+            # clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
 
-            clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
-            clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+            # clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
+            # clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
+
+            # for benchmarking situation; limiting the domain to 200m downstream of the dam
+            clawdata.lower[0] = ll_topo[0] + 20
+            clawdata.upper[0] = ur_topo[0] - 20
+            clawdata.lower[1] = ll_topo[1] + 19.5
+            clawdata.upper[1] = ur_topo[1] - 19.5
+    
+
 
             return dim_topo, clawdata.lower,clawdata.upper
 
@@ -446,8 +456,11 @@ def setrun(claw_pkg='geoclaw'):
 
     # Region containing initial reservoir
     # Test6A reservior -> 7.5m out of 99m in x and 3.6m in y. Test6B reservior -> 140m out of 1823m in x and 53m  in y 
-    regions.append([maxlevel,maxlevel,0, 1e10, -85,-10,-28.25,26.25]) #<-- Reservior minus gate
-    # regions.append([maxlevel,maxlevel,0, 1e10, -146.25,0,-55.1125,53.1125]) #<-- dam gate
+    regions.append([maxlevel,maxlevel,0, 1e10, -151.5,-21.5,-37,35]) #<-- Reservior minus gate
+    regions.append([minlevel,minlevel,0, 1e10, -16,0,9,35.0]) #<-- minus uper wall of gate
+    regions.append([maxlevel,maxlevel,0, 1e10, -16,0,-11,9]) #<-- dam gate
+    regions.append([minlevel,minlevel,0, 1e10, -16,0,-37,-11]) #<-- minus lower wall of gate
+   
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -471,7 +484,7 @@ def setrun(claw_pkg='geoclaw'):
     #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
     # flowgrades_data.flowgrades.append([1.e-3, 2, 1, maxlevel])
     # flowgrades_data.flowgrades.append([1e-3, 1, 1, maxlevel])
-    flowgrades_data.flowgrades.append([0.4, 3, 1, maxlevel])
+    flowgrades_data.flowgrades.append([0.42, 3, 1, maxlevel])
 
     #
     # -------------------------------------------------------
@@ -514,12 +527,12 @@ def setgeo(rundata):
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
-    geo_data.coriolis_forcing = False #Not used in TELEmac
+    geo_data.coriolis_forcing = False 
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0
     geo_data.dry_tolerance = 0.0001
-    geo_data.friction_forcing = True
+    geo_data.friction_forcing =True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
 

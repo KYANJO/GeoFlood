@@ -29,7 +29,8 @@ add_library(geoflood_f OBJECT
     fortran_source/geoclaw_block_fort.f 
     fortran_source/geoclaw_gauges_fort.f90  
     fortran_source/geoclaw_topo_update_fort.f 
-    fortran_source/geoclaw_bc2_fort.f 
+    # fortran_source/geoclaw_bc2_fort.f 
+    fortran_source/geoflood_bc2_fort.f90
     fortran_source/geoclaw_step2_fort.f90 
     fortran_source/geoclaw_setaux_fort.f90 
     fortran_source/geoclaw_src2_fort.f90 

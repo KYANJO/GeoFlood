@@ -31,40 +31,40 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
-fixed_dt = False  # Take constant time step
+initial_dt = 0.5  # Initial time step
+fixed_dt = True  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 1
+output_style = 3
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
     n_hours = 5.0              # Total number of hours in simulation     
     
-
-    frames_per_minute = 1/2   # (1 frame every 30 mins)
+    frames_per_minute = 1/30   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
-    step_interval = 10   # Create output file every 10 steps
-    total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
+    step_interval = 1800   # Create output file every 10 steps
+    total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 50 # Number of x grids per block
-my = 50 # Number of y grids per block
+mx = 128 # Number of x grids per block
+my = 128 # Number of y grids per block
 
-mi = 4  # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 1  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 0 
-maxlevel = 0 #resolution based on levels
+minlevel = 1 
+maxlevel = 4 #resolution based on levels
+
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
@@ -149,7 +149,7 @@ def setrun(claw_pkg='geoclaw'):
             dim_comp = np.array([1000.0,2000.0])   # Shrink domain inside of given bathymetry.
 
             clawdata.lower[0] =mdpt_topo[0] - dim_comp[0]/2.0
-            clawdata.upper[0] = mdpt_topo[0]+ dim_comp[0]/2.0
+            clawdata.upper[0] = mdpt_topo[0] + dim_comp[0]/2.0
 
             clawdata.lower[1] = mdpt_topo[1] - dim_comp[1]/2.0
             clawdata.upper[1] = mdpt_topo[1] + dim_comp[1]/2.0
@@ -415,7 +415,8 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
     hydrographdata.initial_depth = 0.0
-    hydrographdata.channel_width = 20
+    hydrographdata.channel_width = 20.0
+    hydrographdata.channel_position = [0,1000]
     hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
     hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
@@ -459,7 +460,8 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 2,2,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
@@ -564,14 +566,15 @@ def generate_topo_file():
     """
     Generate topo file for the current run
     """
-    buffer = 100
+
+    buffer = 200
     cellsize = 5
     xlower = -buffer
     xupper = 1000 + buffer
     ylower = -buffer
     yupper = 2000 + buffer
-    nxpoints =  int((xupper - xlower)/cellsize) + 1
-    nypoints =  int((yupper - ylower)/cellsize) + 1
+    nxpoints =  int((xupper - xlower)/cellsize) 
+    nypoints =  int((yupper - ylower)/cellsize) 
     outfile= "bathy2.topotype2"   
 
     z = 0.0 # Dry bed  
@@ -585,7 +588,7 @@ def generate_topo_file():
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    generate_topo_file()         # generate topo file (generated before running setrun.py)
+    # generate_topo_file()         # generate topo file (generated before running setrun.py)
     rundata,geoflooddata, hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
     rundata.write()
 

@@ -429,6 +429,7 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.initial_elevation = 0.0
     hydrographdata.initial_depth = 0.01         # Initial depth of water (!needed to initialize the flow)
     hydrographdata.channel_width = 100
+    hydrographdata.channel_position = [0,1950] # [x,y] center position of the channel
     hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
     hydrographdata.time = [0.0, 300, 600, 5160, 172800]
     hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0, 0.0]

@@ -1,5 +1,5 @@
 # -- fortran library
-add_library(geocuda_f OBJECT
+add_library(cpu_cuda_f OBJECT
 	fortran_source/cudaclaw_inlinelimiter.f
 	fortran_source/cudaclaw_set_capacity.f
 	fortran_source/cudaclaw_block.f
@@ -8,24 +8,22 @@ add_library(geocuda_f OBJECT
 	fortran_source/cudaclaw_flux2fw.f
 	fortran_source/cudaclaw_step2.f
 	fortran_source/cudaclaw_step2_wrap.f
-	# fortran_source/fc2d_geoclaw_output_ascii_fort.f 
 )
 
-set_target_properties(geocuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
+set_target_properties(cpu_cuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
-# -- add library
-add_library(geocuda STATIC)
-set_target_properties(geocuda PROPERTIES EXPORT_NAME CUDACLAW)
+# -- add library 
+add_library(cpu_cuda STATIC)
+set_target_properties(cpu_cuda PROPERTIES EXPORT_NAME CUDACLAW)
 
 # device code needs to relcoateable since it is in a shared library
 #target_compile_options(cudaclaw PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:
 #                       --relocatable-device-code=true
 #                       >)
 # needed because we have device code in a library
-set_target_properties(geocuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(cpu_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-target_sources(geocuda PRIVATE
-$<TARGET_OBJECTS:geocuda_f>
+target_sources(cpu_cuda PRIVATE
   fc2d_cudaclaw.cpp
 	fc2d_cudaclaw_options.c
 	cuda_source/cudaclaw_step2.cu
@@ -35,19 +33,18 @@ $<TARGET_OBJECTS:geocuda_f>
 	cuda_source/cudaclaw_flux2.cu
 	fc2d_cuda_profiler.cu
 	cuda_source/cudaclaw_store_patches.cu
-	# fc2d_geoclaw_output_ascii.c
+  $<TARGET_OBJECTS:cpu_cuda_f>
 )
 
-target_link_libraries(geocuda PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
-
-target_include_directories(geocuda
+target_link_libraries(cpu_cuda PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
+target_include_directories(cpu_cuda
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include>
 )
 
 if(CUDAToolkit_VERSION_MAJOR LESS 11)
-	target_include_directories(geocuda PRIVATE ${PROJECT_SOURCE_DIR}/cub)
+	target_include_directories(cpu_cuda PRIVATE ${PROJECT_SOURCE_DIR}/cub)
 endif()
 
 # -- install
@@ -62,21 +59,21 @@ install(FILES
   DESTINATION include
 )
 
-install(TARGETS geocuda
-  EXPORT ${PROJECT_NAME}Targets
+install(TARGETS cpu_cuda
+  EXPORT ${PROJECT_NAME}-targets
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+	RUNTIME DESTINATION bin)
 
 # imported target, for use from FetchContent
 add_library(GEOFLOOD::CUDACLAW INTERFACE IMPORTED GLOBAL)
-target_link_libraries(GEOFLOOD::CUDACLAW INTERFACE geocuda)
+target_link_libraries(GEOFLOOD::CUDACLAW INTERFACE cpu_cuda)
 
 if(BUILD_TESTING)
   add_executable(fc2d_cudaclaw.TEST
     fc2d_cudaclaw.h.TEST.cpp
     fc2d_cudaclaw_options.h.TEST.cpp
   )
-  target_link_libraries(fc2d_cudaclaw.TEST testutils geocuda)
+  target_link_libraries(fc2d_cudaclaw.TEST testutils cpu_cuda)
 #   register_unit_tests(fc2d_cudaclaw.TEST)
 endif(BUILD_TESTING)
