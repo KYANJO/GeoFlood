@@ -337,6 +337,27 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.bc_lower[1] = 'wall'
     clawdata.bc_upper[1] = 'wall'
 
+    # -----------------------------------------------
+    # Hydrograph data: (for this to work the choice of BCs must be 'user')
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.use_hydrograph = True
+    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
+    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_discharge = 0.0
+    hydrographdata.initial_elevation = 0.0
+    hydrographdata.initial_depth = 0.0
+    hydrographdata.channel_width = 20
+    hydrographdata.channel_position = [0,1000]
+    hydrographdata.channel_boundary_location = ['Left',None,None,None] # 'left', 'right', 'top', 'bottom'
+    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
+    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
+    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
+    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
+    
+    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
+
+
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
 
@@ -418,27 +439,6 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
-
-    # -----------------------------------------------
-    # Hydrograph data:
-    # -----------------------------------------------
-    hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.use_hydrograph = True
-    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
-    hydrographdata.initial_velocity = 0.0
-    hydrographdata.initial_discharge = 0.0
-    hydrographdata.initial_elevation = 0.0
-    hydrographdata.initial_depth = 0.0
-    hydrographdata.channel_width = 20
-    hydrographdata.channel_position = [0,1000]
-    hydrographdata.channel_boundary_location = ['left',None,None,None] # 'left', 'right', 'top', 'bottom'
-    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
-    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
-    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
-    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
-    
-    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
-
 
     # -----------------------------------------------
     # AMR parameters:
