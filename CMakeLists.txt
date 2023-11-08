@@ -22,7 +22,7 @@ project(GEOFLOOD
     DESCRIPTION "Flood inundation model"
     HOMEPAGE_URL https://github.com/KYANJO/GeoFlood
     LANGUAGES C CXX Fortran
-    VERSION 1.4)
+    VERSION 1.5)
 
 # --- ctest
 include(CTest)

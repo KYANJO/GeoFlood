@@ -21,8 +21,8 @@ subroutine fc2d_geoclaw_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
       ! (1-ibc,j)  for ibc = 1,mbc, j = 1-mbc, my+mbc
       ! (mx+ibc,j) for ibc = 1,mbc, j = 1-mbc, my+mbc
 
-      use hydrograph_module, only: inflow_interpolate, Riemann_invariants, two_shock, b, y0 ! contains the interpolation, Riemann invariant, and two-shock ssunroutines
-      use hydrograph_module, only: boundary_location,use_hydrograph
+      use hydrograph_module, only: inflow_interpolate, Riemann_invariants, two_shock ! contains the interpolation, Riemann invariant, and two-shock ssunroutines
+      use hydrograph_module, only: b, x0, y0, boundary_location,use_hydrograph
       use geoclaw_module, only: dry_tolerance, grav
 
       implicit none
@@ -35,7 +35,7 @@ subroutine fc2d_geoclaw_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
 
       integer :: m, i, j, ibc, jbc
 
-      real(kind=8) ::  y
+      real(kind=8) ::  x,y
       real(kind=8), dimension(4) :: q0,q1
 
       ! -------------------------------------------------------------------
@@ -229,9 +229,57 @@ subroutine fc2d_geoclaw_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
       goto 399
       ! c
       300 continue
-      ! c     # user-specified boundary conditions go here in place of error output
-      write(6,*) '*** ERROR *** mthbc(3)=0 and no BCs specified in bc2'
-      stop
+      ! inflow boundary condition:
+      if ((use_hydrograph == 'True') .and. (boundary_location(4) == 'bottom')) then
+            ! apply the hydrograph boundary condition
+            do i = 1-mbc,mx+mbc
+                  x = xlower + (i-0.5d0)*dx
+                  q1 = q(:,i,1) ! this is the vector q at the boundary
+                  call inflow_interpolate(t,q0,q1)
+
+                  if (abs(x-x0) <= b/2.0d0) then
+                        do jbc=1,mbc
+                              if (q1(1) < dry_tolerance) then
+                                    q(1,i,1-jbc) = max((q0(2)/sqrt(grav))**(2.0d0/3.0d0), 0.001d0) 
+                                    q(2,i,1-jbc) = q0(2)
+                                    q(3,i,1-jbc) = 0.0d0
+                              else 
+                                    if (q0(2) .ne. 0.0d0) then
+                                          call Riemann_invariants(q0,q1)
+                                          if (q0(1) > q1(1)) then
+                                                call two_shock(q0,q1)
+                                          endif
+                                          q(1,i,1-jbc) = q0(1)
+                                          q(2,i,1-jbc) = q0(2)
+                                          q(3,i,1-jbc) = 0.0d0
+                                    else
+                                          aux(1,i,1-jbc) = aux(1,i,jbc)
+                                          do m=1,meqn
+                                                q(m,i,1-jbc) = q(m,i,jbc)
+                                          enddo
+
+                                          ! c     # negate the normal velocity:   
+                                          q(3,i,1-jbc) = -q(3,i,jbc)
+                                    end if
+                              endif
+                        enddo
+                  else
+                        do jbc=1,mbc   
+                              aux(1,i,1-jbc) = aux(1,i,jbc)
+                              do m=1,meqn
+                                    q(m,i,1-jbc) = q(m,i,jbc)
+                              enddo
+                              ! c     # negate the normal velocity:   
+                              q(3,i,1-jbc) = -q(3,i,jbc)
+                        enddo
+                  endif
+            end do                         
+                             
+      else
+            ! c     # user-specified boundary conditions go here in place of error output
+            write(6,*) '*** ERROR *** mthbc(3)=0 and no BCs specified in bc2'
+            stop
+      endif
       go to 399
       ! c
       310 continue
@@ -272,9 +320,56 @@ subroutine fc2d_geoclaw_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
       goto 499
 
       400 continue
-      !  # user-specified boundary conditions go here in place of error output
-      write(6,*) '*** ERROR *** mthbc(4)=0 and no BCs specified in bc2'
-      stop
+      !  inflow boundary condition:
+      if ((use_hydrograph == 'True') .and. (boundary_location(3) == 'top')) then
+            ! apply the hydrograph boundary condition
+            do i = 1-mbc,mx+mbc
+                  x = xlower + (i-0.5d0)*dx
+                  q1 = q(:,i,my) ! this is the vector q at the boundary
+                  call inflow_interpolate(t,q0,q1)
+
+                  if (abs(x-x0) <= b/2.0d0) then
+                        do jbc=1,mbc
+                              if (q1(1) < dry_tolerance) then
+                                    q(1,i,my+jbc) = max((q0(2)/sqrt(grav))**(2.0d0/3.0d0), 0.001d0) 
+                                    q(2,i,my+jbc) = q0(2)
+                                    q(3,i,my+jbc) = 0.0d0
+                              else 
+                                    if (q0(2) .ne. 0.0d0) then
+                                          call Riemann_invariants(q0,q1)
+                                          if (q0(1) > q1(1)) then
+                                                call two_shock(q0,q1)
+                                          endif
+                                          q(1,i,my+jbc) = q0(1)
+                                          q(2,i,my+jbc) = q0(2)
+                                          q(3,i,my+jbc) = 0.0d0
+                                    else
+                                          aux(1,i,my+jbc) = aux(1,i,my+1-jbc)
+                                          do m=1,meqn
+                                                q(m,i,my+jbc) = q(m,i,my+1-jbc)
+                                          enddo
+
+                                          ! c     # negate the normal velocity:   
+                                          q(3,i,my+jbc) = -q(3,i,my+1-jbc)
+                                    end if
+                              endif
+                        enddo
+                  else
+                        do jbc=1,mbc   
+                              aux(1,i,my+jbc) = aux(1,i,my+1-jbc)
+                              do m=1,meqn
+                                    q(m,i,my+jbc) = q(m,i,my+1-jbc)
+                              enddo
+                              ! c     # negate the normal velocity:   
+                              q(3,i,my+jbc) = -q(3,i,my+1-jbc)
+                        enddo
+                  endif
+            end do
+      else
+            !  # user-specified boundary conditions go here in place of error output
+            write(6,*) '*** ERROR *** mthbc(4)=0 and no BCs specified in bc2'
+            stop
+      endif
       go to 499
 
       410 continue

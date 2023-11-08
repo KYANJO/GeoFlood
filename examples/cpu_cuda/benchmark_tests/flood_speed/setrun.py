@@ -338,11 +338,11 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.bc_upper[1] = 'wall'
 
     # -----------------------------------------------
-    # Hydrograph data: (for this to work the choice of BCs must be 'user')
+    # Hydrograph data: (for this to work the choice of BCs must be 'user' and use_hydrograph must be True)
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.use_hydrograph = True
-    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
+    hydrographdata.use_hydrograph = True  # True if using hydrograph data, False if not
+    hydrographdata.read_data = False      # False if reading from file, True if using reading from set values
     hydrographdata.initial_velocity = 0.0
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
