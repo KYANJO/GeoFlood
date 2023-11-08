@@ -349,6 +349,14 @@ class Hydrographdata(object):
         hydrograph.write('%f %f \t\t\t =: channel_position (x,y) \n' % (self.channel_position[0],self.channel_position[1]))
 
         # hydrograph.write('\n# channel boundary location\n')
+        if self.channel_boundary_location[0] in [0,'left','Left']:
+            self.channel_boundary_location[0] = 'left'
+        if self.channel_boundary_location[1] in [1,'right','Right']:
+            self.channel_boundary_location[1] = 'right'
+        if self.channel_boundary_location[2] in [2,'top','Top']:
+            self.channel_boundary_location[2] = 'top'
+        if self.channel_boundary_location[3] in [3,'bottom','Bottom']:
+            self.channel_boundary_location[3] = 'bottom'
         hydrograph.write('%s %s %s %s  \t\t\t =: channel_boundary_location \n' % (self.channel_boundary_location[0],self.channel_boundary_location[1],self.channel_boundary_location[2],self.channel_boundary_location[3]))
 
         # hydrograph.write('\n# hydrograph data\n')
