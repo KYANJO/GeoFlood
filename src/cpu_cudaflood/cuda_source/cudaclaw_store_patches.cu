@@ -8,6 +8,8 @@
 #include "cudaclaw_allocate.h"
 #include <fc2d_cuda_profiler.h>
 
+// #include "data_swap.h"
+
 void cudaclaw_store_buffer(fclaw2d_global_t* glob,
                            fclaw2d_patch_t *this_patch,
                            int this_patch_idx,
@@ -32,6 +34,22 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 
     fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
     fclaw2d_clawpatch_soln_data(glob,this_patch,&qold,&meqn);
+
+    // data cpoying between geoclaw and cudaclaw
+    // fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
+    // int mx = clawpatch_opt->mx;
+    // int my = clawpatch_opt->my;
+    // int mbc = clawpatch_opt->mbc;
+    
+    // double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
+    // double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
+
+    // swap mij to ijm
+    // swap_mij2ijm(mx,my,mbc,meqn,maux,qold,qold_transpose,aux,aux_transpose);
+
+
+    // fluxes->qold = qold_transpose;
+    // fluxes->aux = aux_transpose;
 
     fluxes->qold = qold;
     fluxes->aux = aux;
