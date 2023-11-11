@@ -25,6 +25,23 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+/* GeoClaw functions */
+#include "geoclaw_solver/fc2d_geoclaw.h"
+#include "geoclaw_solver/fc2d_geoclaw_options.h"
+#include "geoclaw_solver/fc2d_geoclaw_fort.h"
+#include "geoclaw_solver/fc2d_geoclaw_output_ascii.h"
+#include <fclaw_gauges.h>
+#include "geoclaw_solver/fc2d_geoclaw_gauges_default.h"
+#include <fclaw2d_convenience.h>  /* Needed to get search function for gauges */
+
+/* Some mapping functions */
+#include <fclaw2d_map_brick.h>
+#include <fclaw2d_map.h>
+#include <fclaw2d_map_query.h>
+
+/* Needed for debugging */
+#include "types.h"
+
 #include "fc2d_cudaclaw.h"
 #include "fc2d_cudaclaw_fort.h"
 #include "fc2d_cudaclaw_options.h"
@@ -36,6 +53,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_global.h>
 #include <fclaw2d_vtable.h>
 #include <fclaw2d_update_single_step.h>  
+#include <fclaw2d_diagnostics.h>
+#include <fclaw2d_defs.h>
+#include "fclaw2d_options.h"
 
 #include <fclaw2d_patch.h>
 #include <fclaw2d_clawpatch.hpp>
@@ -52,6 +72,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "fc2d_cuda_profiler.h"
 
+// struct region_type region_type_for_debug;
+
+/* ----------------------------- static function defs ------------------------------- */
+static 
+void cudaclaw_setaux(fclaw2d_global_t *glob,
+                       fclaw2d_patch_t *this_patch,
+                       int this_block_idx,
+                       int this_patch_idx);
+
+/* --------------------------- Creating/deleting patches ---------------------------- */
+static
+void cudaclaw_patch_setup(fclaw2d_global_t *glob,
+                            fclaw2d_patch_t *this_patch,
+                            int this_block_idx,
+                            int this_patch_idx)
+{
+    cudaclaw_setaux(glob,this_patch,this_block_idx,this_patch_idx);
+}
+
+
 /* --------------------- Clawpack solver functions (required) ------------------------- */
 
 static
@@ -63,8 +103,6 @@ void cudaclaw_setprob(fclaw2d_global_t *glob)
         cudaclaw_vt->fort_setprob();
     }
 }
-
-
 
 static
 void cudaclaw_qinit(fclaw2d_global_t *glob,
@@ -86,13 +124,15 @@ void cudaclaw_qinit(fclaw2d_global_t *glob,
     fclaw2d_clawpatch_soln_data(glob,this_patch,&q,&meqn);
     fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
 
-    maxmx = mx;
-    maxmy = my;
+    // maxmx = mx;
+    // maxmy = my;
 
     /* Call to classic Clawpack 'qinit' routine.  This must be user defined */
     CUDACLAW_SET_BLOCK(&this_block_idx);
-    cudaclaw_vt->fort_qinit(&maxmx,&maxmy,&meqn,&mbc,&mx,&my,&xlower,&ylower,&dx,&dy,q,
-                          &maux,aux);
+    // cudaclaw_vt->fort_qinit(&maxmx,&maxmy,&meqn,&mbc,&mx,&my,&xlower,&ylower,&dx,&dy,q,
+    //                       &maux,aux);
+    cudaclaw_vt->fort_qinit(&meqn,&mbc,&mx,&my,&xlower,&ylower,&dx,&dy,q,
+                       &maux,aux);
     CUDACLAW_UNSET_BLOCK();
 }
 
@@ -123,8 +163,8 @@ void cudaclaw_bc2(fclaw2d_global_t *glob,
 
     fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
 
-    maxmx = mx;
-    maxmy = my;
+    // maxmx = mx;
+    // maxmy = my;
 
     int *block_mthbc = clawpack_options->mthbc;
 
@@ -151,8 +191,43 @@ void cudaclaw_bc2(fclaw2d_global_t *glob,
     fclaw2d_clawpatch_timesync_data(glob,this_patch,time_interp,&q,&meqn);
 
     CUDACLAW_SET_BLOCK(&this_block_idx);
-    cudaclaw_vt->fort_bc2(&maxmx,&maxmy,&meqn,&mbc,&mx,&my,&xlower,&ylower,
+    cudaclaw_vt->fort_bc2(&meqn,&mbc,&mx,&my,&xlower,&ylower,
                         &dx,&dy,q,&maux,aux,&t,&dt,mthbc);
+    CUDACLAW_UNSET_BLOCK();
+}
+
+/* This can be used as a value for patch_vt->patch_setup */
+static
+void cudaclaw_setaux(fclaw2d_global_t *glob,
+                       fclaw2d_patch_t *this_patch,
+                       int this_block_idx,
+                       int this_patch_idx)
+{
+    PROFILE_CUDA_GROUP("cudaclaw_setaux",2);
+    fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
+
+    FCLAW_ASSERT(cudaclaw_vt->fort_setaux != NULL);
+
+    int mx,my,mbc,maux,maxmx,maxmy;
+    double xlower,ylower,dx,dy;
+    double *aux;
+
+    fclaw2d_clawpatch_grid_data(glob,this_patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
+
+    // maxmx = mx;
+    // maxmy = my;
+
+    /* If this is a ghost patch, we only set aux values in ghost cells */
+    int is_ghost = fclaw2d_patch_is_ghost(this_patch);
+    int mint = 2*mbc;
+    int nghost = mbc;
+
+    CUDACLAW_SET_BLOCK(&this_block_idx);
+    cudaclaw_vt->fort_setaux(&mbc,&mx,&my,&xlower,&ylower,&dx,&dy,
+                      &maux,aux,&is_ghost,&nghost,&mint);
     CUDACLAW_UNSET_BLOCK();
 }
 
@@ -168,28 +243,27 @@ void cudaclaw_b4step2(fclaw2d_global_t *glob,
     PROFILE_CUDA_GROUP("cudaclaw_b4step2",1);
     fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
 
-    int mx,my,mbc,meqn, maux,maxmx,maxmy;
-    double xlower,ylower,dx,dy;
-    double *aux,*q;
 
-    if (cudaclaw_vt->fort_b4step2 == NULL)
+
+    if (cudaclaw_vt->b4step2 != NULL)
     {
-        return;
+        int mx,my,mbc,meqn, maux,maxmx,maxmy;
+        double xlower,ylower,dx,dy;
+        double *aux,*q;
+        fclaw2d_clawpatch_grid_data(glob,this_patch, &mx,&my,&mbc,
+                                    &xlower,&ylower,&dx,&dy);
+
+        fclaw2d_clawpatch_soln_data(glob,this_patch,&q,&meqn);
+        fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
+
+        // maxmx = mx;
+        // maxmy = my;
+
+        CUDACLAW_SET_BLOCK(&this_block_idx);
+        cudaclaw_vt->fort_b4step2(&mbc,&mx,&my,&meqn,q,&xlower,&ylower,
+                                &dx,&dy,&t,&dt,&maux,aux);
+        CUDACLAW_UNSET_BLOCK();
     }
-
-    fclaw2d_clawpatch_grid_data(glob,this_patch, &mx,&my,&mbc,
-                                &xlower,&ylower,&dx,&dy);
-
-    fclaw2d_clawpatch_soln_data(glob,this_patch,&q,&meqn);
-    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
-
-    maxmx = mx;
-    maxmy = my;
-
-    CUDACLAW_SET_BLOCK(&this_block_idx);
-    cudaclaw_vt->fort_b4step2(&maxmx,&maxmy,&mbc,&mx,&my,&meqn,q,&xlower,&ylower,
-                            &dx,&dy,&t,&dt,&maux,aux);
-    CUDACLAW_UNSET_BLOCK();
 }
 
 static
@@ -207,11 +281,7 @@ void cudaclaw_src2(fclaw2d_global_t *glob,
     double xlower,ylower,dx,dy;
     double *aux,*q;
 
-    if (cudaclaw_vt->fort_src2 == NULL)
-    {
-        /* User has not set a fortran routine */
-        return;
-    }
+    FCLAW_ASSERT(cudaclaw_vt->fort_src2 != NULL);
 
     fclaw2d_clawpatch_grid_data(glob,this_patch, &mx,&my,&mbc,
                                 &xlower,&ylower,&dx,&dy);
@@ -219,55 +289,15 @@ void cudaclaw_src2(fclaw2d_global_t *glob,
     fclaw2d_clawpatch_soln_data(glob,this_patch,&q,&meqn);
     fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
 
-    maxmx = mx;
-    maxmy = my;
+    // maxmx = mx;
+    // maxmy = my;
 
     CUDACLAW_SET_BLOCK(&this_block_idx);
-    cudaclaw_vt->fort_src2(&maxmx,&maxmy,&meqn,&mbc,&mx,&my,&xlower,&ylower,
+    cudaclaw_vt->fort_src2(&meqn,&mbc,&mx,&my,&xlower,&ylower,
                          &dx,&dy,q,&maux,aux,&t,&dt);
     CUDACLAW_UNSET_BLOCK();
 }
 
-
-/* This can be used as a value for patch_vt->patch_setup */
-static
-void cudaclaw_setaux(fclaw2d_global_t *glob,
-                       fclaw2d_patch_t *this_patch,
-                       int this_block_idx,
-                       int this_patch_idx)
-{
-    PROFILE_CUDA_GROUP("cudaclaw_setaux",2);
-    fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
-
-    if (cudaclaw_vt->fort_setaux == NULL)
-    {
-        /* User did not set a fort function to assign aux arrays */
-        return;
-    }
-
-    if (fclaw2d_patch_is_ghost(this_patch))
-    {
-        /* This is going to be removed at some point */
-        return;
-    }
-
-    int mx,my,mbc,maux,maxmx,maxmy;
-    double xlower,ylower,dx,dy;
-    double *aux;
-
-    fclaw2d_clawpatch_grid_data(glob,this_patch, &mx,&my,&mbc,
-                                &xlower,&ylower,&dx,&dy);
-
-    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
-
-    maxmx = mx;
-    maxmy = my;
-
-    CUDACLAW_SET_BLOCK(&this_block_idx);
-    cudaclaw_vt->fort_setaux(&maxmx,&maxmy,&mbc,&mx,&my,&xlower,&ylower,&dx,&dy,
-                           &maux,aux);
-    CUDACLAW_UNSET_BLOCK();
-}
 
 static
 double cudaclaw_update(fclaw2d_global_t *glob,
@@ -398,7 +428,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     return maxcfl;
 }
 
-
 /* ---------------------------------- Output functions -------------------------------- */
 
 static
@@ -409,7 +438,8 @@ void cudaclaw_output(fclaw2d_global_t *glob, int iframe)
 
     if (clawpack_options->ascii_out != 0)
     {
-        fclaw2d_clawpatch_output_ascii(glob,iframe);
+        // fclaw2d_clawpatch_output_ascii(glob,iframe);
+        fc2d_geoclaw_output_ascii(glob,iframe); 
     }
 
     if (clawpack_options->vtk_out != 0)
@@ -417,6 +447,398 @@ void cudaclaw_output(fclaw2d_global_t *glob, int iframe)
         fclaw2d_clawpatch_output_vtk(glob,iframe);
     }
 
+}
+
+/* Regridding functions */
+static
+int cudaclaw_patch_tag4refinement(fclaw2d_global_t *glob,
+                                    fclaw2d_patch_t *this_patch,
+                                    int blockno,
+                                    int patchno,
+                                    int initflag)
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+    double *q, *aux;
+    int tag_patch;
+
+    fclaw2d_clawpatch_grid_data(glob,this_patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+    
+    fclaw2d_clawpatch_soln_data(glob,this_patch,&q,&meqn);
+
+    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
+ 
+    int level = this_patch->level;
+    double t = glob->curr_time;
+
+    /* First check to see if we are forced to refine based on regions 
+       If patch intersects a region (including time interval), this routine
+       returns :  
+
+          -- level >= maximum level allowed by any region 
+             this patch intersects with. (tag_patch = 0)
+
+          -- level < minimum level required by any region
+             this patch intersects with. (tag_patch = 1)
+
+        Otherwise, tag_patch = -1 and we should refine using usual criteria.
+    */
+    double xupper = xlower + mx*dx;
+    double yupper = ylower + my*dy;
+    int refine = 1; /* We are tagging for refinement */
+    FC2D_GEOCLAW_TEST_REGIONS(&level,&xlower,&ylower,&xupper,&yupper,
+                              &t,&refine, &tag_patch);
+
+    if (tag_patch < 0)
+    {
+        /* Need maxlevel to get length speed_tolerance*/
+        const fclaw_options_t * fclaw_opt = fclaw2d_get_options(glob);
+        int maxlevel = fclaw_opt->maxlevel;
+        FC2D_GEOCLAW_FORT_TAG4REFINEMENT(&mx,&my,&mbc,&meqn,&maux,&xlower,&ylower,
+                                         &dx,&dy,&t,&blockno,q,aux,&level,&maxlevel,
+                                         &initflag,&tag_patch);
+    }
+
+    return tag_patch;
+
+}
+
+static 
+int cudaclaw_patch_tag4coarsening(fclaw2d_global_t *glob,
+                                    fclaw2d_patch_t *fine_patches,
+                                    int blockno,
+                                    int patchno,
+                                    int initflag)
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower[4],ylower[4],dx,dy;
+    double *q[4], *aux[4];
+    for (int igrid = 0; igrid < 4; igrid++)
+    {
+        fclaw2d_clawpatch_soln_data(glob,&fine_patches[igrid],&q[igrid],&meqn);
+        fclaw2d_clawpatch_aux_data(glob,&fine_patches[igrid],&aux[igrid],&maux);
+
+        fclaw2d_clawpatch_grid_data(glob,&fine_patches[igrid], &mx,&my,&mbc,
+                                    &xlower[igrid],&ylower[igrid],&dx,&dy);
+    }
+
+    int level = fine_patches[0].level;
+    double t = glob->curr_time;
+    int tag_patch;
+
+    /* Test parent quadrant : If any of the four sibling patches are in the 
+       region, we consider that an intersection.  Assume Morton ordering
+       on the sibling patches (0=ll, 1=lr, 2=ul, 3=ur) */
+    double xupper = xlower[1] + mx*dx;
+    double yupper = ylower[2] + my*dy;
+    int refine = 0; /* We are tagging for coarsening */
+    FC2D_GEOCLAW_TEST_REGIONS(&level,&xlower[0],&ylower[0],&xupper,&yupper,
+                              &t,&refine, &tag_patch);
+
+    if (tag_patch < 0)
+    {
+        /* Region tagging is inconclusive */
+        const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
+        int maxlevel = fclaw_opt->maxlevel;
+
+         FC2D_GEOCLAW_FORT_TAG4COARSENING(&blockno,&mx,&my,&mbc,&meqn,&maux,xlower,ylower,
+                                         &dx,&dy, &t,q[0],q[1],q[2],q[3],
+                                         aux[0],aux[1],aux[2],aux[3],
+                                         &level,&maxlevel, &initflag, &tag_patch);
+    }
+
+    return tag_patch;
+}
+
+static
+void cudaclaw_interpolate2fine(fclaw2d_global_t *glob,
+                                fclaw2d_patch_t *coarse_patch,
+                                fclaw2d_patch_t *fine_patches,
+                                int blockno,
+                                int coarse_patchno,
+                                int fine0_patchno)
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+
+    fclaw2d_clawpatch_grid_data(glob,coarse_patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    double *qcoarse;
+    fclaw2d_clawpatch_soln_data(glob,coarse_patch,&qcoarse,&meqn);
+
+    double *auxcoarse;
+    fclaw2d_clawpatch_aux_data(glob,coarse_patch,&auxcoarse,&maux);
+
+    /* Loop over four siblings (z-ordering) */
+    for (int igrid = 0; igrid < 4; igrid++)
+    {
+        fclaw2d_patch_t* fine_patch = &fine_patches[igrid];
+
+        double *qfine;
+        fclaw2d_clawpatch_soln_data(glob,fine_patch,&qfine,&meqn);
+
+        double *auxfine;
+        fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
+
+        FC2D_GEOCLAW_FORT_INTERPOLATE2FINE(&mx,&my,&mbc,&meqn,qcoarse,qfine,
+                                           &maux,auxcoarse,auxfine, &igrid);
+    }
+}
+
+static
+void cudaclaw_average2coarse(fclaw2d_global_t *glob,
+                                fclaw2d_patch_t *fine_patches,
+                                fclaw2d_patch_t *coarse_patch,
+                                int blockno,
+                                int fine0_patchno,
+                                int coarse_patchno)
+{
+    /* Only mx, my are needed here */
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+    fclaw2d_clawpatch_grid_data(glob,coarse_patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    double *qcoarse;
+    fclaw2d_clawpatch_soln_data(glob,coarse_patch,&qcoarse,&meqn);
+
+    double *auxcoarse;
+    fclaw2d_clawpatch_aux_data(glob,coarse_patch,&auxcoarse,&maux);
+
+    /* Loop over four siblings (z-ordering) */
+    for (int igrid = 0; igrid < 4; igrid++)
+    {
+        fclaw2d_patch_t* fine_patch = &fine_patches[igrid];
+
+        double *qfine;
+        fclaw2d_clawpatch_soln_data(glob,fine_patch,&qfine,&meqn);
+
+        double *auxfine;
+        fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
+
+        const fc2d_cudaclaw_options_t* clawopt = fc2d_cudaclaw_get_options(glob);
+        int mcapa = clawopt->mcapa;
+        FC2D_GEOCLAW_FORT_AVERAGE2COARSE(&mx,&my,&mbc,&meqn,qcoarse,qfine,
+                                         &maux,auxcoarse,auxfine,&mcapa,&igrid);
+    }                           
+}                              
+
+/* ------------------------- Ghost filling - patch specific ------------------------ */
+
+void cudaclaw_average_face(fclaw2d_global_t *glob,
+                          fclaw2d_patch_t *coarse_patch,
+                          fclaw2d_patch_t *fine_patch,
+                          int idir,
+                          int iface_coarse,
+                          int p4est_refineFactor,
+                          int refratio,
+                          int time_interp,
+                          int igrid,
+                          fclaw2d_patch_transform_data_t* transform_data)
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+
+    fclaw2d_clawpatch_grid_data(glob,coarse_patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    double *qcoarse;
+    fclaw2d_clawpatch_timesync_data(glob,coarse_patch,time_interp,&qcoarse,&meqn);
+
+    double* qfine = fclaw2d_clawpatch_get_q(glob,fine_patch);
+
+    /* These will be empty for non-manifords cases */
+    double *auxcoarse;
+    fclaw2d_clawpatch_aux_data(glob,coarse_patch,&auxcoarse,&maux);
+
+    double *auxfine;
+    fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
+
+    const fc2d_cudaclaw_options_t* clawopt = fc2d_cudaclaw_get_options(glob);
+    int mcapa = clawopt->mcapa;
+
+    const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
+    int manifold = fclaw_opt->manifold;
+    if (manifold != 0)
+    {
+        fclaw_global_essentialf("cpu_cudaflood : Manifold case is not handled explicit" \
+                                  "in GeoFlood.");
+        exit(0);
+    }
+
+    FC2D_GEOCLAW_FORT_AVERAGE_FACE(&mx,&my,&mbc,&meqn,qcoarse,qfine,
+                                   &maux,auxcoarse,auxfine,&mcapa,
+                                   &idir,&iface_coarse,
+                                   &igrid,&transform_data);
+}
+
+void cudaclaw_interpolate_face(fclaw2d_global_t *glob,
+                              fclaw2d_patch_t *coarse_patch,
+                              fclaw2d_patch_t *fine_patch,
+                              int idir,
+                              int iside,
+                              int p4est_refineFactor,
+                              int refratio,
+                              int time_interp,
+                              int igrid,
+                              fclaw2d_patch_transform_data_t* transform_data)
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+
+    fclaw2d_clawpatch_grid_data(glob,coarse_patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    double *qcoarse;
+    fclaw2d_clawpatch_timesync_data(glob,coarse_patch,time_interp,&qcoarse,&meqn);
+    double *qfine = fclaw2d_clawpatch_get_q(glob,fine_patch);
+
+    double* auxcoarse;
+    fclaw2d_clawpatch_aux_data(glob,coarse_patch,&auxcoarse,&maux);
+
+    double* auxfine;
+    fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
+
+    FC2D_GEOCLAW_FORT_INTERPOLATE_FACE(&mx,&my,&mbc,&meqn,qcoarse,qfine,&maux,
+                                       auxcoarse,auxfine, &idir, &iside,
+                                       &igrid, &transform_data);
+}                             
+
+
+void cudaclaw_average_corner(fclaw2d_global_t *glob,
+                            fclaw2d_patch_t *coarse_patch,
+                            fclaw2d_patch_t *fine_patch,
+                            int coarse_blockno,
+                            int fine_blockno,
+                            int coarse_corner,
+                            int time_interp,
+                            fclaw2d_patch_transform_data_t* transform_data)
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+    fclaw2d_clawpatch_grid_data(glob,coarse_patch, &mx,&my,&mbc,
+                                 &xlower,&ylower,&dx,&dy);
+
+    double *qcoarse;
+    fclaw2d_clawpatch_timesync_data(glob,coarse_patch,time_interp,&qcoarse,&meqn);
+    double *qfine = fclaw2d_clawpatch_get_q(glob,fine_patch);
+
+    double* auxcoarse;
+    fclaw2d_clawpatch_aux_data(glob,coarse_patch,&auxcoarse,&maux);
+
+    double* auxfine;
+    fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
+
+    const fc2d_cudaclaw_options_t* clawopt = fc2d_cudaclaw_get_options(glob);
+    int mcapa = clawopt->mcapa;
+
+    const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
+    int manifold = fclaw_opt->manifold;
+    if (manifold != 0)
+    {
+        fclaw_global_essentialf("cpu_cudaflood : Manifold case is not handled explicit" \
+                                  "in GeoFlood.");
+        exit(0);
+    }
+
+    FC2D_GEOCLAW_FORT_AVERAGE_CORNER(&mx,&my,&mbc,&meqn,
+                                     qcoarse,qfine,&maux,auxcoarse,auxfine,
+                                     &mcapa,&coarse_corner,
+                                     &transform_data);
+}                           
+
+void cudaclaw_interpolate_corner(fclaw2d_global_t* glob,
+                                fclaw2d_patch_t* coarse_patch,
+                                fclaw2d_patch_t* fine_patch,
+                                int coarse_blockno,
+                                int fine_blockno,
+                                int coarse_corner,
+                                int time_interp,
+                                fclaw2d_patch_transform_data_t* transform_data)
+
+{
+    int mx,my,mbc,meqn,maux;
+    double xlower,ylower,dx,dy;
+    fclaw2d_clawpatch_grid_data(glob,coarse_patch, &mx,&my,&mbc,
+                                 &xlower,&ylower,&dx,&dy);
+
+    double *qcoarse;
+    fclaw2d_clawpatch_timesync_data(glob,coarse_patch,time_interp,&qcoarse,&meqn);
+    double *qfine = fclaw2d_clawpatch_get_q(glob,fine_patch);
+
+    double* auxcoarse;
+    fclaw2d_clawpatch_aux_data(glob,coarse_patch,&auxcoarse,&maux);
+
+    double* auxfine;
+    fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
+
+    FC2D_GEOCLAW_FORT_INTERPOLATE_CORNER(&mx,&my,&mbc,&meqn,
+                                         qcoarse,qfine,&maux,
+                                         auxcoarse,auxfine,
+                                         &coarse_corner,&transform_data);
+}
+
+/* --------------------------- Parallel ghost patches -------------------------------- */
+
+void cudaclaw_remote_ghost_setup(fclaw2d_global_t *glob,
+                                fclaw2d_patch_t *patch,
+                                int blockno,
+                                int patchno)
+{
+    fclaw2d_clawpatch_options_t* clawpatch_options;
+    clawpatch_options = fclaw2d_clawpatch_get_options(glob);
+
+    if (clawpatch_options->ghost_patch_pack_aux)
+    {
+       cudaclaw_setaux(glob,patch,blockno,patchno);
+    }
+    else
+    {
+         /* the aux array data has been packed and transferred as MPI messages */
+    }
+}
+
+static
+void cudaclaw_local_ghost_pack_aux(fclaw2d_global_t *glob,
+                                  fclaw2d_patch_t *patch,
+                                  int mint,
+                                  double *auxpack,
+                                  int auxsize, int packmode,
+                                  int* ierror)
+ {
+    int mx,my,mbc,maux;
+    double xlower,ylower,dx,dy;
+    fclaw2d_clawpatch_grid_data(glob,patch, &mx,&my,&mbc,
+                                &xlower,&ylower,&dx,&dy);
+
+    double *aux;
+    fclaw2d_clawpatch_aux_data(glob,patch,&aux,&maux);
+    FC2D_GEOCLAW_LOCAL_GHOST_PACK_AUX(&mx,&my,&mbc,&maux,
+                                          &mint,aux,auxpack,&auxsize,
+                                          &packmode,ierror);
+ }                                 
+
+/* ------------------------------ Misc access functions ----------------------------- */
+
+/* Called from application routines */
+void fc2d_cudaclaw_module_setup(fclaw2d_global_t *glob)
+{
+    const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
+    const fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
+    const fc2d_cudaclaw_options_t *clawopt = fc2d_cudaclaw_get_options(glob);
+
+    FC2D_GEOCLAW_SET_MODULES(&clawopt->mwaves,
+                                &clawopt->mcapa,
+                                &clawpatch_opt->meqn,
+                                &clawpatch_opt->maux,
+                                clawopt->mthlim,
+                                clawopt->method,
+                                &fclaw_opt->ax,
+                                &fclaw_opt->bx,
+                                &fclaw_opt->ay,
+                                &fclaw_opt->by);    
 }
 
 /* ---------------------------------- Virtual table  ---------------------------------- */
@@ -433,61 +855,130 @@ void cudaclaw_vt_destroy(void* vt)
     FCLAW_FREE (vt);
 }
 
+fc2d_cudaclaw_vtable_t* fc2d_cudaclaw_vt(fclaw2d_global_t *glob)
+{
+	fc2d_cudaclaw_vtable_t* cudaclaw_vt = (fc2d_cudaclaw_vtable_t*) 
+	   							fclaw_pointer_map_get(glob->vtables, "fc2d_cudaclaw");
+	FCLAW_ASSERT(cudaclaw_vt != NULL);
+	FCLAW_ASSERT(cudaclaw_vt->is_set != 0);
+	return cudaclaw_vt;
+}
+
+
 void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
 {
+    fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
 	fclaw2d_clawpatch_options_t* clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
 	fc2d_cudaclaw_options_t* clawopt = fc2d_cudaclaw_get_options(glob);
 
     clawopt->method[6] = clawpatch_opt->maux;
 
-    if (clawpatch_opt->maux == 0 && clawopt->mcapa > 0)
+    /* We have to do this so that we know how to size the ghost patches */
+    if (clawpatch_opt->ghost_patch_pack_aux)
     {
-        fclaw_global_essentialf("cudaclaw : bad maux/mcapa combination\n");
-        exit(FCLAW_EXIT_ERROR);
+        fclaw_opt ->ghost_patch_pack_extra = 1; /* Pack the bathymetry */
+        fclaw_opt->ghost_patch_pack_numextrafields = clawpatch_opt->maux;
     }
 
-    int claw_version = 4;
+    int claw_version = 5;
     fclaw2d_clawpatch_vtable_initialize(glob, claw_version);
 
+    fclaw_gauges_vtable_t*  gauges_vt = fclaw_gauges_vt(glob);
+
     fclaw2d_vtable_t*                fclaw_vt = fclaw2d_vt(glob);
-    fclaw2d_patch_vtable_t*          patch_vt = fclaw2d_patch_vt(glob);  
+    fclaw2d_patch_vtable_t*          patch_vt = fclaw2d_patch_vt(glob);
+    fclaw2d_clawpatch_vtable_t*      clawpatch_vt = fclaw2d_clawpatch_vt(glob);
 
     fc2d_cudaclaw_vtable_t*  cudaclaw_vt = cudaclaw_vt_new();
 
 #if defined(_OPENMP)
     fclaw_global_essentialf("Current implementation does not allow OPENMP + CUDA\n");
     exit(0);
-#endif    
+#endif       
 
-    /* ForestClaw vtable items */
+    /* ForestClaw virtual tables */
     fclaw_vt->output_frame                   = cudaclaw_output;
-    fclaw_vt->problem_setup                  = cudaclaw_setprob;    
+    fclaw_vt->problem_setup                  = cudaclaw_setprob;
 
-    /* These could be over-written by user specific settings */
+    /* Set basic patch operations */
+    patch_vt->setup                          = cudaclaw_patch_setup;
     patch_vt->initialize                     = cudaclaw_qinit;
-    patch_vt->setup                          = cudaclaw_setaux; 
     patch_vt->physical_bc                    = cudaclaw_bc2;
-    patch_vt->single_step_update             = cudaclaw_update;
+    patch_vt->single_step_update             = cudaclaw_update; /* Includes b4step2 and src2*/
 
-    /* Set user data */
-    patch_vt->create_user_data  = cudaclaw_allocate_fluxes;
-    patch_vt->destroy_user_data = cudaclaw_deallocate_fluxes;
+    /* Regridding */
+    patch_vt->tag4refinement                 = cudaclaw_patch_tag4refinement;
+    patch_vt->tag4coarsening                 = cudaclaw_patch_tag4coarsening;
+    patch_vt->interpolate2fine               = cudaclaw_interpolate2fine;
+    patch_vt->average2coarse                 = cudaclaw_average2coarse;
 
-    /* Wrappers so that user can change argument list */
-    cudaclaw_vt->b4step2        = cudaclaw_b4step2;
-    cudaclaw_vt->src2           = cudaclaw_src2;
+    /* Ghost filling */
+    clawpatch_vt->fort_copy_face             = FC2D_GEOCLAW_FORT_COPY_FACE;
+    clawpatch_vt->fort_copy_corner           = FC2D_GEOCLAW_FORT_COPY_CORNER;
 
-    /* Required functions  - error if NULL */
-    cudaclaw_vt->fort_bc2       = CUDACLAW_BC2_DEFAULT;
-    cudaclaw_vt->fort_qinit     = NULL;
-    cudaclaw_vt->fort_rpn2      = NULL;
-    cudaclaw_vt->fort_rpt2      = NULL;
+    /* GeoClaw needs specialized averaging and interpolation routines */
+    patch_vt->average_face                   = cudaclaw_average_face;
+    patch_vt->interpolate_face               = cudaclaw_interpolate_face;
+    patch_vt->average_corner                 = cudaclaw_average_corner;
+    patch_vt->interpolate_corner             = cudaclaw_interpolate_corner;
 
-    /* Optional functions - call only if non-NULL */
-    cudaclaw_vt->fort_setprob   = NULL;
-    cudaclaw_vt->fort_setaux    = NULL;
-    cudaclaw_vt->fort_b4step2   = NULL;
-    cudaclaw_vt->fort_src2      = NULL;
+    patch_vt->remote_ghost_setup             = cudaclaw_remote_ghost_setup;
+    clawpatch_vt->fort_local_ghost_pack   = FC2D_GEOCLAW_LOCAL_GHOST_PACK;
+    clawpatch_vt->local_ghost_pack_aux       = cudaclaw_local_ghost_pack_aux;
+
+    /* Diagnostic functions partially implemented in clawpach */
+    clawpatch_vt->fort_compute_error_norm    = FC2D_GEOCLAW_FORT_COMPUTE_ERROR_NORM;
+    clawpatch_vt->fort_compute_patch_area    = FC2D_GEOCLAW_FORT_COMPUTE_PATCH_AREA;
+    clawpatch_vt->fort_conservation_check    = FC2D_GEOCLAW_FORT_CONSERVATION_CHECK;
+    clawpatch_vt->fort_timeinterp            = FC2D_GEOCLAW_FORT_TIMEINTERP;
+
+    cudaclaw_vt->fort_setprob                     = NULL;
+    cudaclaw_vt->fort_setaux                      = FC2D_GEOCLAW_SETAUX;
+    cudaclaw_vt->fort_qinit                       = FC2D_GEOCLAW_QINIT;
+    cudaclaw_vt->fort_bc2                         = FC2D_GEOCLAW_BC2;
+    cudaclaw_vt->fort_b4step2                     = FC2D_GEOCLAW_B4STEP2;
+    cudaclaw_vt->fort_src2                        = FC2D_GEOCLAW_SRC2;
+    cudaclaw_vt->fort_rpn2                        = FC2D_GEOCLAW_RPN2;
+    cudaclaw_vt->fort_rpt2                        = FC2D_GEOCLAW_RPT2;
+
+    gauges_vt->set_gauge_data                = geoclaw_read_gauges_data_default;
+    gauges_vt->create_gauge_files            = geoclaw_create_gauge_files_default;
+    gauges_vt->normalize_coordinates         = geoclaw_gauge_normalize_coordinates;
+
+    gauges_vt->update_gauge                  = geoclaw_gauge_update_default;
+    gauges_vt->print_gauge_buffer            = geoclaw_print_gauges_default; 
+
+/*-------*/
+
+    // /* ForestClaw vtable items */
+    // fclaw_vt->output_frame                   = cudaclaw_output;
+    // fclaw_vt->problem_setup                  = cudaclaw_setprob;    
+
+    // /* These could be over-written by user specific settings */
+    // patch_vt->initialize                     = cudaclaw_qinit;
+    // patch_vt->setup                          = cudaclaw_setaux; 
+    // patch_vt->physical_bc                    = cudaclaw_bc2;
+    // patch_vt->single_step_update             = cudaclaw_update;
+
+    // /* Set user data */
+    // patch_vt->create_user_data  = cudaclaw_allocate_fluxes;
+    // patch_vt->destroy_user_data = cudaclaw_deallocate_fluxes;
+
+    // /* Wrappers so that user can change argument list */
+    // cudaclaw_vt->b4step2        = cudaclaw_b4step2;
+    // cudaclaw_vt->src2           = cudaclaw_src2;
+
+    // /* Required functions  - error if NULL */
+    // cudaclaw_vt->fort_bc2       = CUDACLAW_BC2_DEFAULT;
+    // cudaclaw_vt->fort_qinit     = NULL;
+    // cudaclaw_vt->fort_rpn2      = NULL;
+    // cudaclaw_vt->fort_rpt2      = NULL;
+
+    // /* Optional functions - call only if non-NULL */
+    // cudaclaw_vt->fort_setprob   = NULL;
+    // cudaclaw_vt->fort_setaux    = NULL;
+    // cudaclaw_vt->fort_b4step2   = NULL;
+    // cudaclaw_vt->fort_src2      = NULL;
 
     cudaclaw_vt->is_set = 1;
 
@@ -500,15 +991,6 @@ void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
 
 
 /* These are here in case the user wants to call Clawpack routines directly */
-
-fc2d_cudaclaw_vtable_t* fc2d_cudaclaw_vt(fclaw2d_global_t *glob)
-{
-	fc2d_cudaclaw_vtable_t* cudaclaw_vt = (fc2d_cudaclaw_vtable_t*) 
-	   							fclaw_pointer_map_get(glob->vtables, "fc2d_cudaclaw");
-	FCLAW_ASSERT(cudaclaw_vt != NULL);
-	FCLAW_ASSERT(cudaclaw_vt->is_set != 0);
-	return cudaclaw_vt;
-}
 
 /* This should only be called when a new fclaw2d_clawpatch_t is created. */
 void fc2d_cudaclaw_set_capacity(fclaw2d_global_t *glob,
