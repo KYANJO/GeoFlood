@@ -56,19 +56,15 @@ class GeoFlooddata(object):
         refinement_data = rundata.refinement_data
         amrdata = rundata.amrdata
 
-        user = {
+        geoflood['user'] = {"\n"
         '   # User defined parameters' : None, 
         '   cuda' : self.cuda,
-        '   gravity' : self.gravity,
-        '   dry_tolerance' : self.dry_tolerance,
-        '   earth_radius' : self.earth_radius,
-        '   coordinate_system' : self.coordinate_system,
+        '   gravity' : self.gravity, "\n"
+        '   dry_tolerance' : self.dry_tolerance, "\n"
+        '   earth_radius' : self.earth_radius, "\n"
+        '   coordinate_system' : self.coordinate_system, "\n"
         '   mcapa' : self.mcapa
         }
-        for k in self.user.keys():
-            user[f'   {k:}'] = self.user[k]
-
-        geoflood['user'] = user
 
         geoflood['clawpatch'] = {"\n"
         '   # Grid dimensions' : None,
