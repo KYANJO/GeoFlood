@@ -73,12 +73,13 @@ manning_coefficient = 0.05
 num_dim = 2
 
 # ------------------  user options ---------------------------------------------------
-cuda = True
+use_cuda = True
 gravity = 9.81
 dry_tolerance = 1e-4
 earth_radius = 6367.5e3
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
+buffer_length = 1024
 
 # --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -285,7 +286,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -414,20 +415,13 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
 
-
-    # geoflooddata.user = {'cuda'     : cuda,
-    #                      'gravity'  : gravity,
-    #                      'dry_tolerance' : dry_tolerance,
-    #                      'earth_radius' : earth_radius,
-    #                      'coordinate_system' : coordinate_system,
-    #                      'mcapa' : mcapa}
-
-    geoflooddata.cuda = cuda
+    geoflooddata.cuda = use_cuda
     geoflooddata.gravity = gravity
     geoflooddata.dry_tolerance = dry_tolerance
     geoflooddata.earth_radius = earth_radius
     geoflooddata.coordinate_system = coordinate_system
     geoflooddata.mcapa = mcapa
+    geoflooddata.buffer_len = buffer_length
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
