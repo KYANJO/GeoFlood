@@ -73,7 +73,7 @@ manning_coefficient = 0.05
 num_dim = 2
 
 # ------------------  user options ---------------------------------------------------
-use_cuda = False
+cuda = True
 gravity = 9.81
 dry_tolerance = 1e-4
 earth_radius = 6367.5e3
@@ -415,14 +415,19 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_suffix = "png"
 
 
-    geoflooddata.user = {'cuda'     : use_cuda,
-                         'gravity'  : gravity,
-                         'dry_tolerance' : dry_tolerance,
-                         'earth_radius' : earth_radius,
-                         'coordinate_system' : coordinate_system,
-                         'mcapa' : mcapa}
+    # geoflooddata.user = {'cuda'     : cuda,
+    #                      'gravity'  : gravity,
+    #                      'dry_tolerance' : dry_tolerance,
+    #                      'earth_radius' : earth_radius,
+    #                      'coordinate_system' : coordinate_system,
+    #                      'mcapa' : mcapa}
 
-    geoflooddata.user = {'example'     : 1}
+    geoflooddata.cuda = cuda
+    geoflooddata.gravity = gravity
+    geoflooddata.dry_tolerance = dry_tolerance
+    geoflooddata.earth_radius = earth_radius
+    geoflooddata.coordinate_system = coordinate_system
+    geoflooddata.mcapa = mcapa
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
