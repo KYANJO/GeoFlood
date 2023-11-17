@@ -142,15 +142,116 @@ subroutine fc2d_geoclaw_rpn2(ixy,maxm,meqn,mwaves,maux,mbc,mx,ql,qr,auxl,auxr,fw
             phiL = 0.d0
         endif
 
-        
+        ! left and right surfaces depth inrelation to topography 
+        wall(1) = 1.d0
+        wall(2) = 1.d0
+        wall(3) = 1.d0
+        if (hR <= drytol) then ! left surface is lower than right topo
+            call riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,rare1,rare2,1,drytol,g) ! determine wave structure
+             
+            hstartest = max(hL,hstar)
+            if (hstartest + bL < bR) then ! right state should became ghost values that mirror left for wall problem 
+                wall(2) = 0.d0
+                wall(3) = 0.d0
+                hR = hL
+                huR = -huL
+                bR = bL
+                phiR = phiL
+                uR = -uL
+                vR = vL
+            elseif (hL+bL < bR) then
+                bR = hL + bL
+            endif
+        elseif (hL <= drytol) then ! right surface is lower than left topo
+            call riemanntype(hR,hR,-uR,uR,hstar,s1m,s2m,rare1,rare2,1,drytol,g)
+            hstartest = max(hR,hstar)
+            if (hstartest + bR < bL) then ! left state should became ghost values that mirror right for wall problem 
+                wall(1) = 0.d0
+                wall(2) = 0.d0
+                hL = hR
+                huL = -huR
+                bL = bR
+                phiL = phiR
+                uL = -uR
+                vL = vR
+            elseif (hR+bR < bL) then
+                bL = hR + bR
+            endif
+        endif
 
+        ! determine wave speeds
+        sL = uL - sqrt(g*hL) ! 1 wave speed at left state
+        sR = uR + sqrt(g*hR) ! 2 wave speed at right state
 
+        ! Roe averages and speeds
+        uhat = (sqrt(g*hL)*uL + sqrt(g*hR)*uR)/(sqrt(g*hR) + sqrt(g*hL))
+        chat = sqrt(g*0.5d0*(hL + hR))
+        sRoe1 = uhat - chat ! 1 Roe wave speed
+        sRoe2 = uhat + chat ! 2 Roe wave speed
+
+        sE1 = min(sL,sRoe1) ! 1 Eindefeldt wave speed
+        sE2 = max(sR,sRoe2) ! 2 Eindefeldt wave speed
+
+        ! --- end of initialization ---
+
+        ! === solve Riemann problem ===
+
+        maxiter = 1
+
+        call riemann_aug_JCP(maxiter,3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,g,sw,fw)
+
+        ! eliminate ghost fluxes for wall
+        do mw = 1,3
+            sw(mw) = sw(mw)*wall(mw)
+            fw(1,mw) = fw(1,mw)*wall(mw)
+            fw(2,mw) = fw(2,mw)*wall(mw)
+            fw(3,mw) = fw(3,mw)*wall(mw)
+        enddo 
+
+        do mw = 1,mwaves
+            s(mw,i) = sw(mw)
+            fwave(1,mw,i) = fw(1,mw)
+            fwave(mu,mw,i) = fw(2,mw)
+            fwave(nv,mw,i) = fw(3,mw)
+        enddo
+
+30      continue
     end do
 
+    !  ==== Capacity for mapping from latitude longitude to physical space ====
+    if (mcapa > 0) then
+        do i=2-mbc,mx+mbc
+            if (ixy == 1) then
+                dxdc = earth_radius*deg2rad
+            else
+                dxdc = earth_radius*cos(auxl(3,i))*deg2rad
+            endif
 
+            do mw = 1,mwaves
+                s(mw,i) = dxdc*s(mw,i)
+                fwave(1,mw,i) = dxdc*fwave(1,mw,i)
+                fwave(2,mw,i) = dxdc*fwave(2,mw,i)
+                fwave(3,mw,i) = dxdc*fwave(3,mw,i)
+            enddo
+        enddo
+    endif
 
+    ! ==== compute fluctuations ====
+    amdq(1:3,:) = 0.d0
+    apdq(1:3,:) = 0.d0
+    do i = 2-mbc,mx+mbc
+        do mw = 1,mwaves
+            if (s(mw,i) < 0.d0) then
+                amdq(1:3,i) = amdq(1:3,i) + fwave(1:3,mw,i)
+            else if (s(mw,i) > 0.d0) then
+                apdq(1:3,i) = apdq(1:3,i) + fwave(1:3,mw,i)
+            else
+                amdq(1:3,i) = amdq(1:3,i) + 0.5d0*fwave(1:3,mw,i)
+                apdq(1:3,i) = apdq(1:3,i) + 0.5d0*fwave(1:3,mw,i)
+            endif
+        enddo
+    enddo
 
-
-
+    return
 
 end subroutine fc2d_geoclaw_rpn2
