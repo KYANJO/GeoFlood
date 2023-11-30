@@ -45,10 +45,14 @@ __constant__ double earth_radius;
 __constant__ int coordinate_system;
 __constant__ int mcapa;
 
+
+/* function imports */
+__device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
+
 void setprob_cuda()
 {
     double grav;
-    double drytol;
+    double dry_tol;
     double earth_rad;
     int coordinate_system_;
     int mcapa_;
@@ -78,7 +82,7 @@ __device__ void flood_speed_compute_speeds(int idir, int meqn, int mwaves, int m
     double roe1,roe3,s1l,s3r,s1,s3,s2;
 
     mu = 1+idir;
-    // mv = 2-idir;
+    mv = 2-idir;
 
     hhat = (ql[0] + qr[0])/2.0;
     hsq2 = sqrt(ql[0]) + sqrt(qr[0]);
@@ -214,7 +218,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         wall[2] = 1.0;
         if (hR <= drytol) {
             /* determine the wave structure */
-            riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2, 1, drytol, s_grav);
+            riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
             hstartest = fmax(hL,hstar);
             if (hstartest + bL < bR) {
                 /* hL+bL < bR and hstar+bL < bR, so water can't overtop right cell 
@@ -236,7 +240,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
             }
         } elseif (hL <= drytol) { /* right surface is lower than left topo */
             /* determine the Riemann structure */
-            riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2, 1, drytol, s_grav);
+            riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
             hstartest = fmax(hR,hstar);
             if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
             {
@@ -269,7 +273,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
         /* === solve Riemann problem === */
         riemann_aug_JCP(1,3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,
-            uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,s_grav,sw,fw);
+            uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
 
         // eliminate ghost fluxes for wall
         for (mw=0; mw<3; mw++) {
@@ -349,7 +353,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                 double asdq[], double bmasdq[], double bpasdq[]) 
 {
     int i, mw, mu, mv;
-    double s[mwaves], r[9], beta[mwaves];
+    double s[3], r[9], beta[3];
     double h, u, v;
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
@@ -357,7 +361,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     mu = (idir == 1) ? 2 : 3;
     mv = (idir == 1) ? 3 : 2;
 
-    double h = (imp == 1) ? qr[0] : ql[0];
+    h = (imp == 1) ? qr[0] : ql[0];
 
     if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
 
@@ -421,7 +425,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     /* set-up eigenvectors */
     r[0] = 1.0;
-    r[mu] = u
+    r[mu] = u;
     r[mv] = s[0];
 
     r[0 + mwaves] = 0.0;
@@ -471,12 +475,11 @@ void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
 __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
-    double vR, double phiL, double phiR, double sE1, double sE2, 
-    double drytol, double g, double* sw, double* fw)
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw)
 {
 
     /* Local variables */
-    double A[9], r[9], lambda[3], del[3], beta[3]
+    double A[9], r[9], lambda[3], del[3], beta[3];
     double delh, delhu, delphi, delb, delnorm;
     double rare1st, rare2st, sdelta, raremin, raremax;
     double criticaltol, convergencetol, raretol;
@@ -497,7 +500,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
     delnorm = delh * delh + delphi * delphi;
 
     /* Determine the Riemann structure */
-    riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2,1,drytol,g);
+    riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2);
 
     /* For the solver to handle depth negativity, depth dh is included in the decompostion which gives as acess to using the depth positive semidefinite solver (HLLE). This makes the system to have 3 waves instead of 2. where the 1st and 3rd are the eigenpairs are related to the flux Jacobian matrix of the original SWE (since s1<s2<s3, and have been modified by Einfeldt to handle depth non-negativity) and the 2nd is refered to as the the entropy corrector wave since its introduced to correct entropy violating solutions with only 2 waves. */
     
@@ -530,8 +533,8 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
 
         if (rare1 || rare2) {
             /* check which rarefaction is the strongest */
-            rare1st = 3.0 * (sqrt(g * hL) - sqrt(g * hm));
-            rare2st = 3.0 * (sqrt(g * hR) - sqrt(g * hm));
+            rare1st = 3.0 * (sqrt(s_grav * hL) - sqrt(s_grav * hm));
+            rare2st = 3.0 * (sqrt(s_grav * hR) - sqrt(s_grav * hm));
             if (fmax(rare1st, rare2st) > raremin * sdelta && fmax(rare1st, rare2st) < raremax * sdelta) {
                 rarecorrector = true;
                 if (rare1st > rare2st) {
@@ -565,7 +568,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
     criticaltol = fmax(drytol*g, 1.0e-6);
     criticaltol_2 = sqrt(criticaltol);
     deldelh = -delb;
-    deldelphi = -0.5 * (hR + hL) * (g * delb); /* some approximation of the source term \int_{x_{l}}^{x_{r}} -g h b_x dx */
+    deldelphi = -0.5 * (hR + hL) * (s_grav * delb); /* some approximation of the source term \int_{x_{l}}^{x_{r}} -g h b_x dx */
 
     /* determine a few quantities needed for steady state wave if iterated */
     hLstar = hL;
@@ -595,8 +598,8 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
 
         /* For any two states; Q_i and Q_i-1, eigen values of SWE must satify: lambda(q_i)*lambda(q_i-1) = u^2 -gh, writing this conditon as a function of Q_i and Q_i-1, u and h become averages in lambda(q_i)*lambda(q_i-1) = u^2 -gh and these averages are denoted by bar and tilde. */
         hbar = fmax(0.5 * (hLstar + hRstar), 0.0);
-        s1s2bar = 0.25 * (uLstar + uRstar) * (uLstar + uRstar) - g * hbar;
-        s1s2tilde = fmax(0.0, uLstar * uRstar) - g * hbar;
+        s1s2bar = 0.25 * (uLstar + uRstar) * (uLstar + uRstar) - s_grav * hbar;
+        s1s2tilde = fmax(0.0, uLstar * uRstar) - s_grav * hbar;
 
         /* Based on the above conditon, smooth staedy state over slopping bathymetry cannot have a sonic point. Therefore, for regions with monotonically varying bathymetry, steady-state flow is either entirely subsonic (-u^2 +gh > 0) or entirely supersonic. */
         sonic = false;
@@ -612,9 +615,9 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
             sonic = true;
         } else if (sE2 > -criticaltol_2 && s2m < criticaltol_2) {
             sonic = true;
-        } else if ((uL + sqrt(g * hL)) * (uR + sqrt(g * hR)) < 0.0) {
+        } else if ((uL + sqrt(s_grav * hL)) * (uR + sqrt(s_grav * hR)) < 0.0) {
             sonic = true;
-        } else if ((uL - sqrt(g * hL)) * (uR - sqrt(g * hR)) < 0.0) {
+        } else if ((uL - sqrt(s_grav * hL)) * (uR - sqrt(s_grav * hR)) < 0.0) {
             sonic = true;
         }
 
@@ -622,7 +625,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
         if (sonic) {
             deldelh = -delb;
         } else {
-            deldelh = delb * g * hbar / s1s2bar;
+            deldelh = delb * s_grav * hbar / s1s2bar;
         }
 
         /* find bounds in case of critical state resonance, or negative states */
@@ -641,12 +644,12 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
         if (sonic) {
             deldelphi = -g * hbar * delb;
         } else {
-            deldelphi = -delb * g * hbar * s1s2tilde / s1s2bar;
+            deldelphi = -delb * s_grav * hbar * s1s2tilde / s1s2bar;
         }
 
         /* find bounds in case of critical state resonance, or negative states */
-        deldelphi = fmin(deldelphi, g * fmax(-hLstar * delb, -hRstar * delb));
-        deldelphi = fmax(deldelphi, g * fmin(-hLstar * delb, -hRstar * delb));
+        deldelphi = fmin(deldelphi, s_grav * fmax(-hLstar * delb, -hRstar * delb));
+        deldelphi = fmax(deldelphi, s_grav * fmin(-hLstar * delb, -hRstar * delb));
 
         /* Determine coefficients beta(k) using crammer's rule
           first determine the determinant of the eigenvector matrix */
@@ -762,13 +765,11 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
 */
 
 __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, 
-                            double *s1m, double *s2m, bool *rare1, bool *rare2, int maxiter,
-                            double drytol, double g)
+                            double *s1m, double *s2m, bool *rare1, bool *rare2)
 {
     // Local variables
     double u1m, u2m, um, h0, F_max, F_min, dfdh, F0, slope, gL, gR;
     double sqrtgh1, sqrtgh2;
-    double h0;
     int iter; 
 
     // Test for Riemann structure
@@ -786,20 +787,20 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
     
         /* Either hR or hL is almost zero, so the expression below corresponds
            to either Eqn. (54a) or Eqn. (54b) in the JCP paper */
-        *s1m = uR + uL - 2.0 * sqrt(g * hR) + 2.0 * sqrt(g * hL);
+        *s1m = uR + uL - 2.0 * sqrt(s_grav * hR) + 2.0 * sqrt(s_grav * hL);
         *s2m = *s1m; 
         *rare1 = (hL <= 0.0) ? false : true;
         *rare2 = !(*rare1);
     } else {
-        F_min = delu + 2.0 * (sqrt(g * h_min) - sqrt(g * h_max));
-        F_max = delu + (h_max - h_min) * sqrt(0.5 * g * (h_max + h_min) / (h_max * h_min));
+        F_min = delu + 2.0 * (sqrt(s_grav * h_min) - sqrt(s_grav * h_max));
+        F_max = delu + (h_max - h_min) * sqrt(0.5 * s_grav * (h_max + h_min) / (h_max * h_min));
 
         if (F_min > 0.0){  // 2-rarefactions
             /* Eqn (13.56) in the FVMHP book */
-            *hm = (1.0 / (16.0 * g)) * pow(fmax(0.0, -delu + 2.0 * (sqrt(g * hL) + sqrt(g * hR))), 2);
-            um = copysign(1.0, *hm) * (uL + 2.0 * (sqrt(g * hL) - sqrt(g * *hm)));
-            *s1m = uL + 2.0 * sqrt(g * hL) - 3.0 * sqrt(g * *hm);
-            *s2m = uR - 2.0 * sqrt(g * hR) + 3.0 * sqrt(g * *hm);
+            *hm = (1.0 / (16.0 * s_grav)) * pow(fmax(0.0, -delu + 2.0 * (sqrt(s_grav * hL) + sqrt(s_grav * hR))), 2);
+            um = copysign(1.0, *hm) * (uL + 2.0 * (sqrt(s_grav * hL) - sqrt(s_grav * *hm)));
+            *s1m = uL + 2.0 * sqrt(s_grav * hL) - 3.0 * sqrt(s_grav * *hm);
+            *s2m = uR - 2.0 * sqrt(s_grav * hR) + 3.0 * sqrt(s_grav * *hm);
             *rare1 = true;
             *rare2 = true;
         } else if (F_max <= 0.0) { // 2-shocks
@@ -808,33 +809,33 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
             /* Root finding using a Newton iteration on sqrt(h) */
             h0 = h_max;
             for (iter = 0; iter < maxiter; iter++) {
-                gL = sqrt(0.5 * g * (1.0 / h0 + 1.0 / hL));
-                gR = sqrt(0.5 * g * (1.0 / h0 + 1.0 / hR));
+                gL = sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / hL));
+                gR = sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / hR));
                 F0 = delu + (h0 - hL) * gL + (h0 - hR) * gR;
-                dfdh = gL - g * (h0 - hL) / (4.0 * h0 * h0 * gL) + gR - g * (h0 - hR) / (4.0 * h0 * h0 * gR);
+                dfdh = gL - s_grav * (h0 - hL) / (4.0 * h0 * h0 * gL) + gR - s_grav * (h0 - hR) / (4.0 * h0 * h0 * gR);
                 slope = 2.0 * sqrt(h0) * dfdh;
                 h0 = pow(sqrt(h0) - F0 / slope, 2);
             }
             *hm = h0;
             /* u1m and u2m are Eqns (13.19) and (13.20) in the FVMHP book */
-            u1m = uL - (*hm - hL) * sqrt(0.5 * g * (1.0 / *hm + 1.0 / hL));
-            u2m = uR + (*hm - hR) * sqrt(0.5 * g * (1.0 / *hm + 1.0 / hR));
+            u1m = uL - (*hm - hL) * sqrt(0.5 * s_grav * (1.0 / *hm + 1.0 / hL));
+            u2m = uR + (*hm - hR) * sqrt(0.5 * s_grav * (1.0 / *hm + 1.0 / hR));
             um = 0.5 * (u1m + u2m);
-            *s1m = u1m - sqrt(g * *hm);
-            *s2m = u2m + sqrt(g * *hm);
+            *s1m = u1m - sqrt(s_grav * *hm);
+            *s2m = u2m + sqrt(s_grav * *hm);
             *rare1 = false;
             *rare2 = false;
         } else { // 1-shock or 1-rarefaction
             h0 = h_min;
             for (iter = 0; iter < maxiter; iter++) {
-                F0 = delu + 2.0 * (sqrt(g * h0) - sqrt(g * h_max)) + (h0 - h_min) * sqrt(0.5 * g * (1.0 / h0 + 1.0 / h_min));
+                F0 = delu + 2.0 * (sqrt(s_grav * h0) - sqrt(s_grav * h_max)) + (h0 - h_min) * sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / h_min));
                 slope = (F_max - F0) / (h_max - h_min);
                 h0 = h0 - F0 / slope;
             }
             *hm = h0;
-            sqrtgh2 = sqrt(g * *hm);
+            sqrtgh2 = sqrt(s_grav * *hm);
             if (hL > hR) {
-                sqrtgh1 = sqrt(g * hL);
+                sqrtgh1 = sqrt(s_grav * hL);
                 /* Eqn (13.55) in the FVMHP book */
                 um = uL + 2.0 * sqrtgh1 - 2.0 * sqrtgh2;
                 *s1m = uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2;
@@ -843,7 +844,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
                 *rare1 = true;
                 *rare2 = false;
             } else {
-                sqrtgh1 = sqrt(g * hR);
+                sqrtgh1 = sqrt(s_grav * hR);
                 um = uR - 2.0 * sqrtgh1 + 2.0 * sqrtgh2;
                 *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
                 *s2m = uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2;
