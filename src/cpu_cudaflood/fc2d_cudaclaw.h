@@ -63,8 +63,7 @@ typedef void (*cudaclaw_b4step2_t)(struct fclaw2d_global* glob,
 
 typedef void (*cudaclaw_fort_setprob_t)(void);
 
-typedef void (*cudaclaw_fort_bc2_t)(const int* maxmx, const int* maxmy,
-                                      const int* meqn, const int* mbc,
+typedef void (*cudaclaw_fort_bc2_t)(const int* meqn, const int* mbc,
                                       const int* mx, const int* my,
                                       const double* xlower, const double* ylower,
                                       const double* dx, const double* dy,
@@ -72,22 +71,22 @@ typedef void (*cudaclaw_fort_bc2_t)(const int* maxmx, const int* maxmy,
                                       const double aux[], const double* t,
                                       const double* dt, const int mthbc[]);
 
-typedef  void (*cudaclaw_fort_qinit_t)(const int* maxmx, const int* maxmy,
-                                         const int* meqn,const int* mbc,
+typedef  void (*cudaclaw_fort_qinit_t)(const int* meqn,const int* mbc,
                                          const int* mx, const int* my,
                                          const double* xlower, const double* ylower,
                                          const double* dx, const double* dy,
                                          double q[], const int* maux, double aux[]);
 
-typedef void (*cudaclaw_fort_setaux_t)(const int* maxmx, const int* maxmy, 
-                                         const int* mbc,
-                                         const int* mx, const int* my,
-                                         const double* xlower, const double* ylower,
-                                         const double* dx, const double* dy,
-                                         const int* maux, double aux[]);
+typedef void (*cudaclaw_fort_setaux_t)(const int* mbc,
+                                      const int* mx, const int* my,
+                                      const double* xlower, const double* ylower,
+                                      const double* dx, const double* dy,
+                                      const int* maux, double aux[],
+                                      const int* is_ghost, const int* nghost,
+                                      const int* mint);
 
-typedef void (*cudaclaw_fort_b4step2_t)(const int* maxmx, const int* maxmy,
-                                          const int* mbc,
+
+typedef void (*cudaclaw_fort_b4step2_t)( const int* mbc,
                                           const int* mx, const int* my, const int* meqn,
                                           double q[], const double* xlower,
                                           const double* ylower,
@@ -95,8 +94,7 @@ typedef void (*cudaclaw_fort_b4step2_t)(const int* maxmx, const int* maxmy,
                                           const double* t, const double* dt,
                                           const int* maux, double aux[]);
 
-typedef void (*cudaclaw_fort_src2_t)(const int* maxmx, const int* maxmy, 
-                                       const int* meqn,
+typedef void (*cudaclaw_fort_src2_t)(const int* meqn,
                                        const int* mbc, const int* mx,const int* my,
                                        const double* xlower, const double* ylower,
                                        const double* dx, const double* dy, double q[],
@@ -104,19 +102,22 @@ typedef void (*cudaclaw_fort_src2_t)(const int* maxmx, const int* maxmy,
                                        const double* dt);
 
 typedef void (*cudaclaw_fort_rpn2_t)(const int* ixy,const int* maxm, const int* meqn,
-                                       const int* mwaves, const int* mbc,const int* mx,
-                                       double ql[], double qr[], double auxl[], 
-                                       double auxr[],
-                                       double wave[], double s[],double amdq[], 
-                                       double apdq[]);
+                                    const int* mwaves, const int* maux,
+                                    const int* mbc,const int* mx,
+                                    double ql[], double qr[], double auxl[], 
+                                    double auxr[],
+                                    double fwave[], double s[],double amdq[], 
+                                    double apdq[]);
 
 
-typedef void (*cudaclaw_fort_rpt2_t)(const int* ixy, const int* maxm, const int* meqn,
-                                       const int* mwaves, const int* mbc,const int* mx,
-                                       double ql[], double qr[], double aux1[], 
-                                       double aux2[],
-                                       double aux3[], const int* imp, double dsdq[],
-                                       double bmasdq[], double bpasdq[]);
+typedef void (*cudaclaw_fort_rpt2_t)(const int* ixy, const int* imp, const int* maxm, 
+                                    const int* meqn,
+                                    const int* mwaves, const int* maux, const int* mbc,
+                                    const int* mx,
+                                    double ql[], double qr[], double aux1[], 
+                                    double aux2[],
+                                    double aux3[],  double asdq[],
+                                    double bmasdq[], double bpasdq[]);
 
 
 typedef void (*cudaclaw_fort_flux2_t)(const int* ixy,const int* maxm, const int* meqn,

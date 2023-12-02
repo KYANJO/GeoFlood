@@ -39,6 +39,11 @@ extern "C"
 
 /* --------------------------------- Clawpack functions ------------------------------- */
 
+#define CUDACLAW_SWAP_DATA FCLAW_F77_FUNC(cudaclaw_swap_data,CUDACLAW_SWAP_DATA)
+void CUDACLAW_SWAP_DATA(const int* mx, const int *my, const int *mbc, const int* meqn, const int* maux,
+                        double qold_geoclaw[], double qold_cudaclaw[], double aux_geoclaw[], double aux_cudaclaw[],
+                        const int* geoclaw2cudaclaw);
+
 #define CUDACLAW_BC2_DEFAULT FCLAW_F77_FUNC(cudaclaw_bc2_default,CUDACLAW_BC2_DEFAULT)
 void CUDACLAW_BC2_DEFAULT(const int* maxmx, const int* maxmy, const int* meqn,
                      const int* mbc, const int* mx, const int* my,

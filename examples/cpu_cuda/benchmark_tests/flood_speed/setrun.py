@@ -42,7 +42,7 @@ if output_style == 1:
 
     n_hours = 5.0              # Total number of hours in simulation     
     
-    frames_per_minute = 1/2.5   # (1 frame every 30 mins)
+    frames_per_minute = 1/30   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -56,14 +56,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 25 # Number of x grids per block
-my = 25 # Number of y grids per block
+mx = 16 # Number of x grids per block
+my = 16 # Number of y grids per block
 
-mi = 4 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 0 
-maxlevel = 2 #resolution based on levels
+minlevel = 0
+maxlevel = 1 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -73,12 +73,13 @@ manning_coefficient = 0.05
 num_dim = 2
 
 # ------------------  user options ---------------------------------------------------
-use_cuda = False
+use_cuda = True
 gravity = 9.81
 dry_tolerance = 1e-4
 earth_radius = 6367.5e3
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
+buffer_length = 1024
 
 # --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -285,7 +286,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -414,15 +415,13 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
 
-
-    geoflooddata.user = {'cuda'     : use_cuda,
-                         'gravity'  : gravity,
-                         'dry_tolerance' : dry_tolerance,
-                         'earth_radius' : earth_radius,
-                         'coordinate_system' : coordinate_system,
-                         'mcapa' : mcapa}
-
-    geoflooddata.user = {'example'     : 1}
+    geoflooddata.cuda = use_cuda
+    geoflooddata.gravity = gravity
+    geoflooddata.dry_tolerance = dry_tolerance
+    geoflooddata.earth_radius = earth_radius
+    geoflooddata.coordinate_system = coordinate_system
+    geoflooddata.mcapa = mcapa
+    geoflooddata.buffer_len = buffer_length
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold

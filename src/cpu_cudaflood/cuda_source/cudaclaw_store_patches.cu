@@ -3,10 +3,15 @@
 #include <fclaw2d_patch.h>
 
 #include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
 #include <fc2d_cudaclaw_options.h>
 
 #include "cudaclaw_allocate.h"
 #include <fc2d_cuda_profiler.h>
+
+#include "../fc2d_cudaclaw_fort.h"
+
+// #include "data_swap.h"
 
 void cudaclaw_store_buffer(fclaw2d_global_t* glob,
                            fclaw2d_patch_t *this_patch,
@@ -19,8 +24,6 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
                            int* blockno_array)
 {
     PROFILE_CUDA_GROUP("fc2d_cudaclaw_store_buffer",4);
-    double *qold, *aux;
-    int meqn, maux;
 
     const fc2d_cudaclaw_options_t *cuclaw_opt = fc2d_cudaclaw_get_options(glob);
 
@@ -30,11 +33,13 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 
     FCLAW_ASSERT(fluxes != NULL);
 
-    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
-    fclaw2d_clawpatch_soln_data(glob,this_patch,&qold,&meqn);
+    int meqn, maux;
+    double *qold_geoclaw, *aux_geoclaw;
+    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux_geoclaw,&maux);
+    fclaw2d_clawpatch_soln_data(glob,this_patch,&qold_geoclaw,&meqn);
 
-    fluxes->qold = qold;
-    fluxes->aux = aux;
+    fluxes->qold = qold_geoclaw;
+    fluxes->aux = aux_geoclaw;
 
     int n = iter % cuclaw_opt->buffer_len;
     flux_array[n] = *fluxes;

@@ -7,7 +7,7 @@
 module hydrograph_module
     
     use geoclaw_module, only: grav,dry_tolerance
-
+    ! use refinement_module, only: speed_tolerance
     
     implicit none
     
@@ -236,11 +236,15 @@ contains
         tol = 1.0e-6    ! tolerance for convergence
         max_iter = 100  ! maximum number of iterations
         u1 = q1(2)/q1(1) ! velocity of the first interior cells
-        Fr = u1/sqrt(grav*q1(1)) ! Froude number
-
+        ! u1 = max(q1(2)/q1(1),0.01d0)  ! velocity of the first interior cells
+        ! Fr = u1/sqrt(grav*max(q1(1),dry_tolerance)) ! Froude number
+        Fr = 0.5d0
+    
         ! solve Riemann invariants
         if (hydrograph_type == 'discharge') then
             q0(1) = (q0(2)/sqrt(grav)*Fr)**(2.0d0/3.0d0)
+            ! q0(1) = max(q0(1),dry_tolerance)
+            ! q0(1) = q1(1)
             do i = 1, max_iter
                 fxn = q0(2)/q0(1) - 2*sqrt(grav*q0(1)) - u1 + 2*sqrt(grav*q1(1))
                 if (abs(fxn) < tol) then
@@ -286,11 +290,14 @@ contains
         tol = 1.0e-6    ! tolerance for convergence
         max_iter = 100  ! maximum number of iterations
         u1 = q1(2)/q1(1) ! velocity of the first interior cells
-        Fr = u1/sqrt(grav*q1(1)) ! Froude number
+        ! Fr = u1/sqrt(grav*max(q1(1),dry_tolerance)) ! Froude number
+        Fr = 1.0d0
 
         ! solve Riemann invariants
         if (hydrograph_type == 'discharge') then
             q0(1) = (q0(2)/sqrt(grav)*Fr)**(2.0d0/3.0d0)
+            ! q0(1) = max(q0(1),dry_tolerance)
+            ! q0(1) = q1(1)
             do i = 1, max_iter
 
                 fxn = q0(2)/q0(1) - u1 - (q0(1) - q1(1))*sqrt((grav/2.0d0)*(1.0d0/q0(1) + 1.0d0/q1(1)))
