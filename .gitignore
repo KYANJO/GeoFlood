@@ -17,6 +17,15 @@ examples/cpu_cuda/benchmark_tests/flood_speed/_plots/
 examples/cpu_cuda/benchmark_tests/flood_speed/__pycache__/
 examples/cpu_cuda/benchmark_tests/flood_speed/*.pyc
 examples/cpu_cuda/benchmark_tests/flood_speed/gauge*
+examples/cpu_cuda/benchmark_tests/flood_speed/.DS_Store
+examples/cpu_cuda/benchmark_tests/flood_speed/Makefile.am
+examples/cpu_cuda/benchmark_tests/flood_speed/allrun.sh
+examples/cpu_cuda/benchmark_tests/flood_speed/bathy2.topotype2
+examples/cpu_cuda/benchmark_tests/flood_speed/bathymetry.ipynb
+examples/cpu_cuda/benchmark_tests/flood_speed/fclaw_options.ini.used
+examples/cpu_cuda/benchmark_tests/flood_speed/flood_speed_cpucuda
+examples/cpu_cuda/benchmark_tests/flood_speed/ls
+examples/cpu_cuda/benchmark_tests/flood_speed/run_flood_speed.qsub
 
 # Ignore patterns for examples/cpuflood/malpasset
 examples/cpuflood/malpasset/*.png
@@ -33,6 +42,20 @@ examples/cpuflood/malpasset/_plots/
 examples/cpuflood/malpasset/__pycache__/
 examples/cpuflood/malpasset/*.pyc
 examples/cpuflood/malpasset/gauge*
+examples/cpuflood/malpasset/.gitignore
+examples/cpuflood/malpasset/allrun.sh
+examples/cpuflood/malpasset/fclaw_options.ini.used
+examples/cpuflood/malpasset/geoflood_used.imi
+examples/cpuflood/malpasset/results/
+examples/cpuflood/malpasset/run_malpasset1.qsub
+examples/cpuflood/malpasset/run_malpasset128.qsub
+examples/cpuflood/malpasset/run_malpasset16.qsub
+examples/cpuflood/malpasset/run_malpasset2.qsub
+examples/cpuflood/malpasset/run_malpasset32.qsub
+examples/cpuflood/malpasset/run_malpasset4.qsub
+examples/cpuflood/malpasset/run_malpasset64.qsub
+examples/cpuflood/malpasset/run_malpasset8.qsub
+examples/cpuflood/malpasset/run_strong.qsub
 
 # Ignore patterns for examples/cpuflood/teton
 examples/cpuflood/teton/*.png
@@ -49,6 +72,9 @@ examples/cpuflood/teton/_plots/
 examples/cpuflood/teton/__pycache__/
 examples/cpuflood/teton/*.pyc
 examples/cpuflood/teton/gauge*
+examples/cpuflood/teton/fclaw_options.ini.used
+examples/cpuflood/teton/teton
+examples/cpuflood/teton/topos/
 
 # Ignore patterns for examples/cpuflood/triton
 examples/cpuflood/triton/*.png
@@ -81,6 +107,14 @@ examples/cpuflood/benchmark_tests/flood_speed/_plots/
 examples/cpuflood/benchmark_tests/flood_speed/__pycache__/
 examples/cpuflood/benchmark_tests/flood_speed/*.pyc
 examples/cpuflood/benchmark_tests/flood_speed/gauge*
+examples/cpuflood/benchmark_tests/flood_speed/bathy2.topotype2
+examples/cpuflood/benchmark_tests/flood_speed/fclaw_options.ini.used
+examples/cpuflood/benchmark_tests/flood_speed/flood_speed
+examples/cpuflood/benchmark_tests/flood_speed/fortran/bc.txt
+examples/cpuflood/benchmark_tests/flood_speed/output_00008.o645736
+examples/cpuflood/benchmark_tests/flood_speed/output_00008.o646914
+examples/cpuflood/benchmark_tests/flood_speed/run_flood_speed.qsub
+examples/cpuflood/benchmark_tests/flood_speed/scratch/bc.txt
 
 # Ignore patterns for examples/cpuflood/benchmark_tests/dam_break
 examples/cpuflood/benchmark_tests/dam_break/*.png
@@ -97,6 +131,11 @@ examples/cpuflood/benchmark_tests/dam_break/_plots/
 examples/cpuflood/benchmark_tests/dam_break/__pycache__/
 examples/cpuflood/benchmark_tests/dam_break/*.pyc
 examples/cpuflood/benchmark_tests/dam_break/gauge*
+examples/cpuflood/benchmark_tests/dam_break/dam_break
+examples/cpuflood/benchmark_tests/dam_break/fclaw_options.ini.used
+examples/cpuflood/benchmark_tests/dam_break/init.xyz
+examples/cpuflood/benchmark_tests/dam_break/results/
+examples/cpuflood/benchmark_tests/dam_break/scratch/
 
 # Ignore patterns for examples/cpuflood/benchmark_tests/valley_flood
 examples/cpuflood/benchmark_tests/valley_flood/*.png
@@ -145,6 +184,19 @@ examples/cpuflood/benchmark_tests/filling_depressions/_plots/
 examples/cpuflood/benchmark_tests/filling_depressions/__pycache__/
 examples/cpuflood/benchmark_tests/filling_depressions/*.pyc
 examples/cpuflood/benchmark_tests/filling_depressions/gauge*
+examples/cpuflood/benchmark_tests/filling_depressions/.DS_Store
+examples/cpuflood/benchmark_tests/filling_depressions/.gitignore
+examples/cpuflood/benchmark_tests/filling_depressions/IC.topotype2
+examples/cpuflood/benchmark_tests/filling_depressions/Makefile.am
+examples/cpuflood/benchmark_tests/filling_depressions/allrun.sh
+examples/cpuflood/benchmark_tests/filling_depressions/bathy.topotype1
+examples/cpuflood/benchmark_tests/filling_depressions/bathy.topotype2
+examples/cpuflood/benchmark_tests/filling_depressions/bathymetry.txt
+examples/cpuflood/benchmark_tests/filling_depressions/bc.txt
+examples/cpuflood/benchmark_tests/filling_depressions/fclaw_options.ini.used
+examples/cpuflood/benchmark_tests/filling_depressions/filling_depressions
+examples/cpuflood/benchmark_tests/filling_depressions/ic.topotype1
+examples/cpuflood/benchmark_tests/filling_depressions/scratch/
 
 # Ignore patterns for examples/cpuflood/benchmark_tests/surface_flow
 examples/cpuflood/benchmark_tests/surface_flow/*.png
@@ -177,6 +229,11 @@ examples/cpuflood/benchmark_tests/disconnected_water_body/_plots/
 examples/cpuflood/benchmark_tests/disconnected_water_body/__pycache__/
 examples/cpuflood/benchmark_tests/disconnected_water_body/*.pyc
 examples/cpuflood/benchmark_tests/disconnected_water_body/gauge*
+examples/cpuflood/benchmark_tests/disconnected_water_body/.gitignore
+examples/cpuflood/benchmark_tests/disconnected_water_body/fclaw_options.ini.used
+examples/cpuflood/benchmark_tests/disconnected_water_body/maketopo.py
+examples/cpuflood/benchmark_tests/disconnected_water_body/test1.topotype2
+examples/cpuflood/benchmark_tests/disconnected_water_body/test1.xyz
 
 # Ignore patterns for examples/cudaflood/malpasset
 examples/cudaflood/malpasset/*.png
@@ -193,6 +250,7 @@ examples/cudaflood/malpasset/_plots/
 examples/cudaflood/malpasset/__pycache__/
 examples/cudaflood/malpasset/*.pyc
 examples/cudaflood/malpasset/gauge*
+examples/cudaflood/malpasset/scratch/
 
 # Ignore patterns for examples/cudaflood/teton
 examples/cudaflood/teton/*.png
@@ -209,6 +267,9 @@ examples/cudaflood/teton/_plots/
 examples/cudaflood/teton/__pycache__/
 examples/cudaflood/teton/*.pyc
 examples/cudaflood/teton/gauge*
+examples/cudaflood/teton/fclaw_options.ini.used
+examples/cudaflood/teton/teton_cuda
+examples/cudaflood/teton/topos/
 
 # Ignore patterns for examples/cudaflood/bump
 examples/cudaflood/bump/*.png
@@ -226,8 +287,10 @@ examples/cudaflood/bump/__pycache__/
 examples/cudaflood/bump/*.pyc
 examples/cudaflood/bump/gauge*
 examples/cudaflood/bump/bump_00*
+examples/cudaflood/bump/bump_old.cpp
+examples/cudaflood/bump/swe.cuda
 
 # Ignore patterns for scripts/amrclaw and geoclaw
 scripts/amrclaw/__pycache__/
 scripts/geoclaw/__pycache__/
-scripts/__pycache__/
+scripts/__pycache__
