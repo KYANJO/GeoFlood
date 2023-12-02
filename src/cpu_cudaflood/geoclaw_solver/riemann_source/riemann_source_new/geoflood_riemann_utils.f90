@@ -13,8 +13,8 @@ subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR
     ! input
     integer, intent(in) :: maxiter,meqn,mwaves
 
-    double precision, intent(in) :: hL,hR,huL,huR,bL,bR,uL,uR,phiL,phiR,sE1,sE2
-    double precision, intent(in) :: hvL,hvR,vL,vR
+    double precision, intent(inout) :: hL,hR,huL,huR,bL,bR,uL,uR,phiL,phiR,sE1,sE2
+    double precision, intent(inout) :: hvL,hvR,vL,vR
     double precision, intent(in) :: drytol,g
 
     ! output
@@ -24,13 +24,13 @@ subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR
     ! local
     integer :: m,mw,k,iter,max_iter
     double precision :: A(3,3),r(3,3)
-    double precision :: lambda(3), d(3),beta(3)
+    double precision :: lambda(3), d(3),beta(3),del(3)
 
     double precision :: dh,dhu,dphi,db,delnorm
     double precision :: rare1st,rare2st,sdelta,raremin,raremax
-    double precision :: criticaltol,covergencetol,raretol
+    double precision :: criticaltol,convergencetol,raretol
     double precision :: s1s2bar,s1s2tilde,hbar,hLstar,hRstar,hustar
-    double precision :: huRstar,huLstar,uRstar,uLstar,hstarHLL,HstarHLL
+    double precision :: huRstar,huLstar,uRstar,uLstar,hstarHLL,HstarHLL_
     double precision :: ddh,ddphi
     double precision :: s1m,s2m,hm
     double precision :: det1,det2,det3,determinant
@@ -59,7 +59,7 @@ subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR
     ! the 1st and 3rd speeds are the eigenvalues of the Jacobian matrix of the original SWE modified by Einfeldt's 
     ! for use with the HLLE solver. 
     lambda(1) = min(sE1,s2m) ! modified by Einfeldt speed; sE1 - flux Jacobian eigen value s2m - Roe speed
-    lambda(3) = max(sE2,s21m) ! modified by Einfeldt speed; sE2 - flux Jacobian eigen value s2m - Roe speed
+    lambda(3) = max(sE2,s1m) ! modified by Einfeldt speed; sE2 - flux Jacobian eigen value s2m - Roe speed
 
     ! Einfeldt speeds
     sE1 = lambda(1)
@@ -69,8 +69,8 @@ subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR
     lambda(2) = 0.d0  ! no strong or significant rarefaction wave
 
     ! determine the middle state in the HLLE solver
-    HstarHLL = (huL - huR + sE2*hR - sE1*hL)/(sE2 - sE1)
-    hstarHLL = max(HstarHLL,0.d0) ! middle state between the two discontinuities (positive semidefinite depth)
+    HstarHLL_ = (huL - huR + sE2*hR - sE1*hL)/(sE2 - sE1)
+    hstarHLL = max(HstarHLL_,0.d0) ! middle state between the two discontinuities (positive semidefinite depth)
 
     ! === determine the middle entropy corrector wave ===
     ! rarecorrectortest = .true. provides a more accurate Riemann solution but is more expensive. This is because
@@ -80,7 +80,6 @@ subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR
     rarecorrectortest = .false. 
     rarecorrector     = .false.
     if (rarecorrectortest) then
-        !  Not sure about where the raremin and raremax constants come from ?????? since it's off i will skip it for now
         sdelta = lambda(3) - lambda(1)
         raremin = 0.5d0 ! indicate a large rarefaction wave but not large 
         raremax = 0.9d0 ! indicate a very large rarefaction wave
@@ -196,7 +195,7 @@ subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR
         if (sonic) then
             ddphi = -g*hbar*db
         else
-            ddphi = -db*g*hbar*s1s2tilde/s2s2bar
+            ddphi = -db*g*hbar*s1s2tilde/s1s2bar
         end if
 
         ! find bounds in case of critical state resonance, or negative states
@@ -370,7 +369,7 @@ subroutine riemanntype(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2,maxiter,drytol,g)
     logical, intent(out) :: rare1,rare2
 
     ! local
-    double precision :: u1m,u2m,um,dhu
+    double precision :: u1m,u2m,um,du, dhu
     double precision :: h_max,h_min,h0,F_max,F_min,dfdh,F0,slope,gL,gR
     integer :: iter
 

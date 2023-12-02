@@ -202,7 +202,7 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
                         ENDIF
 
                         ! don't refine in deep water if already at maxlevel
-                        if (abs(auxvec(1))> deep_depth .and. speed < 0.01) then
+                        if (abs(auxvec(1))> deep_depth .and. speed < speed_tolerance(1)) then
                             fc2d_geoclaw_flag2refine = 0
                             cycle x_loop
                         endif

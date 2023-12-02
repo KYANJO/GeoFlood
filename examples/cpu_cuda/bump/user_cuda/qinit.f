@@ -1,4 +1,4 @@
-      subroutine cudaclaw_qinit(maxmx,maxmy,meqn,mbc,mx,my,
+      subroutine bump_qinit(meqn,mbc,mx,my,
      &      xlower,ylower,dx,dy,q,maux,aux)
 c     =====================================================
 c
@@ -8,10 +8,10 @@ c     # circle specified in fdisc.f
 c
       implicit none
 
-      integer maxmx, maxmy, meqn, mbc, mx, my, maux
+      integer meqn, mbc, mx, my, maux
       double precision dx, dy, xlower, ylower
-      double precision q(1-mbc:maxmx+mbc, 1-mbc:maxmy+mbc, meqn)
-      double precision aux(1-mbc:maxmx+mbc, 1-mbc:maxmy+mbc, maux)
+      double precision q(1-mbc:mx+mbc, 1-mbc:my+mbc, meqn)
+      double precision aux(1-mbc:mx+mbc, 1-mbc:my+mbc, maux)
 
       integer i,j
       double precision xc, yc

@@ -77,7 +77,7 @@ subroutine flood_speed_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,mt
             do ibc=1,mbc
     
                     if (q(1,1,j) < 1.d-4) then
-                        h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0) - 0.01 , 0.001d0) 
+                        h_0 = max((hu_0/sqrt(9.81d0))**(2.0d0/3.0d0), 0.001d0) 
                         q(1,1-ibc,j) = h_0
                         q(2,1-ibc,j) = hu_0
                         q(3,1-ibc,j) = 0.0d0

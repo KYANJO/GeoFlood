@@ -42,7 +42,7 @@ if output_style == 1:
 
     n_hours = 5.0              # Total number of hours in simulation     
     
-    frames_per_minute = 1/0.5   # (1 frame every 30 mins)
+    frames_per_minute = 1/30   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -56,14 +56,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 25 # Number of x grids per block
-my = 25 # Number of y grids per block
+mx = 16 # Number of x grids per block
+my = 16 # Number of y grids per block
 
-mi = 4 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 8  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 0
-maxlevel = 2 #resolution based on levels
+maxlevel = 1 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -73,7 +73,7 @@ manning_coefficient = 0.05
 num_dim = 2
 
 # ------------------  user options ---------------------------------------------------
-use_cuda = False
+use_cuda = True
 gravity = 9.81
 dry_tolerance = 1e-4
 earth_radius = 6367.5e3

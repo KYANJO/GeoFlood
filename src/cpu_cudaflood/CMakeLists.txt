@@ -18,9 +18,12 @@ add_library(cpu_cuda_f OBJECT
 	geoclaw_solver/geolib_source/refinement_module.f90 
 	geoclaw_solver/geolib_source/friction_module.f90 
 	geoclaw_solver/hydrograph/hydrograh_module.f90
-	geoclaw_solver/riemann_source/rpn2_geoclaw.f 
-	geoclaw_solver/riemann_source/rpt2_geoclaw.f 
-	geoclaw_solver/riemann_source/geoclaw_riemann_utils.f 
+	# geoclaw_solver/riemann_source/rpn2_geoclaw.f 
+	# geoclaw_solver/riemann_source/rpt2_geoclaw.f 
+	# geoclaw_solver/riemann_source/geoclaw_riemann_utils.f 
+	geoclaw_solver/riemann_source/riemann_source_new/rpt2_geoflood.f90
+	geoclaw_solver/riemann_source/riemann_source_new/rpn2_geoflood.f90
+	geoclaw_solver/riemann_source/riemann_source_new/geoflood_riemann_utils.f90
 	geoclaw_solver/amrlib_source/opendatafile.f 
 	geoclaw_solver/amrlib_source/check4nans.f90 
 	geoclaw_solver/amrlib_source/quick_sort1.f 
@@ -56,6 +59,7 @@ add_library(cpu_cuda_f OBJECT
 	geoclaw_solver/fclaw2d_source/fc2d_geoclaw_local_ghost_pack_aux_fort.f 
 	geoclaw_solver/fclaw2d_source/fc2d_geoclaw_diagnostics_fort.f 
 	geoclaw_solver/fclaw2d_source/fc2d_geoclaw_timeinterp_fort.f
+	cuda_source/data_swap.f90
 )
 
 set_target_properties(cpu_cuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
@@ -81,7 +85,7 @@ target_sources(cpu_cuda PRIVATE
 	cuda_source/cudaclaw_flux2.cu
 	fc2d_cuda_profiler.cu
 	cuda_source/cudaclaw_store_patches.cu
-	cuda_source/data_swap.c
+	# cuda_source/data_swap.c
 	geoclaw_solver/fc2d_geoclaw_gauges_default.c 
 	geoclaw_solver/fc2d_geoclaw_output_ascii.c
 	geoclaw_solver/fc2d_geoclaw_run.c
@@ -113,7 +117,7 @@ install(FILES
 	fc2d_cudaclaw_options.h
 	cudaclaw_user_fort.h
 	fc2d_cudaclaw_fort.h
-	cuda_source/data_swap.h
+	# cuda_source/data_swap.h
 	geoclaw_solver/types.h
 	geoclaw_solver/fc2d_geoclaw.h
 	geoclaw_solver/fc2d_geoclaw_fort.h

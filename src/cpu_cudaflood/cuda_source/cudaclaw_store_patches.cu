@@ -3,10 +3,13 @@
 #include <fclaw2d_patch.h>
 
 #include <fclaw2d_clawpatch.h>
+#include <fclaw2d_clawpatch_options.h>
 #include <fc2d_cudaclaw_options.h>
 
 #include "cudaclaw_allocate.h"
 #include <fc2d_cuda_profiler.h>
+
+#include "../fc2d_cudaclaw_fort.h"
 
 // #include "data_swap.h"
 
@@ -21,8 +24,6 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
                            int* blockno_array)
 {
     PROFILE_CUDA_GROUP("fc2d_cudaclaw_store_buffer",4);
-    double *qold, *aux;
-    int meqn, maux;
 
     const fc2d_cudaclaw_options_t *cuclaw_opt = fc2d_cudaclaw_get_options(glob);
 
@@ -32,27 +33,13 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 
     FCLAW_ASSERT(fluxes != NULL);
 
-    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux,&maux);
-    fclaw2d_clawpatch_soln_data(glob,this_patch,&qold,&meqn);
+    int meqn, maux;
+    double *qold_geoclaw, *aux_geoclaw;
+    fclaw2d_clawpatch_aux_data(glob,this_patch,&aux_geoclaw,&maux);
+    fclaw2d_clawpatch_soln_data(glob,this_patch,&qold_geoclaw,&meqn);
 
-    // data cpoying between geoclaw and cudaclaw
-    // fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
-    // int mx = clawpatch_opt->mx;
-    // int my = clawpatch_opt->my;
-    // int mbc = clawpatch_opt->mbc;
-    
-    // double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
-    // double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
-
-    // swap mij to ijm
-    // swap_mij2ijm(mx,my,mbc,meqn,maux,qold,qold_transpose,aux,aux_transpose);
-
-
-    // fluxes->qold = qold_transpose;
-    // fluxes->aux = aux_transpose;
-
-    fluxes->qold = qold;
-    fluxes->aux = aux;
+    fluxes->qold = qold_geoclaw;
+    fluxes->aux = aux_geoclaw;
 
     int n = iter % cuclaw_opt->buffer_len;
     flux_array[n] = *fluxes;

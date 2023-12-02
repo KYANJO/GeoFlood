@@ -35,7 +35,7 @@ subroutine fc2d_geoclaw_rpn2(ixy,maxm,meqn,mwaves,maux,mbc,mx,ql,qr,auxl,auxr,fw
     implicit none
 
     ! Input variables
-    integer, intent(in) :: ixy, maxm, meqn, mwaves, mbc, mx
+    integer, intent(in) :: ixy, maxm, meqn,maux, mwaves, mbc, mx
 
     ! Input/Output variables
     double precision, intent(inout) :: fwave(meqn,mwaves,1-mbc:maxm+mbc)

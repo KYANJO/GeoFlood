@@ -86,7 +86,12 @@ user_options_t* bump_get_options(fclaw2d_global_t* glob);
 // void RPN2_CONS_UPDATE(const int* meqn, const int* maux, const int* idir, const int* iface,
 //                       double q[], double aux_center[], double aux_edge[], double flux[]);
 
-
+#define BUMP_QINIT   FCLAW_F77_FUNC(bump_qinit,  BUMP_QINIT)
+void BUMP_QINIT(const int* meqn,
+                      const int* mbc, const int* mx, const int* my,
+                      const double* xlower, const double* ylower,
+                      const double* dx, const double* dy,
+                      double q[], const int* maux, double aux[]);
 
 /* --------------------------------------- non-Cuda ----------------------------------------*/
 

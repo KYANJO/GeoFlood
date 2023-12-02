@@ -316,6 +316,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     size_t size, bytes;
     double maxcfl;
 
+    FC2D_GEOCLAW_TOPO_UPDATE(&t);
+
     /* ------------------------------- Call b4step2 ----------------------------------- */
 #if 1
     if (cudaclaw_vt->b4step2 != NULL)

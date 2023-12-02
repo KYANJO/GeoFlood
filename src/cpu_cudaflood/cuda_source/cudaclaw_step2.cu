@@ -19,6 +19,7 @@
 #include <cub/cub.cuh>
 
 // #include "data_swap.h"
+#include "../fc2d_cudaclaw_fort.h"
 
 #define thread_count 224
 
@@ -109,23 +110,35 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
 
             I_q = i*fluxes->num;
 
-             /* swap (m,i,j) to (i,j,m)
-            double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
-            double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
-            
-            swap (m,i,j) to (i,j,m)
-            swap_mij2ijm(mx,my,mbc,meqn,maux,fluxes->qold,qold_transpose,fluxes->aux,aux_transpose);
-
-            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold_transpose ,fluxes->num_bytes);
-             */
-
-            memcpy(&membuffer_cpu[I_q]  ,fluxes->qold ,fluxes->num_bytes);
-            fluxes->qold_dev = &membuffer_dev[I_q];
-
+            // allocate memory for transpose
+            // double *qold_cudaclaw = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
+            // double *aux_cudaclaw = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
+            double* aux_cudaclaw = NULL;
             if (fluxes->num_aux > 0)
             {
                 I_aux = batch_size*fluxes->num + i*fluxes->num_aux;
-                memcpy(&membuffer_cpu[I_aux],fluxes->aux  ,fluxes->num_bytes_aux);                
+                aux_cudaclaw = &membuffer_cpu[I_aux];
+                
+                // memcpy(&membuffer_cpu[I_aux],aux_transpose  ,fluxes->num_bytes_aux);                
+                // fluxes->aux_dev  = &membuffer_dev[I_aux];
+            }
+            // swap mij to ijm
+            double* qold_cudaclaw = &membuffer_cpu[I_q];
+            int geoclaw2cudaclaw = 1;
+            CUDACLAW_SWAP_DATA(&mx,&my,&mbc,&meqn,&maux,fluxes->qold,qold_cudaclaw,fluxes->aux,aux_cudaclaw,&geoclaw2cudaclaw);
+
+            
+            // memcpy(&membuffer_cpu[I_q]  ,qold_cudaclaw ,fluxes->num_bytes);
+             
+
+            // memcpy(&membuffer_cpu[I_q]  ,fluxes->qold ,fluxes->num_bytes);
+            fluxes->qold_dev = &membuffer_dev[I_q];
+
+
+            if (fluxes->num_aux > 0)
+            {
+                // I_aux = batch_size*fluxes->num + i*fluxes->num_aux;
+                // memcpy(&membuffer_cpu[I_aux],aux_transpose  ,fluxes->num_bytes_aux);                
                 fluxes->aux_dev  = &membuffer_dev[I_aux];
             }
         }  
@@ -272,18 +285,15 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
         {      
             fluxes = &(array_fluxes_struct[i]);
             I_q = i*fluxes->num;
-
-            /* swap (m,i,j) to (i,j,m)
-            double *qold_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*meqn);
-            double *aux_transpose = FCLAW_ALLOC(double,(mx+2*mbc)*(my+2*mbc)*maux);
             
-            swap (i,j,m) to (m,i,j)
-            swap_ijm2mij(mx,my,mbc,meqn,maux,fluxes->qold,qold_transpose,fluxes->aux,aux_transpose);
+            // swap (i,j,m) to (m,i,j)
+            // memcpy(qold_transpose,&membuffer_cpu[I_q],fluxes->num_bytes);
+            int geoclaw2cudaclaw = 0;
+            double *aux_cudaclaw = NULL;
+            CUDACLAW_SWAP_DATA(&mx,&my,&mbc,&meqn,&maux,fluxes->qold,&membuffer_cpu[I_q],fluxes->aux,aux_cudaclaw,&geoclaw2cudaclaw);
 
-            memcpy(&fluxes->qold_transpose,&membuffer_cpu[I_q],fluxes->num_bytes);
-            */
 
-            memcpy(fluxes->qold,&membuffer_cpu[I_q],fluxes->num_bytes);
+            // memcpy(fluxes->qold,&membuffer_cpu[I_q],fluxes->num_bytes);
         }        
     }
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_CUDA_MEMCOPY_H2H]);       

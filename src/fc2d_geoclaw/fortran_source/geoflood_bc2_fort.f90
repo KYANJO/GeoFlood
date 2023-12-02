@@ -65,21 +65,21 @@ subroutine fc2d_geoclaw_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
                                     q(3,1-ibc,j) = 0.0d0
                               else 
                                     if (q0(2) .ne. 0.0d0) then
-                                    call Riemann_invariants(q0,q1)
-                                    if (q0(1) > q1(1)) then
-                                          call two_shock(q0,q1)
-                                    endif
-                                    q(1,1-ibc,j) = q0(1)
-                                    q(2,1-ibc,j) = q0(2)
-                                    q(3,1-ibc,j) = 0.0d0
+                                          call Riemann_invariants(q0,q1)
+                                          if (q0(1) > q1(1)) then
+                                                call two_shock(q0,q1)
+                                          endif
+                                          q(1,1-ibc,j) = q0(1)
+                                          q(2,1-ibc,j) = q0(2)
+                                          q(3,1-ibc,j) = 0.0d0
                                     else
-                                    aux(1,1-ibc,j) = aux(1,ibc,j)
-                                    do m=1,meqn
-                                          q(m,1-ibc,j) = q(m,ibc,j)
-                                    enddo
+                                          aux(1,1-ibc,j) = aux(1,ibc,j)
+                                          do m=1,meqn
+                                                q(m,1-ibc,j) = q(m,ibc,j)
+                                          enddo
 
-                                    ! c     # negate the normal velocity:   
-                                    q(2,1-ibc,j) = -q(2,ibc,j)
+                                          ! c     # negate the normal velocity:   
+                                          q(2,1-ibc,j) = -q(2,ibc,j)
                                     end if
                               endif
                         enddo

@@ -31,11 +31,11 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 0.5  # Initial time step
-fixed_dt = True  # Take constant time step
+initial_dt = 1 # Initial time step
+fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 3
+output_style = 1
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
@@ -56,14 +56,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 128 # Number of x grids per block
-my = 128 # Number of y grids per block
+mx = 16 # Number of x grids per block
+my = 16 # Number of y grids per block
 
-mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 1  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 1 
-maxlevel = 4 #resolution based on levels
+minlevel = 0 
+maxlevel = 1 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -279,7 +279,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -460,7 +460,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,1000,990,1010]) # 1000-20 = 980, 1000+20 = 1020
 
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])

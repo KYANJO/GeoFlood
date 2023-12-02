@@ -33,24 +33,27 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_include_all.h>
 
-/* Parameters on the device */
-const double atan1 = atan(1.0); // Precompute the value
-__device__ __constant__ double pi = 3.14159265358979323846;
-__device__ __constant__ double deg2rad = pi/180.0;
-
 /* Parameters to used on the device */
 __constant__ double s_grav;
 __constant__ double drytol;
 __constant__ double earth_radius;
+__constant__ double deg2rad;
 __constant__ int coordinate_system;
 __constant__ int mcapa;
-
 
 /* function imports */
 __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
 
+__device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
+    double hR, double huL, double huR, double hvL, double hvR, 
+    double bL, double bR, double uL, double uR, double vL, 
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw);
+
 void setprob_cuda()
 {
+    /* host variables */
+    double pi = 3.14159265358979323846;
+    double deg2rad_host = pi / 180.0;
     double grav;
     double dry_tol;
     double earth_rad;
@@ -69,40 +72,37 @@ void setprob_cuda()
     CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
     CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
+    CHECK(cudaMemcpyToSymbol(deg2rad, &deg2rad_host, sizeof(double)));
 }
 
 __device__ void flood_speed_compute_speeds(int idir, int meqn, int mwaves, int maux,
-    double ql[], double  qr[],
-    double auxl[], double auxr[],
-    double s[])
+                                            double ql[], double  qr[],
+                                            double auxl[], double auxr[],
+                                            double s[])
 {
-    int mu,mv;
 
-    double hhat,uhat,vhat,chat,hsq2;
-    double roe1,roe3,s1l,s3r,s1,s3,s2;
+    int mu = 1+idir;
+    // int mv = 2-idir;
 
-    mu = 1+idir;
-    mv = 2-idir;
-
-    hhat = (ql[0] + qr[0])/2.0;
-    hsq2 = sqrt(ql[0]) + sqrt(qr[0]);
-    uhat = (ql[mu]/sqrt(ql[0]) + qr[mu]/sqrt(qr[0]))/hsq2;
-    // vhat = (ql[mv]/sqrt(ql[0]) + qr[mv]/sqrt(qr[0]))/hsq2;
-    chat = sqrt(s_grav*hhat);
+    double hhat = (ql[0] + qr[0])/2.0;
+    double hsq2 = sqrt(ql[0]) + sqrt(qr[0]);
+    double uhat = (ql[mu]/sqrt(ql[0]) + qr[mu]/sqrt(qr[0]))/hsq2;
+    // double vhat = (ql[mv]/sqrt(ql[0]) + qr[mv]/sqrt(qr[0]))/hsq2;
+    double chat = sqrt(s_grav*hhat);
 
     // Roe wave speeds
-    roe1 = uhat - chat;
-    roe3 = uhat + chat;
+    double roe1 = uhat - chat;
+    double roe3 = uhat + chat;
 
     // left and right state wave speeds
-    s1l = ql[mu]/ql[0] - sqrt(s_grav*ql[0]);
-    s3r = qr[mu]/qr[0] + sqrt(s_grav*qr[0]);
+    double s1l = ql[mu]/ql[0] - sqrt(s_grav*ql[0]);
+    double s3r = qr[mu]/qr[0] + sqrt(s_grav*qr[0]);
 
     // Einfeldt wave speeds
-    s1 = fmin(s1l,roe1);
-    s3 = fmax(s3r,roe3);
+    double s1 = fmin(s1l,roe1);
+    double s3 = fmax(s3r,roe3);
 
-    s2 = 0.5*(s1+s3);
+    double s2 = 0.5*(s1+s3);
 
     s[0] = s1;
     s[1] = s2;
@@ -130,12 +130,12 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 {
     /* Local variables */
     double wall[3], fw[9], sw[3];
-    double hR, hL, huR, huL, hvR, hvL, uR, uL, vR, vL, phiR, phiL, pL, pR;
+    double hR, hL, huR, huL, hvR, hvL, uR, uL, vR, vL, phiR, phiL;
     double bR, bL, sL, sR, sRoe1, sRoe2, sE1, sE2, uhat, chat;
-    double hstar, hstartest, hstarHLL, sLtest, sRtest, tw, dxdc;
+    double hstar, hstartest, dxdc;
     double s1m, s2m;
     bool rare1, rare2;
-    int m, mw, mu, mv;
+    int mw, mu, mv;
 
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
@@ -233,12 +233,12 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                 uR = -uL;
                 vR = vL;
                 /* here we already have huR =- huL, so we don't need to change it */
-            } elseif (hL+bL < bR) {
+            } else if (hL+bL < bR) {
                 /* hL+bL < bR and hstar+bL >bR, so we set bR to the water level in 
                 the left cell so that water can possibly overtop the right cell (move into the right cell) */ 
                 bR = hL + bL;
             }
-        } elseif (hL <= drytol) { /* right surface is lower than left topo */
+        } else if (hL <= drytol) { /* right surface is lower than left topo */
             /* determine the Riemann structure */
             riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
             hstartest = fmax(hR,hstar);
@@ -252,7 +252,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                 phiL = phiR;
                 uL = -uR;
                 vL = vR;
-            } elseif (hR+bR < bL) {
+            } else if (hR+bR < bL) {
                 bL = hR + bR;
             }
         }
@@ -272,8 +272,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         /* --- end of initializing --- */
 
         /* === solve Riemann problem === */
-        riemann_aug_JCP(1,3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,
-            uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
+        riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
 
         // eliminate ghost fluxes for wall
         for (mw=0; mw<3; mw++) {
@@ -315,7 +314,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
             amdq[mw] += fwave[mw];
             amdq[mw] += fwave[mw + mu*mwaves];
             amdq[mw] += fwave[mw + mv*mwaves];
-        } elseif (s[mw] > 0.0) {
+        } else if (s[mw] > 0.0) {
             apdq[mw] += fwave[mw];
             apdq[mw] += fwave[mw + mu*mwaves];
             apdq[mw] += fwave[mw + mv*mwaves];
@@ -352,7 +351,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                 double aux2[], double aux3[], int imp, 
                 double asdq[], double bmasdq[], double bpasdq[]) 
 {
-    int i, mw, mu, mv;
+    int mw, mu, mv;
     double s[3], r[9], beta[3];
     double h, u, v;
     double delf1, delf2, delf3;
@@ -421,7 +420,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     beta[0] = (s[2]*delf1 - delf3) / (s[2] - s[0]);
     beta[1] = -u*delf1 + delf2;
-    beta[2] = (delf3 - s(1)*delf1) / (s[2] - s[0]);
+    beta[2] = (delf3 - s[0]*delf1) / (s[2] - s[0]);
 
     /* set-up eigenvectors */
     r[0] = 1.0;
@@ -472,7 +471,7 @@ void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
          over variable topography due to loss of hyperbolicity. 
 */
 
-__device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
+__device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw)
@@ -482,15 +481,15 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
     double A[9], r[9], lambda[3], del[3], beta[3];
     double delh, delhu, delphi, delb, delnorm;
     double rare1st, rare2st, sdelta, raremin, raremax;
-    double criticaltol, convergencetol, raretol;
+    double criticaltol, convergencetol;
     double criticaltol_2, hustar_interface;
-    double s1s2bar, s1s2tilde, hbar, hLstar, hRstar, hustar;
+    double s1s2bar, s1s2tilde, hbar, hLstar, hRstar;
     double huRstar, huLstar, uRstar, uLstar, hstarHLL;
     double deldelh, deldelphi;
     double s1m, s2m, hm;
     double det1, det2, det3, determinant;
     bool rare1, rare2, rarecorrector, rarecorrectortest, sonic;
-    int m, mw, k, iter;
+    int mw, k, iter;
 
     /* determine del vectors */
     delh = hR - hL;
@@ -565,7 +564,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
     }
 
     /* === Determine the steady state wave === */
-    criticaltol = fmax(drytol*g, 1.0e-6);
+    criticaltol = fmax(drytol*s_grav, 1.0e-6);
     criticaltol_2 = sqrt(criticaltol);
     deldelh = -delb;
     deldelphi = -0.5 * (hR + hL) * (s_grav * delb); /* some approximation of the source term \int_{x_{l}}^{x_{r}} -g h b_x dx */
@@ -642,7 +641,7 @@ __device__ void riemann_aug_JCP(int maxiter, int meqn, int mwaves, double hL,
 
         /* find jump in phi, ddphi */
         if (sonic) {
-            deldelphi = -g * hbar * delb;
+            deldelphi = -s_grav * hbar * delb;
         } else {
             deldelphi = -delb * s_grav * hbar * s1s2tilde / s1s2bar;
         }
@@ -768,7 +767,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
                             double *s1m, double *s2m, bool *rare1, bool *rare2)
 {
     // Local variables
-    double u1m, u2m, um, h0, F_max, F_min, dfdh, F0, slope, gL, gR;
+    double um, u1m, u2m, h0, F_max, F_min, dfdh, F0, slope, gL, gR;
     double sqrtgh1, sqrtgh2;
     int iter; 
 

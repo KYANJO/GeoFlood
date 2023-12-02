@@ -74,7 +74,7 @@ void bump_link_solvers(fclaw2d_global_t *glob)
     if(user->cuda == 0)
     {
         fc2d_clawpack46_vtable_t *claw46_vt = fc2d_clawpack46_vt(glob);
-        claw46_vt->fort_qinit     = &CUDACLAW_QINIT;
+        claw46_vt->fort_qinit     = &CLAWPACK46_QINIT;
         claw46_vt->fort_rpn2      = &CLAWPACK46_RPN2;
         claw46_vt->fort_rpt2      = &CLAWPACK46_RPT2;
         claw46_vt->fort_rpn2_cons = &RPN2_CONS_UPDATE;
@@ -82,7 +82,7 @@ void bump_link_solvers(fclaw2d_global_t *glob)
     else
     {
         fc2d_cudaclaw_vtable_t *cuclaw_vt = fc2d_cudaclaw_vt(glob);
-        cuclaw_vt->fort_qinit  = &CUDACLAW_QINIT;
+        cuclaw_vt->fort_qinit  = &BUMP_QINIT;
 
         bump_assign_rpn2(&cuclaw_vt->cuda_rpn2);
         FCLAW_ASSERT(cuclaw_vt->cuda_rpn2 != NULL);
