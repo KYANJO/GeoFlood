@@ -26,6 +26,8 @@ examples/cpu_cuda/benchmark_tests/flood_speed/fclaw_options.ini.used
 examples/cpu_cuda/benchmark_tests/flood_speed/flood_speed_cpucuda
 examples/cpu_cuda/benchmark_tests/flood_speed/ls
 examples/cpu_cuda/benchmark_tests/flood_speed/run_flood_speed.qsub
+examples/cpu_cuda/benchmark_tests/flood_speed/scratch/.DS_Store
+examples/cpu_cuda/benchmark_tests/flood_speed/scratch/BC.csv
 
 # Ignore patterns for examples/cpuflood/malpasset
 examples/cpuflood/malpasset/*.png
@@ -56,6 +58,7 @@ examples/cpuflood/malpasset/run_malpasset4.qsub
 examples/cpuflood/malpasset/run_malpasset64.qsub
 examples/cpuflood/malpasset/run_malpasset8.qsub
 examples/cpuflood/malpasset/run_strong.qsub
+examples/cudaflood/malpasset/scratch
 
 # Ignore patterns for examples/cpuflood/teton
 examples/cpuflood/teton/*.png
@@ -294,3 +297,9 @@ examples/cudaflood/bump/swe.cuda
 scripts/amrclaw/__pycache__/
 scripts/geoclaw/__pycache__/
 scripts/__pycache__
+scripts/visclaw/.gitignore
+
+src/cpu_cudaflood/build/
+src/fc2d_cpu_cudaflood/
+src/fc2d_cpucuda4.x/
+y.txt
