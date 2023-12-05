@@ -67,6 +67,15 @@ void setprob_cuda()
     fscanf(f,"%d",&mcapa_);
     fclose(f);
 
+    // print to screen
+    printf("grav = %f\n",grav);
+    printf("dry_tol = %f\n",dry_tol);
+    printf("earth_rad = %f\n",earth_rad);
+    printf("coordinate_system_ = %d\n",coordinate_system_);
+    printf("mcapa_ = %d\n",mcapa_);
+    return;
+
+    /* copy to device */
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(drytol, &dry_tol, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));

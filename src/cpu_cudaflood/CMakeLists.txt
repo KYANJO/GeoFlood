@@ -62,6 +62,10 @@ add_library(cpu_cuda_f OBJECT
 	cuda_source/data_swap.f90
 )
 
+target_link_Libraries(cpu_cuda_f PRIVATE
+	FORESTCLAW::CLAWPATCH
+)
+
 set_target_properties(cpu_cuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # -- add library 
@@ -76,7 +80,8 @@ set_target_properties(cpu_cuda PROPERTIES EXPORT_NAME CPU_CUDA)
 set_target_properties(cpu_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 target_sources(cpu_cuda PRIVATE
-  fc2d_cudaclaw.cpp
+	$<TARGET_OBJECTS:cpu_cuda_f>
+  	fc2d_cudaclaw.cpp
 	fc2d_cudaclaw_options.c
 	cuda_source/cudaclaw_step2.cu
 	cuda_source/cudaclaw_initialize.cu
@@ -89,7 +94,6 @@ target_sources(cpu_cuda PRIVATE
 	geoclaw_solver/fc2d_geoclaw_gauges_default.c 
 	geoclaw_solver/fc2d_geoclaw_output_ascii.c
 	geoclaw_solver/fc2d_geoclaw_run.c
-  $<TARGET_OBJECTS:cpu_cuda_f>
 )
 
 target_link_libraries(cpu_cuda PUBLIC 
@@ -98,10 +102,10 @@ target_link_libraries(cpu_cuda PUBLIC
 	CUDA::nvToolsExt
 )
 
-target_include_directories(cpu_cuda
-  PUBLIC
+target_include_directories(cpu_cuda PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-  $<INSTALL_INTERFACE:include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+#   $<INSTALL_INTERFACE:include>
 )
 
 if(CUDAToolkit_VERSION_MAJOR LESS 11)

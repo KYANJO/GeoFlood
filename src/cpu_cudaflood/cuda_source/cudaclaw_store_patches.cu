@@ -37,7 +37,7 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
     double *qold_geoclaw, *aux_geoclaw;
     fclaw2d_clawpatch_aux_data(glob,this_patch,&aux_geoclaw,&maux);
     fclaw2d_clawpatch_soln_data(glob,this_patch,&qold_geoclaw,&meqn);
-
+   
     fluxes->qold = qold_geoclaw;
     fluxes->aux = aux_geoclaw;
 
