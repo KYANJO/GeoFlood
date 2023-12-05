@@ -440,6 +440,11 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.verbosity = 'production'
 
     # -----------------------------------------------
+    # setrob parameters:
+    # -----------------------------------------------
+    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
+
+    # -----------------------------------------------
     # AMR parameters:
     # -----------------------------------------------
     amrdata = rundata.amrdata
@@ -502,7 +507,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, hydrographdata
+    return rundata, geoflooddata, hydrographdata, setprobdata
     # end of function setrun
     # ----------------------
 
@@ -589,10 +594,8 @@ def generate_topo_file():
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     # generate_topo_file()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata, setprobdata = setrun(*sys.argv[1:])
     rundata.write()
-
-    geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-    hydrographdata.write()       # writes a geoflood hydrograph file
+    geoflood.write_data_outputs(rundata,geoflooddata, hydrographdata, setprobdata)
 
     

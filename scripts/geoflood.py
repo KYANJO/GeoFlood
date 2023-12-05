@@ -462,5 +462,29 @@ class Flowgradesdata(object):
             flow_grades.write(4*"%g " % tuple(i) + "\t =: flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel\n")
         flow_grades.close()
 
+# write out setprob data 
+# using inheritance to access the attributes of the GeoFlooddata class to avoid redundancy
+class Setprobdata(GeoFlooddata):
 
-        
+    def __init__(self,gravity,dry_tolerance,earth_radius,coordinate_system,mcapa):
+        self.gravity = gravity
+        self.dry_tolerance = dry_tolerance
+        self.earth_radius = earth_radius
+        self.coordinate_system = coordinate_system
+        self.mcapa = mcapa
+
+    def write(self):
+        # write setprob data to file with comments of there meaning
+        set_prob = open('setprob.data','w')
+        set_prob.write('%f \t\t =: gravity\n' % self.gravity)
+        set_prob.write('%f \t\t =: dry_tolerance\n' % self.dry_tolerance)
+        set_prob.write('%f \t\t =: earth_radius\n' % self.earth_radius)
+        set_prob.write('%d \t\t\t =: coordinate_system\n' % self.coordinate_system)
+        set_prob.write('%d \t\t\t =: mcapa\n' % self.mcapa)
+        set_prob.close()
+
+# write out setrun data      
+def write_data_outputs(rundata, *data_objects):
+    data_objects[0].write(rundata)  # for the geoflood data
+    for data_object in data_objects[1:]:
+        data_object.write()
