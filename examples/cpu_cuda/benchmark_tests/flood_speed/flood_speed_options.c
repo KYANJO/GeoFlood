@@ -27,13 +27,13 @@ flood_speed_register (user_options_t* user, sc_options_t * opt)
 static fclaw_exit_type_t
 flood_speed_check (user_options_t *user)
 {
-    if(user->cuda != 0)
-    {
-        if (user->example != 0) {
-            fclaw_global_essentialf ("Option --user:example must be 0\n");
-            return FCLAW_EXIT_QUIET;
-        }
-    }
+    // if(user->cuda != 0)
+    // {
+    //     if (user->example != 0) {
+    //         fclaw_global_essentialf ("Option --user:example must be 0\n");
+    //         return FCLAW_EXIT_QUIET;
+    //     }
+    // }
     return FCLAW_NOEXIT;
 }
 

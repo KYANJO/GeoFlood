@@ -51,29 +51,29 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
 void setprob_cuda()
 {
-    /* host variables */
-    double pi = 3.14159265358979323846;
-    double deg2rad_host = pi / 180.0;
-    double grav;
-    double dry_tol;
-    double earth_rad;
-    int coordinate_system_;
-    int mcapa_;
+    int i = 0;
+    char * line = NULL, *p = NULL, *eptr;
+    size_t len = 0;
+    ssize_t read;
+    double arr[5];
     FILE *f = fopen("setprob.data","r");
-    fscanf(f,"%lf",&grav);
-    fscanf(f,"%lf",&dry_tol);
-    fscanf(f,"%lf",&earth_rad);
-    fscanf(f,"%d",&coordinate_system_);
-    fscanf(f,"%d",&mcapa_);
+
+    while ((read = getline(&line, &len, f)) != -1) 
+    {
+        p =strtok(line, " "); // get first word
+        arr[i] = strtod(p,&eptr);  // convert to double
+        i++; 
+    }
     fclose(f);
 
-    // print to screen
-    printf("grav = %f\n",grav);
-    printf("dry_tol = %f\n",dry_tol);
-    printf("earth_rad = %f\n",earth_rad);
-    printf("coordinate_system_ = %d\n",coordinate_system_);
-    printf("mcapa_ = %d\n",mcapa_);
-    
+    double grav = arr[0];
+    double dry_tol = arr[1];
+    double earth_rad = arr[2];
+    int coordinate_system_ = (int) arr[3];
+    int mcapa_ = (int) arr[4];
+
+    double pi = 3.14159265358979323846;
+    double deg2rad_host = pi / 180.0;
 
     /* copy to device */
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
@@ -83,6 +83,8 @@ void setprob_cuda()
     CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
     CHECK(cudaMemcpyToSymbol(deg2rad, &deg2rad_host, sizeof(double)));
 }
+
+
 
 __device__ void flood_speed_compute_speeds(int idir, int meqn, int mwaves, int maux,
                                             double ql[], double  qr[],

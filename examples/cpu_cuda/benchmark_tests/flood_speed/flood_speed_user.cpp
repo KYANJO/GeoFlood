@@ -30,8 +30,23 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch.h>
 #include <fc2d_geoclaw.h>
 
-void flood_speed_link_solvers(fclaw2d_global_t *glob)
+static
+void flood_speed_problem_setup(fclaw2d_global_t* glob)
 {
+    const user_options_t* user = flood_speed_get_options(glob);
+    
+    fclaw2d_domain_barrier (glob->domain);
+    if (user->cuda != 0)
+    {
+        setprob_cuda();
+    }
+}
+
+
+void flood_speed_link_solvers(fclaw2d_global_t *glob)
+{   
+    fclaw2d_vtable_t *vt = fclaw2d_vt(glob);
+    vt->problem_setup = &flood_speed_problem_setup;  /* Version-independent */
 
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
@@ -45,7 +60,7 @@ void flood_speed_link_solvers(fclaw2d_global_t *glob)
     else 
     {
         fc2d_cudaclaw_vtable_t *cuclaw_vt = fc2d_cudaclaw_vt(glob);
-        // cuclaw_vt->fort_qinit = &FC2D_GEOCLAW_QINIT;
+        // cuclaw_vt->fort_bc2 = &FC2D_GEOCLAW_BC2;
         cuclaw_vt->fort_bc2 = &FLOOD_SPEED_BC2;
         // cudaclaw_vt->fort_rpn2  = &FC2D_GEOCLAW_RPN2;
         // cudaclaw_vt->fort_rpt2  = &FC2D_GEOCLAW_RPT2;
