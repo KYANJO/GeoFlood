@@ -150,9 +150,9 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
-    if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
-        printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
-    }
+    // if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
+    //     printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
+    // }
 
     // Initialize Riemann problem for the grid interface 
     for (mw=0; mw<mwaves; ++mw)
@@ -171,15 +171,15 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     // left state
     if (qr[0] < 0.0) {
         qr[0] = 0.0;
-        qr[mu] = 0.0;
-        qr[mv] = 0.0;
+        qr[1] = 0.0;
+        qr[2] = 0.0;
     }
 
     // right state
     if (ql[0] < 0.0) {
         ql[0] = 0.0;
-        ql[mu] = 0.0;
-        ql[mv] = 0.0;
+        ql[1] = 0.0;
+        ql[2] = 0.0;
     }
 
     // Skip problem if in a completely dry area
