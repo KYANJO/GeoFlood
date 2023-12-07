@@ -43,7 +43,7 @@ cudaclaw_register (fc2d_cudaclaw_options_t* clawopt, sc_options_t * opt)
     sc_options_add_bool (opt, 0, "src_term", &clawopt->src_term, 0,
                          "[cudaclaw] Source term option [F]");
 
-    sc_options_add_bool (opt, 0, "use-fwaves", &clawopt->use_fwaves, 0,
+    sc_options_add_bool (opt, 0, "use_fwaves", &clawopt->use_fwaves, 0,
                          "[cudaclaw] Use fwave flux-form [F]");
 
 
