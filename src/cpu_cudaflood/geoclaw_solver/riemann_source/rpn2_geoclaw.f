@@ -1,6 +1,6 @@
 c======================================================================
-      subroutine fc2d_geoclaw_rpn2(ixy,maxm,meqn,mwaves,maux,mbc,mx,
-     &      ql,qr,auxl,auxr,fwave,s,amdq,apdq)
+       subroutine rpn2(ixy,maxm,meqn,mwaves,maux,mbc,mx,
+     &                 ql,qr,auxl,auxr,fwave,s,amdq,apdq)
 c======================================================================
 c
 c Solves normal Riemann problems for the 2D SHALLOW WATER equations
@@ -33,9 +33,11 @@ c
 !           David George, Vancouver WA, Feb. 2009                           !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      use geoclaw_module, only: g => grav, drytol => dry_tolerance
+      use geoclaw_module, only: g => grav, drytol => dry_tolerance, rho
       use geoclaw_module, only: earth_radius, deg2rad
       use amr_module, only: mcapa
+
+      use storm_module, only: pressure_forcing, pressure_index
 
       implicit none
 
@@ -57,13 +59,17 @@ c
       double precision fw(3,3)
       double precision sw(3)
 
-      double precision hR,hL,huR,huL,uR,uL,hvR,hvL,vR,vL,phiR,phiL
+      double precision hR,hL,huR,huL,uR,uL,hvR,hvL,vR,vL,phiR,phiL,pL,pR
       double precision bR,bL,sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat
       double precision s1m,s2m
       double precision hstar,hstartest,hstarHLL,sLtest,sRtest
       double precision tw,dxdc
 
       logical rare1,rare2
+
+      ! In case there is no pressure forcing
+      pL = 0.d0
+      pR = 0.d0
 
       !loop through Riemann problems at each grid cell
       do i=2-mbc,mx+mbc
@@ -110,14 +116,18 @@ c        !set normal direction
          endif
 
          !Riemann problem variables
-         hL = qr(1,i-1)
-         hR = ql(1,i)
-         huL = qr(mu,i-1)
-         huR = ql(mu,i)
+         hL = qr(1,i-1) 
+         hR = ql(1,i) 
+         huL = qr(mu,i-1) 
+         huR = ql(mu,i) 
          bL = auxr(1,i-1)
          bR = auxl(1,i)
+         if (pressure_forcing) then
+             pL = auxr(pressure_index, i-1)
+             pR = auxl(pressure_index, i)
+         end if
 
-         hvL=qr(nv,i-1)
+         hvL=qr(nv,i-1) 
          hvR=ql(nv,i)
 
          !check for wet/dry boundary
@@ -204,20 +214,22 @@ c               bL=hstartest+bR
          maxiter = 1
 
          call riemann_aug_JCP(maxiter,3,3,hL,hR,huL,
-     &        huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,
-     &                                    drytol,g,sw,fw)
+     &        huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,
+     &                                    drytol,g,rho,sw,fw)
 
-c         call riemann_ssqfwave(maxiter,meqn,mwaves,hL,hR,huL,huR,
-c     &     hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,g,sw,fw)
+C          call riemann_ssqfwave(maxiter,meqn,mwaves,hL,hR,huL,huR,
+C      &     hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,
+C      &     rho,sw,fw)
 
-c          call riemann_fwave(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,
-c     &      bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,g,sw,fw)
+C          call riemann_fwave(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,
+C      &      bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,rho,sw,
+C      &      fw)
 
 c        !eliminate ghost fluxes for wall
          do mw=1,3
             sw(mw)=sw(mw)*wall(mw)
 
-               fw(1,mw)=fw(1,mw)*wall(mw)
+               fw(1,mw)=fw(1,mw)*wall(mw) 
                fw(2,mw)=fw(2,mw)*wall(mw)
                fw(3,mw)=fw(3,mw)*wall(mw)
          enddo
@@ -249,7 +261,7 @@ c             if (s(mw,i) .gt. 316.d0) then
 c               # shouldn't happen unless h > 10 km!
 c                write(6,*) 'speed > 316: i,mw,s(mw,i): ',i,mw,s(mw,i)
 c                endif
-	           s(mw,i)=dxdc*s(mw,i)
+               s(mw,i)=dxdc*s(mw,i)
                fwave(1,mw,i)=dxdc*fwave(1,mw,i)
                fwave(2,mw,i)=dxdc*fwave(2,mw,i)
                fwave(3,mw,i)=dxdc*fwave(3,mw,i)

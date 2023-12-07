@@ -1,6 +1,7 @@
 c-----------------------------------------------------------------------
       subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,
-     &   hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,g,sw,fw)
+     &   hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,rho,
+     &   sw,fw)
 
       ! solve shallow water equations given single left and right states
       ! This solver is described in J. Comput. Phys. (6): 3089-3113, March 2008
@@ -12,8 +13,6 @@ c-----------------------------------------------------------------------
       ! instabilities that arise (with any solver) as flow becomes transcritical over variable topo
       ! due to loss of hyperbolicity.
 
-
-
       implicit none
 
       !input
@@ -21,8 +20,8 @@ c-----------------------------------------------------------------------
       double precision fw(meqn,mwaves)
       double precision sw(mwaves)
       double precision hL,hR,huL,huR,bL,bR,uL,uR,phiL,phiR,sE1,sE2
-      double precision hvL,hvR,vL,vR
-      double precision drytol,g
+      double precision hvL,hvR,vL,vR,pL,pR
+      double precision drytol,g,rho
 
 
       !local
@@ -36,9 +35,10 @@ c-----------------------------------------------------------------------
       double precision delh,delhu,delphi,delb,delnorm
       double precision rare1st,rare2st,sdelta,raremin,raremax
       double precision criticaltol,convergencetol,raretol
+      double precision criticaltol_2, hustar_interface
       double precision s1s2bar,s1s2tilde,hbar,hLstar,hRstar,hustar
       double precision huRstar,huLstar,uRstar,uLstar,hstarHLL
-      double precision deldelh,deldelphi
+      double precision deldelh,deldelphi,delP
       double precision s1m,s2m,hm
       double precision det1,det2,det3,determinant
 
@@ -49,6 +49,7 @@ c-----------------------------------------------------------------------
       delhu = huR-huL
       delphi = phiR-phiL
       delb = bR-bL
+      delP = pR - pL
       delnorm = delh**2 + delphi**2
 
       call riemanntype(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2,
@@ -109,9 +110,12 @@ c     !---------------------------------------------------
 
 
 c     !determine the steady state wave -------------------
-      criticaltol = 1.d-6
+      !criticaltol = 1.d-6
+      ! MODIFIED:
+      criticaltol = max(drytol*g, 1d-6)
+      criticaltol_2 = sqrt(criticaltol)
       deldelh = -delb
-      deldelphi = -g*0.5d0*(hR+hL)*delb
+      deldelphi = -0.5d0 * (hR + hL) * (g * delb + delp / rho)
 
 c     !determine a few quanitites needed for steady state wave if iterated
       hLstar=hL
@@ -145,15 +149,25 @@ c           lambda(2) = max(min(0.5d0*(s1m+s2m),sE2),sE1)
          s1s2tilde= max(0.d0,uLstar*uRstar) - g*hbar
 
 c        !find if sonic problem
-         sonic=.false.
-         if (abs(s1s2bar).le.criticaltol) sonic=.true.
-         if (s1s2bar*s1s2tilde.le.criticaltol) sonic=.true.
-         if (s1s2bar*sE1*sE2.le.criticaltol) sonic = .true.
-         if (min(abs(sE1),abs(sE2)).lt.criticaltol) sonic=.true.
-         if (sE1.lt.0.d0.and.s1m.gt.0.d0) sonic = .true.
-         if (sE2.gt.0.d0.and.s2m.lt.0.d0) sonic = .true.
-         if ((uL+sqrt(g*hL))*(uR+sqrt(g*hR)).lt.0.d0) sonic=.true.
-         if ((uL-sqrt(g*hL))*(uR-sqrt(g*hR)).lt.0.d0) sonic=.true.
+         ! MODIFIED from 5.3.1 version
+         sonic = .false.
+         if (abs(s1s2bar) <= criticaltol) then
+            sonic = .true.
+         else if (s1s2bar*s1s2tilde <= criticaltol**2) then
+            sonic = .true.
+         else if (s1s2bar*sE1*sE2 <= criticaltol**2) then
+            sonic = .true.
+         else if (min(abs(sE1),abs(sE2)) < criticaltol_2) then
+            sonic = .true.
+         else if (sE1 <  criticaltol_2 .and. s1m > -criticaltol_2) then
+            sonic = .true.
+         else if (sE2 > -criticaltol_2 .and. s2m <  criticaltol_2) then
+            sonic = .true.
+         else if ((uL+dsqrt(g*hL))*(uR+dsqrt(g*hR)) < 0.d0) then
+            sonic = .true.
+         else if ((uL- dsqrt(g*hL))*(uR- dsqrt(g*hR)) < 0.d0) then
+            sonic = .true.
+         end if
 
 c        !find jump in h, deldelh
          if (sonic) then
@@ -173,6 +187,9 @@ c        !find bounds in case of critical state resonance, or negative states
             deldelh = max(deldelh,hstarHLL*(sE2-sE1)/sE2)
          endif
 
+c        ! adjust deldelh for well-balancing of atmospheric pressure difference 
+         deldelh = deldelh - delP/(rho*g)
+
 c        !find jump in phi, deldelphi
          if (sonic) then
             deldelphi = -g*hbar*delb
@@ -182,6 +199,7 @@ c        !find jump in phi, deldelphi
 c        !find bounds in case of critical state resonance, or negative states
          deldelphi=min(deldelphi,g*max(-hLstar*delb,-hRstar*delb))
          deldelphi=max(deldelphi,g*min(-hLstar*delb,-hRstar*delb))
+         deldelphi = deldelphi - hbar * delp / rho
 
          del(1)=delh-deldelh
          del(2)=delhu
@@ -254,9 +272,18 @@ c        !solve for beta(k) using Cramers Rule=================
          fw(3,mw)=beta(mw)*r(2,mw)
       enddo
       !find transverse components (ie huv jumps).
+      ! MODIFIED from 5.3.1 version
       fw(3,1)=fw(3,1)*vL
       fw(3,3)=fw(3,3)*vR
-      fw(3,2)= hR*uR*vR - hL*uL*vL - fw(3,1)- fw(3,3)
+      fw(3,2)= 0.d0
+ 
+      hustar_interface = huL + fw(1,1)   ! = huR - fw(1,3)
+      if (hustar_interface <= 0.0d0) then
+          fw(3,1) = fw(3,1) + (hR*uR*vR - hL*uL*vL - fw(3,1)- fw(3,3))
+        else
+          fw(3,3) = fw(3,3) + (hR*uR*vR - hL*uL*vL - fw(3,1)- fw(3,3))
+        end if
+
 
       return
 
@@ -265,7 +292,8 @@ c        !solve for beta(k) using Cramers Rule=================
 
 c-----------------------------------------------------------------------
       subroutine riemann_ssqfwave(maxiter,meqn,mwaves,hL,hR,huL,huR,
-     &    hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,drytol,g,sw,fw)
+     &    hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,
+     &    rho,sw,fw)
 
       ! solve shallow water equations given single left and right states
       ! steady state wave is subtracted from delta [q,f]^T before decomposition
@@ -276,8 +304,8 @@ c-----------------------------------------------------------------------
       integer meqn,mwaves,maxiter
 
       double precision hL,hR,huL,huR,bL,bR,uL,uR,phiL,phiR,sE1,sE2
-      double precision vL,vR,hvL,hvR
-      double precision drytol,g
+      double precision vL,vR,hvL,hvR,pL,pR
+      double precision drytol,g,rho
 
       !local
       integer iter
@@ -287,7 +315,7 @@ c-----------------------------------------------------------------------
       double precision delh,delhu,delphi,delb,delhdecomp,delphidecomp
       double precision s1s2bar,s1s2tilde,hbar,hLstar,hRstar,hustar
       double precision uRstar,uLstar,hstarHLL
-      double precision deldelh,deldelphi
+      double precision deldelh,deldelphi,delP
       double precision alpha1,alpha2,beta1,beta2,delalpha1,delalpha2
       double precision criticaltol,convergencetol
       double precision sL,sR
@@ -301,12 +329,13 @@ c-----------------------------------------------------------------------
       delhu = huR-huL
       delphi = phiR-phiL
       delb = bR-bL
+      delP = pR - pL
 
       convergencetol= 1.d-16
       criticaltol = 1.d-99
 
       deldelh = -delb
-      deldelphi = -g*0.5d0*(hR+hL)*delb
+      deldelphi = -0.5d0 * (hR + hL) * (g * delb + delP / rho)
 
 !     !if no source term, skip determining steady state wave
       if (abs(delb).gt.0.d0) then
@@ -450,7 +479,8 @@ c               hustar=huL+alpha1*sE1
 
 c-----------------------------------------------------------------------
       subroutine riemann_fwave(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,
-     &            bL,bR,uL,uR,vL,vR,phiL,phiR,s1,s2,drytol,g,sw,fw)
+     &            bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,s1,s2,drytol,g,rho,
+     &            sw,fw)
 
       ! solve shallow water equations given single left and right states
       ! solution has two waves.
@@ -462,15 +492,15 @@ c-----------------------------------------------------------------------
       integer meqn,mwaves
 
       double precision hL,hR,huL,huR,bL,bR,uL,uR,phiL,phiR,s1,s2
-      double precision hvL,hvR,vL,vR
-      double precision drytol,g
+      double precision hvL,hvR,vL,vR,pL,pR
+      double precision drytol,g,rho
 
       double precision sw(mwaves)
       double precision fw(meqn,mwaves)
 
       !local
       double precision delh,delhu,delphi,delb,delhdecomp,delphidecomp
-      double precision deldelh,deldelphi
+      double precision deldelh,deldelphi,delP
       double precision beta1,beta2
 
 
@@ -479,8 +509,9 @@ c-----------------------------------------------------------------------
       delhu = huR-huL
       delphi = phiR-phiL
       delb = bR-bL
+      delP = pR - pL
 
-      deldelphi = -g*0.5d0*(hR+hL)*delb
+      deldelphi = -0.5d0 * (hR + hL) * (g * delb + delP / rho)
       delphidecomp = delphi - deldelphi
 
       !flux decomposition
@@ -623,4 +654,3 @@ c           !root finding using a Newton iteration on sqrt(h)===
       return
 
       end ! subroutine riemanntype----------------------------------------------------------------
-

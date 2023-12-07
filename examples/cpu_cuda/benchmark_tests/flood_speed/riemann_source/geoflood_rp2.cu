@@ -11,7 +11,7 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 @input: ql - conatins the state vector at the left edge of each cell
         qr - contains the state vector at the right edge of each cell
         
-        This data is along a slice in the x-direction if idir = 1 or along a slice in the y-direction if idir = 2.
+        This data is along a slice in the x-direction if idir = 0 or along a slice in the y-direction if idir = 1.
 
         idir - indicates the direction of the slice
 
@@ -132,10 +132,10 @@ void flood_speed_assign_speeds(cudaclaw_cuda_speeds_t *speeds)
 
 /* Normal Riemann solver for the 2d shallow water equations with topography */
 __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
-    int maux, double ql[], double qr[],
-    double auxl[], double auxr[],
-    double fwave[], double s[], 
-    double amdq[], double apdq[])
+                                int maux, double ql[], double qr[],
+                                double auxl[], double auxr[],
+                                double fwave[], double s[], 
+                                double amdq[], double apdq[])
 {
     /* Local variables */
     double wall[3], fw[9], sw[3];
@@ -302,7 +302,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
-        if (idir == 1) {
+        if (idir == 0) {
             dxdc = earth_radius*deg2rad;
         } else {
             dxdc = earth_radius*cos(auxl[2])*deg2rad;
@@ -352,7 +352,7 @@ void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
 }
 
 /* Transverse Riemann solver for the 2d shallow water equations with topography 
-@desc: Using The Jacobian matrix from left cell (imp == 1) or right cell (imp == 2) to compute the transverse fluxes.
+@desc: Using The Jacobian matrix from left cell (imp == 0) or right cell (imp == 1) to compute the transverse fluxes.
 */
 
 __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
@@ -366,15 +366,15 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
 
-    mu = (idir == 1) ? 2 : 3;
-    mv = (idir == 1) ? 3 : 2;
+    mu = 1+idir;
+    mv = 2-idir;
 
-    h = (imp == 1) ? qr[0] : ql[0];
+    h = (imp == 0) ? qr[0] : ql[0];
 
     if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
 
     /* Compute velocities in relevant cell, and other quantities */
-    if (imp == 1) {
+    if (imp == 0) {
         // fluctuations being split is left-going
         u = qr[mu] / h;
         v = qr[mv] / h;
@@ -394,11 +394,11 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     do the splitting (no dry cells), and compute necessary quantities */
     if (coordinate_system == 2) {
         // On the sphere
-        if (idir == 2) {
+        if (idir == 1) {
             dxdcp = earth_radius * deg2rad;
             dxdcm = dxdcp;
         } else {
-            if (imp == 1) {
+            if (imp == 0) {
                 dxdcp = earth_radius * cos(aux3[2] * deg2rad);
                 dxdcm = earth_radius * cos(aux1[2] * deg2rad);
             } else {
@@ -413,8 +413,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     }
 
     /* Compute some speeds necessary for the Jacobian 
-       - Computing upgoing, downgoing waves either in cell on left (if imp==1)
-         or on the right (if imp==2) 
+       - Computing upgoing, downgoing waves either in cell on left (if imp==0)
+         or on the right (if imp==1) 
        - To achieve this we use q values in cells above and below, however these
           aren't available (only in aux values)
     */
@@ -567,9 +567,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     /* no strong rarefaction wave */
     if (!rarecorrector) {
         lambda[1]= 0.5*(lambda[0] + lambda[2]);
-        r[1] = 1.0; // r[0,1]
+        r[1] = 0.0; // r[0,1]
         r[4] = 0.0; // r[1,1]
-        r[7] = 0.0; // r[2,1]
+        r[7] = 1.0; // r[2,1]
     }
 
     /* === Determine the steady state wave === */
@@ -601,7 +601,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
             lambda[1] = 0.5*(lambda[0] + lambda[2]);
             r[1] = 0.0; // r[0,1]
             r[4] = 0.0; // r[1,1]
-            r[7] = 0.0; // r[2,1]
+            r[7] = 1.0; // r[2,1]
         }
 
         /* For any two states; Q_i and Q_i-1, eigen values of SWE must satify: lambda(q_i)*lambda(q_i-1) = u^2 -gh, writing this conditon as a function of Q_i and Q_i-1, u and h become averages in lambda(q_i)*lambda(q_i-1) = u^2 -gh and these averages are denoted by bar and tilde. */
