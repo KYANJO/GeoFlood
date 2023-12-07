@@ -238,7 +238,7 @@ void cudaclaw_b4step2(fclaw2d_global_t *glob,
     PROFILE_CUDA_GROUP("cudaclaw_b4step2",1);
     fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
 
-    if (cudaclaw_vt->b4step2 != NULL)
+    if (cudaclaw_vt->fort_b4step2 != NULL)
     {
         int mx,my,mbc;
         double xlower,ylower,dx,dy;
@@ -315,13 +315,14 @@ double cudaclaw_update(fclaw2d_global_t *glob,
 
     /* ------------------------------- Call b4step2 ----------------------------------- */
 #if 1
-    if (cudaclaw_vt->b4step2 != NULL)
+    if (cudaclaw_vt->fort_b4step2 != NULL)
     {
         fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
-        cudaclaw_vt->b4step2(glob,
-                           this_patch,
-                           this_block_idx,
-                           this_patch_idx,t,dt);
+        // cudaclaw_vt->fort_b4step2(glob,
+        //                    this_patch,
+        //                    this_block_idx,
+        //                    this_patch_idx,t,dt);
+        cudaclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
         fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
     }
 #endif
@@ -397,15 +398,18 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     {
         if (cuclaw_opt->src_term > 0)
         {   
-            FCLAW_ASSERT(cudaclaw_vt->src2 != NULL);
+            FCLAW_ASSERT(cudaclaw_vt->fort_src2 != NULL);
             // iterate over patches in buffer and call src2 to update them
             for (int i = 0; i < (iter+1); i++)
             {
-                cudaclaw_vt->src2(glob,
-                                  patch_data->patch_array[i],
-                                  patch_data->blockno_array[i],
-                                  patch_data->patchno_array[i],
-                                  t,dt);
+                // cudaclaw_vt->fort_src2(glob,
+                //                   patch_data->patch_array[i],
+                //                   patch_data->blockno_array[i],
+                //                   patch_data->patchno_array[i],
+                //                   t,dt);
+                cudaclaw_src2(glob,patch_data->patch_array[i],
+                              patch_data->blockno_array[i],
+                              patch_data->patchno_array[i],t,dt);
             }
             FCLAW_FREE(patch_data->patch_array);
             FCLAW_FREE(patch_data->patchno_array);
@@ -953,38 +957,6 @@ void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
     gauges_vt->update_gauge                  = geoclaw_gauge_update_default;
     gauges_vt->print_gauge_buffer            = geoclaw_print_gauges_default; 
 
-/*-------*/
-
-    // /* ForestClaw vtable items */
-    // fclaw_vt->output_frame                   = cudaclaw_output;
-    // fclaw_vt->problem_setup                  = cudaclaw_setprob;    
-
-    // /* These could be over-written by user specific settings */
-    // patch_vt->initialize                     = cudaclaw_qinit;
-    // patch_vt->setup                          = cudaclaw_setaux; 
-    // patch_vt->physical_bc                    = cudaclaw_bc2;
-    // patch_vt->single_step_update             = cudaclaw_update;
-
-    // /* Set user data */
-    // patch_vt->create_user_data  = cudaclaw_allocate_fluxes;
-    // patch_vt->destroy_user_data = cudaclaw_deallocate_fluxes;
-
-    // /* Wrappers so that user can change argument list */
-    // cudaclaw_vt->b4step2        = cudaclaw_b4step2;
-    // cudaclaw_vt->src2           = cudaclaw_src2;
-
-    // /* Required functions  - error if NULL */
-    // cudaclaw_vt->fort_bc2       = CUDACLAW_BC2_DEFAULT;
-    // cudaclaw_vt->fort_qinit     = NULL;
-    // cudaclaw_vt->fort_rpn2      = NULL;
-    // cudaclaw_vt->fort_rpt2      = NULL;
-
-    // /* Optional functions - call only if non-NULL */
-    // cudaclaw_vt->fort_setprob   = NULL;
-    // cudaclaw_vt->fort_setaux    = NULL;
-    // cudaclaw_vt->fort_b4step2   = NULL;
-    // cudaclaw_vt->fort_src2      = NULL;
-
     cudaclaw_vt->is_set = 1;
 
 	FCLAW_ASSERT(fclaw_pointer_map_get(glob->vtables,"fc2d_cudaclaw") == NULL);
@@ -1033,7 +1005,7 @@ void fc2d_cudaclaw_setprob(fclaw2d_global_t *glob)
     cudaclaw_setprob(glob);
 }
 
-/* This can be set to cudaclaw_vt->src2 */
+/* This can be set to cudaclaw_vt->fort_src2 */
 void fc2d_cudaclaw_src2(fclaw2d_global_t* glob,
                           fclaw2d_patch_t *this_patch,
                           int this_block_idx,

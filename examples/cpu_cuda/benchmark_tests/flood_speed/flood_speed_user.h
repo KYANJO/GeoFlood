@@ -68,6 +68,14 @@ user_options_t* flood_speed_options_register (fclaw_app_t * app,
                                           const char *configfile);
 void flood_speed_options_store (fclaw2d_global_t* glob, user_options_t* user);
 user_options_t* flood_speed_get_options(fclaw2d_global_t* glob);
+
+// ------------------------------------------ non-cuda functions ----------------------------
+#if 0
+#define FLOOD_SPEED_SETPROB FCLAW_F77_FUNC(flood_speed_setprob, FLOOD_SPEED_SETPROB)
+void FLOOD_SPEED_SETPROB(const double* grav, const double* drytol,
+                         const double* earth_radius, const int* coord_system,
+                         const int* mcapa);
+#endif
 // #define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 
 // void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
@@ -77,15 +85,15 @@ user_options_t* flood_speed_get_options(fclaw2d_global_t* glob);
 //                     double q[], const int* maux, double aux[]);
 
 // //  BC (Fortran to c)
-// #define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
+#define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
 
-// void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
-//                     const int* mx, const int* my,
-//                     const double* xlower, const double* ylower,
-//                     const double* dx, const double* dy,
-//                     const double q[], const int* maux,
-//                     const double aux[], const double* t,
-//                     const double* dt, const int mthbc[]);
+void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    const double q[], const int* maux,
+                    const double aux[], const double* t,
+                    const double* dt, const int mthbc[]);
 
 
 /* Mappings */

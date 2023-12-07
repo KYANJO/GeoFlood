@@ -164,7 +164,8 @@ options_register (fclaw_app_t * app, void *package, sc_options_t * opt)
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
-
+    FCLAW_ASSERT (opt != NULL);
+    
     clawopt = (fc2d_cudaclaw_options_t*) package;
 
     return cudaclaw_register(clawopt,opt);

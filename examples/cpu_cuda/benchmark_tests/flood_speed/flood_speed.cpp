@@ -89,6 +89,7 @@ void run_program(fclaw2d_global_t* glob)
                                     clawopt->mwaves,
                                     clawopt->use_fwaves);
         fc2d_cudaclaw_solver_initialize(glob);
+        // fc2d_geoclaw_solver_initialize(glob); //initialize cuda solver using geoclaw solver
     }
     else
     {

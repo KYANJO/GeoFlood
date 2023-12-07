@@ -73,7 +73,7 @@ void setprob_cuda()
     printf("earth_rad = %f\n",earth_rad);
     printf("coordinate_system_ = %d\n",coordinate_system_);
     printf("mcapa_ = %d\n",mcapa_);
-    return;
+    
 
     /* copy to device */
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));

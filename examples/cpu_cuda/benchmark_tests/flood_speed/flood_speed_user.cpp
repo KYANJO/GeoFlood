@@ -45,7 +45,8 @@ void flood_speed_link_solvers(fclaw2d_global_t *glob)
     else 
     {
         fc2d_cudaclaw_vtable_t *cuclaw_vt = fc2d_cudaclaw_vt(glob);
-        cuclaw_vt->fort_qinit = &FC2D_GEOCLAW_QINIT;
+        // cuclaw_vt->fort_qinit = &FC2D_GEOCLAW_QINIT;
+        cuclaw_vt->fort_bc2 = &FLOOD_SPEED_BC2;
         // cudaclaw_vt->fort_rpn2  = &FC2D_GEOCLAW_RPN2;
         // cudaclaw_vt->fort_rpt2  = &FC2D_GEOCLAW_RPT2;
 

@@ -1,13 +1,5 @@
 # -- fortran library
 add_library(cpu_cuda_f OBJECT
-	fortran_source/cudaclaw_inlinelimiter.f
-	fortran_source/cudaclaw_set_capacity.f
-	fortran_source/cudaclaw_block.f
-	fortran_source/cudaclaw_bc2_default.f
-	fortran_source/cudaclaw_flux2.f
-	fortran_source/cudaclaw_flux2fw.f
-	fortran_source/cudaclaw_step2.f
-	fortran_source/cudaclaw_step2_wrap.f
 	geoclaw_solver/amrlib_source/amr_module.f90 
 	geoclaw_solver/geolib_source/utility_module.f90 
 	geoclaw_solver/geolib_source/geoclaw_module.f90 
@@ -59,6 +51,14 @@ add_library(cpu_cuda_f OBJECT
 	geoclaw_solver/fclaw2d_source/fc2d_geoclaw_local_ghost_pack_aux_fort.f 
 	geoclaw_solver/fclaw2d_source/fc2d_geoclaw_diagnostics_fort.f 
 	geoclaw_solver/fclaw2d_source/fc2d_geoclaw_timeinterp_fort.f
+	fortran_source/cudaclaw_inlinelimiter.f
+	fortran_source/cudaclaw_set_capacity.f
+	fortran_source/cudaclaw_block.f
+	fortran_source/cudaclaw_bc2_default.f
+	fortran_source/cudaclaw_flux2.f
+	fortran_source/cudaclaw_flux2fw.f
+	fortran_source/cudaclaw_step2.f
+	fortran_source/cudaclaw_step2_wrap.f
 	cuda_source/data_swap.f90
 )
 
@@ -69,7 +69,8 @@ target_link_Libraries(cpu_cuda_f PRIVATE
 set_target_properties(cpu_cuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # -- add library 
-add_library(cpu_cuda STATIC)
+# add_library(cpu_cuda STATIC)
+add_library(cpu_cuda)
 set_target_properties(cpu_cuda PROPERTIES EXPORT_NAME CPU_CUDA)
 
 # device code needs to relcoateable since it is in a shared library
@@ -81,6 +82,9 @@ set_target_properties(cpu_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 target_sources(cpu_cuda PRIVATE
 	$<TARGET_OBJECTS:cpu_cuda_f>
+	geoclaw_solver/fc2d_geoclaw_gauges_default.c 
+	geoclaw_solver/fc2d_geoclaw_output_ascii.c
+	geoclaw_solver/fc2d_geoclaw_run.c
   	fc2d_cudaclaw.cpp
 	fc2d_cudaclaw_options.c
 	cuda_source/cudaclaw_step2.cu
@@ -90,10 +94,7 @@ target_sources(cpu_cuda PRIVATE
 	cuda_source/cudaclaw_flux2.cu
 	fc2d_cuda_profiler.cu
 	cuda_source/cudaclaw_store_patches.cu
-	# cuda_source/data_swap.c
-	geoclaw_solver/fc2d_geoclaw_gauges_default.c 
-	geoclaw_solver/fc2d_geoclaw_output_ascii.c
-	geoclaw_solver/fc2d_geoclaw_run.c
+	# cuda_source/data_swap.c	
 )
 
 target_link_libraries(cpu_cuda PUBLIC 
@@ -114,6 +115,10 @@ endif()
 
 # -- install
 install(FILES
+	geoclaw_solver/types.h
+	geoclaw_solver/fc2d_geoclaw.h
+	geoclaw_solver/fc2d_geoclaw_fort.h
+	geoclaw_solver/fc2d_geoclaw_gauges_default.h
 	fc2d_cudaclaw.h
 	fc2d_cudaclaw_cuda.h
 	fc2d_cudaclaw_check.h
@@ -122,16 +127,20 @@ install(FILES
 	cudaclaw_user_fort.h
 	fc2d_cudaclaw_fort.h
 	# cuda_source/data_swap.h
-	geoclaw_solver/types.h
-	geoclaw_solver/fc2d_geoclaw.h
-	geoclaw_solver/fc2d_geoclaw_fort.h
-	geoclaw_solver/fc2d_geoclaw_gauges_default.h
   DESTINATION include
 )
 
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/include/geoclaw_module.mod
-  # ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/topo_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/qinit_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/friction_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/regions_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/utility_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/fixedgrids_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/refinement_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/amr_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
   DESTINATION include
 )
 
