@@ -66,23 +66,23 @@ cudaclaw_register (fc2d_cudaclaw_options_t* clawopt, sc_options_t * opt)
 
      /* Coarsen criteria */
     sc_options_add_double (opt, 0, "dry_tolerance_c", &clawopt->dry_tolerance_c, 1.0,
-                           "[geoclaw] Coarsen criteria: Dry tolerance [1.0]");
+                           "[cudaclaw] Coarsen criteria: Dry tolerance [1.0]");
 
     sc_options_add_double (opt, 0, "wave_tolerance_c", &clawopt->wave_tolerance_c, 1.0,
-                           "[geoclaw] Coarsen criteria: Wave tolerance [1.0]");
+                           "[cudaclaw] Coarsen criteria: Wave tolerance [1.0]");
 
     sc_options_add_int (opt, 0, "speed_tolerance_entries_c",
                         &clawopt->speed_tolerance_entries_c, 1,
-                        "[geoclaw] Coarsen criteria: Number of speed tolerance entries [1]");
+                        "[cudaclaw] Coarsen criteria: Number of speed tolerance entries [1]");
 
     fclaw_options_add_double_array (opt, 0, "speed_tolerance_c",
                                     &clawopt->speed_tolerance_c_string, NULL,
                                     &clawopt->speed_tolerance_c, 
                                     clawopt->speed_tolerance_entries_c,
-                                    "[geoclaw] Coarsen criteria: speed tolerance [NULL]");
+                                    "[cudaclaw] Coarsen criteria: speed tolerance [NULL]");
 
     sc_options_add_int (opt, 0, "mbathy", &clawopt->mbathy, 1,
-                        "[geoclaw] Location of bathymetry in aux array [1]");
+                        "[cudaclaw] Location of bathymetry in aux array [1]");
 
 
     sc_options_add_bool (opt, 0, "ascii-out", &clawopt->ascii_out, 0,
@@ -198,7 +198,7 @@ options_check (fclaw_app_t * app, void *package, void *registered)
     FCLAW_ASSERT (registered == NULL);
 
     clawopt = (fc2d_cudaclaw_options_t*) package;
-    FCLAW_ASSERT (clawopt->is_registered);
+    FCLAW_ASSERT (clawopt->is_registered != 0);
 
     return cudaclaw_check(clawopt);
 }
@@ -210,7 +210,7 @@ options_destroy (fclaw_app_t * app, void *package, void *registered)
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
-    FCLAW_ASSERT (registered == NULL);
+    FCLAW_ASSERT (registered == 0);
 
     clawopt = (fc2d_cudaclaw_options_t*) package;
     FCLAW_ASSERT (clawopt->is_registered);

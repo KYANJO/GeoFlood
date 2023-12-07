@@ -26,6 +26,14 @@
 #ifndef FC2D_CUDACLAW_H
 #define FC2D_CUDACLAW_H
 
+#include "geoclaw_solver/fc2d_geoclaw.h"
+#include "geoclaw_solver/fc2d_geoclaw_options.h"
+#include "geoclaw_solver/fc2d_geoclaw_fort.h"
+#include "geoclaw_solver/fc2d_geoclaw_output_ascii.h"
+#include <fclaw_gauges.h>
+#include "geoclaw_solver/fc2d_geoclaw_gauges_default.h"
+#include <fclaw2d_convenience.h>  /* Needed to get search function for gauges */
+
 #include <fc2d_cudaclaw_cuda.h>  /* Defines typedefs */
 
 #ifdef __cplusplus

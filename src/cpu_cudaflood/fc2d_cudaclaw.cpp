@@ -382,6 +382,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         /* (1) We have filled the buffer */
         maxcfl = cudaclaw_step2_batch(glob,(cudaclaw_fluxes_t*) patch_data->flux_array,
                                       patch_buffer_len,t,dt);
+        printf("iter = %d maxcfl_0 = %f\n",iter,maxcfl);
+        // exit(0);
     }
     else if ((iter+1) == total)
     {        
@@ -389,6 +391,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
             that need to be updated.  */
         maxcfl = cudaclaw_step2_batch(glob,(cudaclaw_fluxes_t*) patch_data->flux_array,
                                       total%patch_buffer_len,t,dt); 
+        printf("iter = %d maxcfl = %f\n",iter,maxcfl);
+        // exit(0);
     }  
 
     
