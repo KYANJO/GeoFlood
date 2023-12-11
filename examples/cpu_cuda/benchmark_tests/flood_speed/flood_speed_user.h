@@ -60,6 +60,7 @@ typedef struct user_options
 void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
 void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
 void flood_speed_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
+void flood_speed_assign_b4step2(cudaclaw_cuda_b4step2_t *b4step2);
 
 void setprob_cuda();
 
