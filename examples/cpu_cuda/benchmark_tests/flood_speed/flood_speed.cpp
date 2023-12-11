@@ -85,7 +85,7 @@ void run_program(fclaw2d_global_t* glob)
     if(user_opt->cuda != 0)
     {
         /* Initialize virtual tables for solvers */
-        fc2d_cudaclaw_options_t *clawopt = fc2d_cudaclaw_get_options(glob);
+        fc2d_geoclaw_options_t *clawopt = fc2d_geoclaw_get_options(glob);
 
         fc2d_cudaclaw_initialize_GPUs(glob);
 
@@ -104,7 +104,8 @@ void run_program(fclaw2d_global_t* glob)
     
     flood_speed_link_solvers(glob);
 
-    if(user_opt -> cuda == 0) fc2d_geoclaw_module_setup(glob);
+    // if(user_opt -> cuda == 0) 
+    fc2d_geoclaw_module_setup(glob);
 
     /* ---------------------------------------------------------------
        Initialize, run and finalize
@@ -137,29 +138,31 @@ main (int argc, char **argv)
     user_options_t              *user_opt;
     fclaw_options_t             *fclaw_opt;
     fclaw2d_clawpatch_options_t *clawpatch_opt;
-    fc2d_cudaclaw_options_t     *cuclaw_opt;
-    fc2d_geoclaw_options_t      *geoclaw_opt;
+    fc2d_geoclaw_options_t     *cuclaw_opt;
+    // fc2d_geoclaw_options_t      *geoclaw_opt;
 
     fclaw2d_global_t            *glob;
     fclaw2d_domain_t            *domain;
 
+    int retval;
+
      /* Create new options packages */
     fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
     clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
-    cuclaw_opt =          fc2d_cudaclaw_options_register(app,"cudaclaw","fclaw_options.ini");
+    cuclaw_opt =          fc2d_geoclaw_options_register(app,"cudaclaw","fclaw_options.ini");
     
-    geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
+    // geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
     user_opt =                flood_speed_options_register(app,"fclaw_options.ini"); 
 
     /* Read configuration file(s) and command line, and process options */
     int first_arg;
     fclaw_exit_type_t vexit;
-    // options = fclaw_app_get_options (app);
-    // retval = fclaw_options_read_from_file(options);
+    options = fclaw_app_get_options (app);
+    retval = fclaw_options_read_from_file(options);
     vexit =  fclaw_app_options_parse (app, &first_arg,"fclaw_options.ini.used");
 
     /* Run the program */
-    if (!vexit)
+    if (!retval & !vexit)
     {
         int size, rank;
         sc_MPI_Comm mpicomm = fclaw_app_get_mpi_size_rank (app, &size, &rank);
@@ -170,8 +173,8 @@ main (int argc, char **argv)
         /* Store option packages in glob */
         fclaw2d_options_store           (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
-        fc2d_cudaclaw_options_store     (glob, cuclaw_opt);
-        fc2d_geoclaw_options_store      (glob, geoclaw_opt);
+        fc2d_geoclaw_options_store     (glob, cuclaw_opt);
+        // fc2d_geoclaw_options_store      (glob, geoclaw_opt);
         flood_speed_options_store       (glob, user_opt);
 
         // domain = create_domain(mpicomm, fclaw_opt);

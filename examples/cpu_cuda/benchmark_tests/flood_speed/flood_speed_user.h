@@ -25,7 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef FLOOD_SPEED_USER_H
 #define FLOOD_SPEED_USER_H
-#include <fc2d_cudaclaw.h>
+// #include <fc2d_cudaclaw.h>
+#include <fc2d_geoclaw.h>
 #include <fc2d_cudaclaw_options.h>
 #include <cudaclaw_user_fort.h>
 

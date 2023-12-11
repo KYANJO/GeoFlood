@@ -76,7 +76,7 @@ endif()
  
 
   if(cudaflood)
-    add_subdirectory(src/fc2d_cudaclaw)
+     add_subdirectory(src/fc2d_cudaflood)
   endif(cudaflood)
 
   if(cpu_cuda)

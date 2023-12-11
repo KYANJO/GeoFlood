@@ -29,8 +29,9 @@ target_include_directories(flood_speed_cpucuda PRIVATE
 )
 
 target_link_libraries(flood_speed_cpucuda PRIVATE 
-  GEOFLOOD::CPU_CUDA
-  GEOFLOOD::GEOCLAW
+  GEOFLOOD::CUDA_FLOOD
+  # GEOFLOOD::GEOCLAW
+  # GEOFLOOD::CPU_CUDA
 )
 
 # -- set environment string used for regression tests
