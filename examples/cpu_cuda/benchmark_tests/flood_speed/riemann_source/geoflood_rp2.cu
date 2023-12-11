@@ -186,7 +186,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     if (qr[0] <= drytol && ql[0] <= drytol) {
         goto label30;
     }
-    
+
     /* Riemann problem variables */
     hL  = qr[0];
     hR  = ql[0];
@@ -378,7 +378,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     h = (imp == 0) ? qr[0] : ql[0];
 
     // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
-    if (h <= drytol) {
+    if (h > drytol) {
         /* Compute velocities in relevant cell, and other quantities */
         if (imp == 0) {
             // fluctuations being split is left-going
@@ -398,7 +398,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
 
         /* Check if cell that transverse wave go into are both too high: */
         // if (eta < fmin(topo1, topo3)) return; 
-        if (eta < fmin(topo1, topo3)) {
+        if (eta >= fmin(topo1, topo3)) {
 
             /* Check if cell that transverse waves go into are both to high, if so,
             do the splitting (no dry cells), and compute necessary quantities */
