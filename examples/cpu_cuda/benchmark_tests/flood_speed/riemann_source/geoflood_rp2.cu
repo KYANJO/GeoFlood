@@ -25,7 +25,7 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 
 #include "../flood_speed_user.h"
 #include <math.h>
-#include <fc2d_cudaclaw.h>
+#include <fc2d_geoclaw.h>
 #include <fc2d_cudaclaw_check.h>
 #include <fc2d_cudaclaw_options.h>
 #include <cudaclaw_user_fort.h>
@@ -183,124 +183,128 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     }
 
     // Skip problem if in a completely dry area
-    if (qr[0] > drytol && ql[0] > drytol) {
-        /* Riemann problem variables */
-        hL  = qr[0];
-        hR  = ql[0];
-        huL = qr[mu];
-        huR = ql[mu];
-        bL = auxr[0];
-        bR = auxl[0];
+    if (qr[0] <= drytol && ql[0] <= drytol) {
+        goto label30;
+    }
+    
+    /* Riemann problem variables */
+    hL  = qr[0];
+    hR  = ql[0];
+    huL = qr[mu];
+    huR = ql[mu];
+    bL = auxr[0];
+    bR = auxl[0];
 
-        hvL = qr[mv];
-        hvR = ql[mv];
+    hvL = qr[mv];
+    hvR = ql[mv];
 
-        // Check for wet/dry left boundary
-        if (hR > drytol) {
-            uR = huR / hR;
-            vR = hvR / hR;
-            phiR = 0.5 * s_grav * hR * hR + huR * huR / hR;
-        } else {
-            hR = 0.0;
-            huR = 0.0;
-            hvR = 0.0;
-            uR = 0.0;
-            vR = 0.0;
-            phiR = 0.0;
+    // Check for wet/dry left boundary
+    if (hR > drytol) {
+        uR = huR / hR;
+        vR = hvR / hR;
+        phiR = 0.5 * s_grav * hR * hR + huR * huR / hR;
+    } else {
+        hR = 0.0;
+        huR = 0.0;
+        hvR = 0.0;
+        uR = 0.0;
+        vR = 0.0;
+        phiR = 0.0;
+    }
+
+    // Check for wet/dry right boundary
+    if (hL > drytol) {
+        uL = huL / hL;
+        vL = hvL / hL;
+        phiL = 0.5 * s_grav * hL * hL + huL * huL / hL;
+    } else {
+        hL = 0.0;
+        huL = 0.0;
+        hvL = 0.0;
+        uL = 0.0;
+        vL = 0.0;
+        phiL = 0.0;
+    }
+
+    /* left and right surfaces depth inrelation to topography */
+    wall[0] = 1.0;
+    wall[1] = 1.0;
+    wall[2] = 1.0;
+    if (hR <= drytol) {
+        /* determine the wave structure */
+        riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
+        hstartest = fmax(hL,hstar);
+        if (hstartest + bL < bR) {
+            /* hL+bL < bR and hstar+bL < bR, so water can't overtop right cell 
+            (move into right cell) so right state should become ghost values 
+            that mirror left for wall problem) */
+            wall[1] = 0.0;
+            wall[2] = 0.0;
+            hR = hL;
+            huR = -huL;
+            bR = bL;
+            phiR = phiL;
+            uR = -uL;
+            vR = vL;
+            /* here we already have huR =- huL, so we don't need to change it */
+        } else if (hL+bL < bR) {
+            /* hL+bL < bR and hstar+bL >bR, so we set bR to the water level in 
+            the left cell so that water can possibly overtop the right cell (move into the right cell) */ 
+            bR = hL + bL;
         }
-
-        // Check for wet/dry right boundary
-        if (hL > drytol) {
-            uL = huL / hL;
-            vL = hvL / hL;
-            phiL = 0.5 * s_grav * hL * hL + huL * huL / hL;
-        } else {
-            hL = 0.0;
-            huL = 0.0;
-            hvL = 0.0;
-            uL = 0.0;
-            vL = 0.0;
-            phiL = 0.0;
-        }
-
-        /* left and right surfaces depth inrelation to topography */
-        wall[0] = 1.0;
-        wall[1] = 1.0;
-        wall[2] = 1.0;
-        if (hR <= drytol) {
-            /* determine the wave structure */
-            riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
-            hstartest = fmax(hL,hstar);
-            if (hstartest + bL < bR) {
-                /* hL+bL < bR and hstar+bL < bR, so water can't overtop right cell 
-                (move into right cell) so right state should become ghost values 
-                that mirror left for wall problem) */
-                wall[1] = 0.0;
-                wall[2] = 0.0;
-                hR = hL;
-                huR = -huL;
-                bR = bL;
-                phiR = phiL;
-                uR = -uL;
-                vR = vL;
-                /* here we already have huR =- huL, so we don't need to change it */
-            } else if (hL+bL < bR) {
-                /* hL+bL < bR and hstar+bL >bR, so we set bR to the water level in 
-                the left cell so that water can possibly overtop the right cell (move into the right cell) */ 
-                bR = hL + bL;
-            }
-        } else if (hL <= drytol) { /* right surface is lower than left topo */
-            /* determine the Riemann structure */
-            riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
-            hstartest = fmax(hR,hstar);
-            if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
-            {
-                wall[0] = 0.0;
-                wall[1] = 0.0;
-                hL = hR;
-                huL = -huR;
-                bL = bR;
-                phiL = phiR;
-                uL = -uR;
-                vL = vR;
-            } else if (hR+bR < bL) {
-                bL = hR + bR;
-            }
-        }
-
-        /* determine wave speeds */
-        sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
-        sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
-
-        uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe average
-        chat = sqrt(0.5*s_grav*(hL+hR)); // Roe average
-        sRoe1 = uhat - chat; // Roe wave speed 1 wave
-        sRoe2 = uhat + chat; // Roe wave speed 2 wave
-
-        sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
-        sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
-
-        /* --- end of initializing --- */
-
-        /* === solve Riemann problem === */
-        riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
-
-        // eliminate ghost fluxes for wall
-        for (mw=0; mw<3; mw++) {
-            sw[mw] *= wall[mw];
-            fw[mw] *= wall[mw];
-            fw[mw + mu*3] *= wall[mw];
-            fw[mw + mv*3] *= wall[mw];
-        }
-
-        // update fwave and corresponding speeds
-        for (mw=0; mw<mwaves; mw++) {
-            s[mw] = sw[mw];
-            fwave[mw + 0*mwaves] = fw[mw];
-            fwave[mw + mu*mwaves] = fw[mw + mu*3];
-            fwave[mw + mv*mwaves] = fw[mw + mv*3];
+    } else if (hL <= drytol) { /* right surface is lower than left topo */
+        /* determine the Riemann structure */
+        riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
+        hstartest = fmax(hR,hstar);
+        if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
+        {
+            wall[0] = 0.0;
+            wall[1] = 0.0;
+            hL = hR;
+            huL = -huR;
+            bL = bR;
+            phiL = phiR;
+            uL = -uR;
+            vL = vR;
+        } else if (hR+bR < bL) {
+            bL = hR + bR;
         }
     }
+
+    /* determine wave speeds */
+    sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
+    sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
+
+    uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe average
+    chat = sqrt(0.5*s_grav*(hL+hR)); // Roe average
+    sRoe1 = uhat - chat; // Roe wave speed 1 wave
+    sRoe2 = uhat + chat; // Roe wave speed 2 wave
+
+    sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
+    sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
+
+    /* --- end of initializing --- */
+
+    /* === solve Riemann problem === */
+    riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
+
+    // eliminate ghost fluxes for wall
+    for (mw=0; mw<3; mw++) {
+        sw[mw] *= wall[mw];
+        fw[mw] *= wall[mw];
+        fw[mw + mu*3] *= wall[mw];
+        fw[mw + mv*3] *= wall[mw];
+    }
+
+    // update fwave and corresponding speeds
+    for (mw=0; mw<mwaves; mw++) {
+        s[mw] = sw[mw];
+        fwave[mw + 0*mwaves] = fw[mw];
+        fwave[mw + mu*mwaves] = fw[mw + mu*3];
+        fwave[mw + mv*mwaves] = fw[mw + mv*3];
+    }
+
+    label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
@@ -373,89 +377,95 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     h = (imp == 0) ? qr[0] : ql[0];
 
-    if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
-
-    /* Compute velocities in relevant cell, and other quantities */
-    if (imp == 0) {
-        // fluctuations being split is left-going
-        u = qr[mu] / h;
-        v = qr[mv] / h;
-        eta = h + aux2[0];
-        topo1 = aux1[0];
-        topo3 = aux3[0];
-    } else {
-        // fluctuations being split is right-going
-        u = ql[mu] / h;
-        v = ql[mv] / h;
-        eta = h + aux2[0];
-        topo1 = aux1[0];
-        topo3 = aux3[0];
-    }
-
-    /* Check if cell that transverse waves go into are both to high, if so,
-    do the splitting (no dry cells), and compute necessary quantities */
-    if (coordinate_system == 2) {
-        // On the sphere
-        if (idir == 1) {
-            dxdcp = earth_radius * deg2rad;
-            dxdcm = dxdcp;
+    // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
+    if (h <= drytol) {
+        /* Compute velocities in relevant cell, and other quantities */
+        if (imp == 0) {
+            // fluctuations being split is left-going
+            u = qr[mu] / h;
+            v = qr[mv] / h;
+            eta = h + aux2[0];
+            topo1 = aux1[0];
+            topo3 = aux3[0];
         } else {
-            if (imp == 0) {
-                dxdcp = earth_radius * cos(aux3[2] * deg2rad);
-                dxdcm = earth_radius * cos(aux1[2] * deg2rad);
-            } else {
-                dxdcp = earth_radius * cos(aux3[2] * deg2rad);
-                dxdcm = earth_radius * cos(aux1[2] * deg2rad);
-            }
+            // fluctuations being split is right-going
+            u = ql[mu] / h;
+            v = ql[mv] / h;
+            eta = h + aux2[0];
+            topo1 = aux1[0];
+            topo3 = aux3[0];
         }
-    } else {
-        // Cartesian
-        dxdcp = 1.0;
-        dxdcm = 1.0;
-    }
 
-    /* Compute some speeds necessary for the Jacobian 
-       - Computing upgoing, downgoing waves either in cell on left (if imp==0)
-         or on the right (if imp==1) 
-       - To achieve this we use q values in cells above and below, however these
-          aren't available (only in aux values)
-    */
-    s[0] = v - sqrt(s_grav * h);
-    s[1] = v;
-    s[2] = v + sqrt(s_grav * h);
+        /* Check if cell that transverse wave go into are both too high: */
+        // if (eta < fmin(topo1, topo3)) return; 
+        if (eta < fmin(topo1, topo3)) {
 
-    /* Determine asdq decomposition (beta) */
-    delf1 = asdq[0];
-    delf2 = asdq[mu];
-    delf3 = asdq[mv];
+            /* Check if cell that transverse waves go into are both to high, if so,
+            do the splitting (no dry cells), and compute necessary quantities */
+            if (coordinate_system == 2) {
+                // On the sphere
+                if (idir == 1) {
+                    dxdcp = earth_radius * deg2rad;
+                    dxdcm = dxdcp;
+                } else {
+                    if (imp == 0) {
+                        dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
+                        dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                    } else {
+                        dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
+                        dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                    }
+                }
+            } else {
+                // Cartesian
+                dxdcp = 1.0;
+                dxdcm = 1.0;
+            }
 
-    beta[0] = (s[2]*delf1 - delf3) / (s[2] - s[0]);
-    beta[1] = -u*delf1 + delf2;
-    beta[2] = (delf3 - s[0]*delf1) / (s[2] - s[0]);
+            /* Compute some speeds necessary for the Jacobian 
+            - Computing upgoing, downgoing waves either in cell on left (if imp==0)
+                or on the right (if imp==1) 
+            - To achieve this we use q values in cells above and below, however these
+                aren't available (only in aux values)
+            */
+            s[0] = v - sqrt(s_grav * h);
+            s[1] = v;
+            s[2] = v + sqrt(s_grav * h);
 
-    /* set-up eigenvectors */
-    r[0] = 1.0;
-    r[mu] = u;
-    r[mv] = s[0];
+            /* Determine asdq decomposition (beta) */
+            delf1 = asdq[0];
+            delf2 = asdq[mu];
+            delf3 = asdq[mv];
 
-    r[0 + mwaves] = 0.0;
-    r[mu + mwaves] = 1.0;
-    r[mv + mwaves] = 0.0;
+            beta[0] = (s[2]*delf1 - delf3) / (s[2] - s[0]);
+            beta[1] = -u*delf1 + delf2;
+            beta[2] = (delf3 - s[0]*delf1) / (s[2] - s[0]);
 
-    r[0 + 2*mwaves] = 1.0;
-    r[mu + 2*mwaves] = u;
-    r[mv + 2*mwaves] = s[2];
+            /* set-up eigenvectors */
+            r[0] = 1.0;
+            r[mu] = u;
+            r[mv] = s[0];
 
-    /* Compute transverse fluctuations */
-    for (mw = 0; mw < 3; mw++) {
-        if ((s[mw] < 0.0) && (eta >= topo1)) {
-            bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
-            bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
-            bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[mw + 2*mwaves];
-        } else if ((s[mw] > 0.0) && (eta >= topo3)) {
-            bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
-            bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
-            bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[mw + 2*mwaves];
+            r[0 + mwaves] = 0.0;
+            r[mu + mwaves] = 1.0;
+            r[mv + mwaves] = 0.0;
+
+            r[0 + 2*mwaves] = 1.0;
+            r[mu + 2*mwaves] = u;
+            r[mv + 2*mwaves] = s[2];
+
+            /* Compute transverse fluctuations */
+            for (mw = 0; mw < 3; mw++) {
+                if ((s[mw] < 0.0) && (eta >= topo1)) {
+                    bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
+                    bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
+                    bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[mw + 2*mwaves];
+                } else if ((s[mw] > 0.0) && (eta >= topo3)) {
+                    bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
+                    bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
+                    bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[mw + 2*mwaves];
+                }
+            }
         }
     }
 }
@@ -501,6 +511,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double det1, det2, det3, determinant;
     bool rare1, rare2, rarecorrector, rarecorrectortest, sonic;
     int mw, k, iter;
+
+    int mu = 1; // x-direction
+    int mv = 2; // y-direction
 
     /* determine del vectors */
     delh = hR - hL;
@@ -569,9 +582,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     /* no strong rarefaction wave */
     if (!rarecorrector) {
         lambda[1]= 0.5*(lambda[0] + lambda[2]);
-        r[1] = 0.0; // r[0,1]
-        r[4] = 0.0; // r[1,1]
-        r[7] = 1.0; // r[2,1]
+        r[mwaves] = 0.0; // r[0,1]
+        r[mwaves + mu] = 0.0; // r[1,1]
+        r[mwaves + mv] = 1.0; // r[2,1]
     }
 
     /* === Determine the steady state wave === */
@@ -601,9 +614,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
             huLstar = uLstar*hLstar;
             huRstar = uRstar*hRstar;
             lambda[1] = 0.5*(lambda[0] + lambda[2]);
-            r[1] = 0.0; // r[0,1]
-            r[4] = 0.0; // r[1,1]
-            r[7] = 1.0; // r[2,1]
+            r[mwaves] = 0.0; // r[0,1]
+            r[mwaves + mu] = 0.0; // r[1,1]
+            r[mwaves + mv] = 1.0; // r[2,1]
         }
 
         /* For any two states; Q_i and Q_i-1, eigen values of SWE must satify: lambda(q_i)*lambda(q_i-1) = u^2 -gh, writing this conditon as a function of Q_i and Q_i-1, u and h become averages in lambda(q_i)*lambda(q_i-1) = u^2 -gh and these averages are denoted by bar and tilde. */
@@ -663,9 +676,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
         /* Determine coefficients beta(k) using crammer's rule
           first determine the determinant of the eigenvector matrix */
-        det1 = r[0]*(r[4]*r[8] - r[5]*r[7]);
-        det2 = r[1]*(r[3]*r[8] - r[5]*r[6]);
-        det3 = r[2]*(r[3]*r[7] - r[4]*r[6]);
+        det1 = r[0]*(r[mwaves + mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mwaves + mv]);
+        det2 = r[mwaves]*(r[mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mv]);
+        det3 = r[2*mwaves]*(r[mu]*r[mwaves + mv] - r[mwaves + mu]*r[mv]);
         determinant = det1 - det2 + det3;
 
         /* determine the delta vectors */
@@ -685,9 +698,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
             A[mwaves*k + 0] = del[0];
             A[mwaves*k + 1] = del[1];
             A[mwaves*k + 2] = del[2];
-            det1 = A[0]*(A[4]*A[8] - A[5]*A[7]);
-            det2 = A[1]*(A[3]*A[8] - A[5]*A[6]);
-            det3 = A[2]*(A[3]*A[7] - A[4]*A[6]);
+            det1 = A[0]*(A[mwaves + mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mwaves + mv]);
+            det2 = A[mwaves]*(A[mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mv]);
+            det3 = A[2*mwaves]*(A[mu]*A[mwaves + mv] - A[mwaves + mu]*A[mv]);
             beta[k] = (det1 - det2 + det3)/determinant;
         }
 
@@ -757,15 +770,15 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     }
 
     // find transverse components (ie huv jumps)
-    fw[6] *= vL;
-    fw[8] *= vR;
-    fw[7] = 0.0;
+    fw[mv] *= vL;
+    fw[2*mwaves + mv] *= vR;
+    fw[mwaves + mv] = 0.0;
 
     hustar_interface = huL + fw[0];
     if (hustar_interface <= 0.0) {
-        fw[6] += (hR * uR * vR - hL * uL * vL - fw[6] - fw[8]);
+        fw[mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
     } else {
-        fw[8] += (hR * uR * vR - hL * uL * vL - fw[6] - fw[8]);
+        fw[2*mwaves + mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
     }
 
 }
