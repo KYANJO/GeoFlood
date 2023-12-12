@@ -44,13 +44,13 @@ void CUDACLAW_SWAP_DATA(const int* mx, const int *my, const int *mbc, const int*
                         double qold_geoclaw[], double qold_cudaclaw[], double aux_geoclaw[], double aux_cudaclaw[],
                         const int* geoclaw2cudaclaw);
 
-#define CUDACLAW_BC2_DEFAULT FCLAW_F77_FUNC(cudaclaw_bc2_default,CUDACLAW_BC2_DEFAULT)
-void CUDACLAW_BC2_DEFAULT(const int* maxmx, const int* maxmy, const int* meqn,
-                     const int* mbc, const int* mx, const int* my,
-                     const double* xlower, const double* ylower,
-                     const double* dx, const double* dy, const double q[],
-                     const int* maux, const double aux[], const double* t,
-                     const double* dt, const int mthbc[]);
+// #define CUDACLAW_BC2_DEFAULT FCLAW_F77_FUNC(cudaclaw_bc2_default,CUDACLAW_BC2_DEFAULT)
+// void CUDACLAW_BC2_DEFAULT(const int* meqn,
+//                      const int* mbc, const int* mx, const int* my,
+//                      const double* xlower, const double* ylower,
+//                      const double* dx, const double* dy, const double q[],
+//                      const int* maux, const double aux[], const double* t,
+//                      const double* dt, const int mthbc[]);
 
 
 #define CUDACLAW_FLUX2 FCLAW_F77_FUNC(cudaclaw_flux2,CUDACLAW_FLUX2)

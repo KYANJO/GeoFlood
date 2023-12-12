@@ -124,6 +124,15 @@ c        !set normal direction
          hvL=qr(nv,i-1) 
          hvR=ql(nv,i)
 
+         write (*,*) 'hL = ', hL, ' hR = ', hR
+         write (*,*) 'huL = ', huL, ' huR = ', huR
+         write (*,*) 'hvL = ', hvL, ' hvR = ', hvR
+         write (*,*) 'uL = ', uL, ' uR = ', uR
+         write (*,*) 'vL = ', vL, ' vR = ', vR
+         write (*,*) 'phiL = ', phiL, ' phiR = ', phiR
+         write (*,*) 'bL = ', bL, ' bR = ', bR
+         stop
+
          !check for wet/dry boundary
          if (hR.gt.drytol) then
             uR=huR/hR

@@ -68,7 +68,7 @@ void CUDACLAW_SETAUX(const int* maxmx, const int* maxmy, const int* mbc,
                        const int* maux, double aux[]);
 
 #define CUDACLAW_BC2     FCLAW_F77_FUNC(cudaclaw_bc2,    CUDACLAW_bc2)
-void CUDACLAW_BC2(const int* maxmx, const int* maxmy, const int* meqn,
+void CUDACLAW_BC2(  const int* meqn,
                     const int* mbc, const int* mx, const int* my,
                     const double* xlower, const double* ylower,
                     const double* dx, const double* dy, const double q[],

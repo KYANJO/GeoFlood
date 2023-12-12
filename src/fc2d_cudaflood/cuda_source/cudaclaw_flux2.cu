@@ -320,6 +320,15 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     t,dt,maux,auxr,i,j);
             // b4step2(&mbc,&mx,&my,&meqn,qr,&xlower,&ylower,&dx,&dy, 
             //         &t,&dt,&maux,auxr);
+
+            //   print at only one thread; debug auxr
+            int tid = threadIdx.x;
+            if (tid == 0)
+            {
+                printf("auxr[0] = %f\n", auxr[0]);
+            }
+
+
                     
             for(int m = 0; m < maux; m++)
             {

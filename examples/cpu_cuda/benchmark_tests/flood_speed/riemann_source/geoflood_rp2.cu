@@ -33,8 +33,6 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_include_all.h>
 
-#include "b4step2.h"
-
 /* Parameters to used on the device */
 __constant__ double s_grav;
 __constant__ double drytol;
@@ -49,6 +47,16 @@ __constant__ int aux_finalized;
 __constant__ double  dt_max_dtopo;
 __constant__ double *t0dtopo;
 __constant__ double *tfdtopo;
+
+/* friction variables */
+__constant__ int friction_index;
+__constant__ bool variable_friction;
+
+/* amr variables */
+__constant__ double xupper;
+__constant__ double yupper;
+__constant__ double xlower;
+__constant__ double ylower;
 __constant__ double NEEDS_TO_BE_DEFINED;
 
 /* function imports */
@@ -87,23 +95,21 @@ void setprob_cuda()
     double deg2rad_host = pi / 180.0;
 
     /* topo variables */
-    /* Declare an instance of the struct TopoParams */
-    // TopoParams topoParams;
-    // get_topo_params(&topoParams);
-    // GET_TOPO_PARAMS(&topoParams);
-    // int num_dtopo_ = topoParams.num_dtopo;
-    // int aux_finalized_ = topoParams.aux_finalized;
-    // /* t0dopo is a dynamic array */
-    // double *t0dtopo_ = topoParams.t0dtopo;
-    // double *tfdtopo_ = topoParams.tfdtopo;
     int num_dtopo_;
     int aux_finalized_;
     double  dt_max_dtopo_;
-    double NEEDS_TO_BE_DEFINED_;
-    double *t0dtopo_;
-    double *tfdtopo_;
+    double *t0dtopo_, *tfdtopo_;
 
-    GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo, tfdtopo,  &dt_max_dtopo, &NEEDS_TO_BE_DEFINED_);
+    /* friction variables */
+    int friction_index_;
+    bool variable_friction_;
+
+    /* amr variables */
+    double xupper_, yupper_, xlower_, ylower_;
+    double NEEDS_TO_BE_DEFINED_;
+
+
+    GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo_, tfdtopo_,  &dt_max_dtopo_, &NEEDS_TO_BE_DEFINED_,$variable_friction_, &friction_index_, &xupper_, &yupper_, &xlower_, &ylower_);
 
     /* copy to device */
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
@@ -119,10 +125,19 @@ void setprob_cuda()
     CHECK(cudaMemcpyToSymbol(dt_max_dtopo, &dt_max_dtopo_, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(t0dtopo, &t0dtopo_, sizeof(double*)));
     CHECK(cudaMemcpyToSymbol(tfdtopo, &tfdtopo_, sizeof(double*)));
+
+    /* Copy friction variables to device */
+    CHECK(cudaMemcpyToSymbol(friction_index, &friction_index_, sizeof(int)));
+    CHECK(cudaMemcpyToSymbol(variable_friction, &variable_friction_, sizeof(bool)));
+
+    /* Copy amr variables to device */
     CHECK(cudaMemcpyToSymbol(NEEDS_TO_BE_DEFINED, &NEEDS_TO_BE_DEFINED_, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(xupper, &xupper_, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(yupper, &yupper_, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(xlower, &xlower_, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(ylower, &ylower_, sizeof(double)));
     
-    /* deallocate topo array variables */
-    // deallocate_arrays(&topoParams);
+   
 }
 
 
@@ -223,6 +238,9 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         ql[2] = 0.0;
     }
 
+     //   print at only one thread
+     int tid = threadIdx.x;
+
     // Skip problem if in a completely dry area
     if (qr[0] <= drytol && ql[0] <= drytol) {
         goto label30;
@@ -238,6 +256,20 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
     hvL = qr[mv];
     hvR = ql[mv];
+
+      // Debugging check for NaNs 
+    //   print at only one thread
+    // int tid = threadIdx.x;
+    // if (tid == 0) {
+    //   printf("hL = %e, hR = %e\n", hL, hR);
+    //   printf("huL = %e, huR = %e\n", huL, huR);
+    //   printf("hvL = %e, hvR = %e\n", hvL, hvR);
+    //   printf("uL = %e, uR = %e\n", uL, uR);
+    //   printf("vL = %e, vR = %e\n", vL, vR);
+    //   printf("phiL = %e, phiR = %e\n", phiL, phiR);
+    //   printf("bL = %e, bR = %e\n", bL, bR);
+    // }
+
 
     // Check for wet/dry left boundary
     if (hR > drytol) {

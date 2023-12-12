@@ -54,7 +54,7 @@ add_library(cpu_cuda_f OBJECT
 	fortran_source/cudaclaw_inlinelimiter.f
 	fortran_source/cudaclaw_set_capacity.f
 	fortran_source/cudaclaw_block.f
-	fortran_source/cudaclaw_bc2_default.f
+	# fortran_source/cudaclaw_bc2_default.f
 	fortran_source/cudaclaw_flux2.f
 	fortran_source/cudaclaw_flux2fw.f
 	fortran_source/cudaclaw_step2.f
@@ -124,7 +124,7 @@ install(FILES
 	fc2d_cudaclaw_check.h
 	fc2d_cuda_profiler.h
 	fc2d_cudaclaw_options.h
-	cudaclaw_user_fort.h
+	# cudaclaw_user_fort.h
 	fc2d_cudaclaw_fort.h
 	# cuda_source/data_swap.h
   DESTINATION include
