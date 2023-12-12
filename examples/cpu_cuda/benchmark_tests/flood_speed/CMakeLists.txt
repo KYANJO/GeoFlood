@@ -3,13 +3,14 @@ add_library(flood_speed_cpu_f OBJECT
   riemann_source/setprob.f90
   rpn2cons_update.f
   fortran/fc2d_geoflood_bc2.f90
-  ../../../../src/fc2d_geoclaw/hydrograph/hydrograh_module.f90
-  ../../../../src/fc2d_geoclaw/geolib_source/geoclaw_module.f90 
-  ../../../../src/fc2d_geoclaw/geolib_source/refinement_module.f90
-  ../../../../src/fc2d_geoclaw/geolib_source/utility_module.f90
-  ../../../../src/fc2d_geoclaw/geolib_source/topo_module.f90
-  ../../../../src/fc2d_geoclaw/amrlib_source/amr_module.f90
-  ../../../../src/fc2d_geoclaw/fortran_source/extract_dt.f90
+  ../../../../src/fc2d_cudaflood/hydrograph/hydrograh_module.f90
+  ../../../../src/fc2d_cudaflood/geolib_source/geoclaw_module.f90 
+  ../../../../src/fc2d_cudaflood/geolib_source/refinement_module.f90
+  ../../../../src/fc2d_cudaflood/geolib_source/utility_module.f90
+  ../../../../src/fc2d_cudaflood/geolib_source/topo_module.f90
+  ../../../../src/fc2d_cudaflood/amrlib_source/amr_module.f90
+  ../../../../src/fc2d_cudaflood/fortran_source/extract_dt.f90
+  ../../../../src/fc2d_cudaflood/fortran_source/extract_topo_variables.f90
 )
 
 add_executable(flood_speed_cpucuda 
@@ -17,6 +18,7 @@ $<TARGET_OBJECTS:flood_speed_cpu_f>
 	flood_speed_user.cpp
 	flood_speed_options.c
 	flood_speed.cpp
+  riemann_source/b4step2.cu
   riemann_source/geoflood_rp2.cu
   # riemann_source/geoflood_riemann_utils.cu
   # riemann_source/rpn2_geoflood.cu

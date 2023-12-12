@@ -2,7 +2,7 @@
 !  Module for topography data
 ! ============================================================================
 module topo_module
-
+    use iso_c_binding, only: c_int, c_double, c_ptr, c_f_pointer ! for C interoperability 
     use amr_module, only: xlower,xupper,ylower,yupper
     implicit none
 
@@ -67,6 +67,14 @@ module topo_module
 
     real(kind=8) topo_missing
 
+    ! ====== define parameters for C interface ======
+    ! type, bind(C) :: TopoParameters
+    !     integer(c_int) :: num_dtopo
+    !     integer(c_int) :: aux_finalized
+    !     type(c_ptr) :: t0dtopo ! pointer to the dynamic allocated array
+    !     type(c_ptr) :: tfdtopo ! pointer to the dynamic allocated array
+    ! end type TopoParameters
+
 contains
 
     ! ========================================================================
@@ -84,6 +92,71 @@ contains
     ! Finest value of topography in a given region will be used for
     ! computation
     ! ========================================================================
+
+    ! subroutine allocate_arrays(params, size)
+
+    !     use iso_c_binding
+
+    !     implicit none
+
+    !     type(TopoParameters), intent(inout) :: params
+    !     integer(c_int), intent(in) :: size
+    !     real(c_double), allocatable, target :: temp_t0dtopo(:)
+    !     real(c_double), allocatable, target :: temp_tfdtopo(:)
+
+    !     ! Allocate the arrays
+    !     allocate(temp_t0dtopo(size))
+    !     allocate(temp_tfdtopo(size))
+
+    !     ! Convert the Fortran pointers to C pointers
+    !     params%t0dtopo = c_loc(temp_t0dtopo)
+    !     params%tfdtopo = c_loc(temp_tfdtopo)
+    ! end subroutine allocate_arrays
+
+    ! subroutine deallocate_arrays(params)
+    !     use iso_c_binding
+
+    !     implicit none
+
+    !     type(TopoParameters), intent(inout) :: params
+    !     real(c_double), pointer :: temp_t0dtopo(:)
+    !     real(c_double), pointer :: temp_tfdtopo(:)
+    !     integer :: shape(1)
+
+    !     ! Set the shape of the array
+    !     shape(1) = params%num_dtopo
+
+    !     ! Convert the C pointers back to Fortran pointers
+    !     call c_f_pointer(params%t0dtopo, temp_t0dtopo, shape)
+    !     call c_f_pointer(params%tfdtopo, temp_tfdtopo, shape)
+
+
+    !     ! ! Convert the C pointers back to Fortran pointers
+    !     ! call c_f_pointer(params%t0dtopo, temp_t0dtopo)
+    !     ! call c_f_pointer(params%tfdtopo, temp_tfdtopo)
+
+    !     ! Deallocate the arrays
+    !     deallocate(temp_t0dtopo)
+    !     deallocate(temp_tfdtopo)
+    ! end subroutine deallocate_arrays
+    
+    ! subroutine get_topo_params(params, num_dtopo_val, aux_finalized_val) bind(C, name="get_topo_params")
+
+    !     use iso_c_binding
+    !     implicit none
+
+    !     type(TopoParameters), intent(inout) :: params
+    !     integer(c_int), intent(in) :: num_dtopo_val, aux_finalized_val
+
+    !     ! Set the simple parameters
+    !     params%num_dtopo = num_dtopo_val
+    !     params%aux_finalized = aux_finalized_val
+
+    !     ! Allocate the dynamic arrays
+    !     call allocate_arrays(params, num_dtopo_val)
+    ! end subroutine get_topo_params
+
+
     subroutine read_topo_settings(restart,file_name)
 
         use geoclaw_module

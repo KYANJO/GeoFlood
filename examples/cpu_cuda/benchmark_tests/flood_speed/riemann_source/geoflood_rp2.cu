@@ -33,6 +33,8 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_include_all.h>
 
+#include "b4step2.h"
+
 /* Parameters to used on the device */
 __constant__ double s_grav;
 __constant__ double drytol;
@@ -40,6 +42,14 @@ __constant__ double earth_radius;
 __constant__ double deg2rad;
 __constant__ int coordinate_system;
 __constant__ int mcapa;
+
+/* topo variables */
+__constant__ int num_dtopo;
+__constant__ int aux_finalized;
+__constant__ double  dt_max_dtopo;
+__constant__ double *t0dtopo;
+__constant__ double *tfdtopo;
+__constant__ double NEEDS_TO_BE_DEFINED;
 
 /* function imports */
 __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
@@ -65,6 +75,7 @@ void setprob_cuda()
         i++; 
     }
     fclose(f);
+    free(line);
 
     double grav = arr[0];
     double dry_tol = arr[1];
@@ -75,6 +86,25 @@ void setprob_cuda()
     double pi = 3.14159265358979323846;
     double deg2rad_host = pi / 180.0;
 
+    /* topo variables */
+    /* Declare an instance of the struct TopoParams */
+    // TopoParams topoParams;
+    // get_topo_params(&topoParams);
+    // GET_TOPO_PARAMS(&topoParams);
+    // int num_dtopo_ = topoParams.num_dtopo;
+    // int aux_finalized_ = topoParams.aux_finalized;
+    // /* t0dopo is a dynamic array */
+    // double *t0dtopo_ = topoParams.t0dtopo;
+    // double *tfdtopo_ = topoParams.tfdtopo;
+    int num_dtopo_;
+    int aux_finalized_;
+    double  dt_max_dtopo_;
+    double NEEDS_TO_BE_DEFINED_;
+    double *t0dtopo_;
+    double *tfdtopo_;
+
+    GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo, tfdtopo,  &dt_max_dtopo, &NEEDS_TO_BE_DEFINED_);
+
     /* copy to device */
     CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
     CHECK(cudaMemcpyToSymbol(drytol, &dry_tol, sizeof(double)));
@@ -82,6 +112,17 @@ void setprob_cuda()
     CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
     CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
     CHECK(cudaMemcpyToSymbol(deg2rad, &deg2rad_host, sizeof(double)));
+
+    /* Copy topo variables to device */
+    CHECK(cudaMemcpyToSymbol(num_dtopo, &num_dtopo_, sizeof(int)));
+    CHECK(cudaMemcpyToSymbol(aux_finalized, &aux_finalized_, sizeof(int)));
+    CHECK(cudaMemcpyToSymbol(dt_max_dtopo, &dt_max_dtopo_, sizeof(double)));
+    CHECK(cudaMemcpyToSymbol(t0dtopo, &t0dtopo_, sizeof(double*)));
+    CHECK(cudaMemcpyToSymbol(tfdtopo, &tfdtopo_, sizeof(double*)));
+    CHECK(cudaMemcpyToSymbol(NEEDS_TO_BE_DEFINED, &NEEDS_TO_BE_DEFINED_, sizeof(double)));
+    
+    /* deallocate topo array variables */
+    // deallocate_arrays(&topoParams);
 }
 
 

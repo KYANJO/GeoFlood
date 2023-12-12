@@ -34,10 +34,12 @@ static
 void flood_speed_problem_setup(fclaw2d_global_t* glob)
 {
     const user_options_t* user = flood_speed_get_options(glob);
-    
     fclaw2d_domain_barrier (glob->domain);
     if (user->cuda != 0)
     {
+        // TopoParams topoParams;
+        // get_topo_params(&topoParams);
+        // GET_TOPO_PARAMS(&topoParams);
         setprob_cuda();
     }
 }
@@ -68,8 +70,8 @@ void flood_speed_link_solvers(fclaw2d_global_t *glob)
         flood_speed_assign_rpn2(&cuclaw_vt->cuda_rpn2);
         FCLAW_ASSERT(cuclaw_vt->cuda_rpn2 != NULL);
 
-        food_speed_assign_b4step2(&cudaclaw_vt->cuda_b4step2);
-	    FCLAW_ASSERT(cudaclaw_vt->cuda_b4step2 != NULL);
+        flood_speed_assign_b4step2(&cuclaw_vt->cuda_b4step2);
+	    FCLAW_ASSERT(cuclaw_vt->cuda_b4step2 != NULL);
 
         flood_speed_assign_rpt2(&cuclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(cuclaw_vt->cuda_rpt2 != NULL);

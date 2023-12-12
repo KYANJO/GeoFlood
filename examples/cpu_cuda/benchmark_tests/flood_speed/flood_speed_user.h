@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
 
+#include "riemann_source/b4step2.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -61,6 +63,9 @@ void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
 void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
 void flood_speed_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
 void flood_speed_assign_b4step2(cudaclaw_cuda_b4step2_t *b4step2);
+
+#define GET_B4STEP2_PARAMETERS FCLAW_F77_FUNC(get_b4step2_parameters,GET_B4STEP2_PARAMETERS)
+void GET_B4STEP2_PARAMETERS(const int* num_dtopo, const int* aux_finalized, double t0dtopo[], double tfdtopo[], const double* dt_max_dtopo, const double* NEEDS_TO_BE_DEFINED);
 
 void setprob_cuda();
 
