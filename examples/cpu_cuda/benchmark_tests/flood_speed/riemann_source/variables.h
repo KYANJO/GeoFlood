@@ -25,11 +25,12 @@ struct GeofloodVars{
 };
 
 struct TopoVars{
-    int num_dtopo;
-    int aux_finalized;
-    double *t0dtopo;
-    double *tfdtopo;
+    int num_dtopo,test_topography;
+    int aux_finalized, mtopofiles;
+    double *t0dtopo, *tfdtopo;
     double dt_max_dtopo;
+    double *topowork, *xlowtopo, *ylowtopo, *xhitopo, *yhitopo, *dxtopo, *dytopo;
+    int *mxtopo, *mytopo, *mtopoorder, *i0topo, *mtopo;
 };
 
 struct FrictionVars{

@@ -13,9 +13,9 @@ extern __constant__ AmrVars d_amrVars;
 __device__ void check4nans(int meqn, int mbc, int mx, int my, double q[], 
                             double t, int ichecknan, int i, int j);
 
-// __device__ void setaux_cuda(int mbc, int mx, int my, double xlow, 
-//                             double ylow, double dx, double dy, int maux, 
-//                             double aux[], int is_ghost_in, int nghost, int mint);
+__device__ void setaux_cuda(int mbc, int mx, int my, double xlow, 
+                            double ylow, double dx, double dy, int maux, 
+                            double aux[], int is_ghost_in, int nghost, int mint,int i, int j);
 
 __device__ double fc2d_geoclaw_get_dt_max_dtopo();
 __device__ void fc2d_geoclaw_get_dtopo_interval(double tmin, double tmax);
@@ -59,9 +59,8 @@ __device__ void flood_b4step2_cuda(int mbc, int mx, int my,
         int is_ghost = 0; /* Won't be used, if is_ghost = 0 */
         int nghost = mbc;
         int mint = 2*mbc;
-    #if 0
+
         setaux_cuda(mbc,mx,my,xlower,ylower,dx,dy,maux,aux,is_ghost,nghost,mint,i,j);
-    #endif
 
     }
 
@@ -166,9 +165,14 @@ __device__ void setaux_cuda(int mbc, int mx, int my, double xlow,
     
     /* Access the __constant__ variables in variables.h */
     int coordinate_system = d_geofloodVars.coordinate_system;
+    double earth_radius = d_geofloodVars.earth_radius;
     int mcapa = d_geofloodVars.mcapa;
     bool variable_friction = d_frictionVars.variable_friction;
     int friction_index = d_frictionVars.friction_index;
+    double xlower = d_amrVars.xlower;
+    double ylower = d_amrVars.ylower;
+    double xupper = d_amrVars.xupper;
+    double yupper = d_amrVars.yupper;
 
 
     bool is_ghost = (is_ghost_in != 0);
@@ -206,11 +210,40 @@ __device__ void setaux_cuda(int mbc, int mx, int my, double xlow,
         aux[friction_index] = 0.0;
     }
 
-    // /* set analytical bathymetry here if requested */
-    // if (test_topography > 0) {
-    //     if (is_ghost && ghost_invalid(i, j, mx, my, nghost, mint)) return;
-    //     aux[0] = test_topo(xlow + (i - 0.5)*dx);
-    // }
+    /* Skipped analytical topography for now */
+
+    /* Test: compute integer indices based off same corner of domaint to reduce round off discrepancies */
+    int ilo = floor((xlow - xlower + 0.50*dx) / dx);
+    int jlo = floor((ylow - ylower + 0.50*dy) / dy);
+
+    /* Set topography */
+    int skipcount = 0;
+    double ym = ylower + (j+jlo - 1.0)*dy;
+    double yp = ylower + (j+jlo)*dy;
+    double y = 0.5*(ym + yp);
+
+    double xm = xlower + (i+ilo - 1.0)*dx;
+    double xp = xlower + (i+ilo)*dx;
+    double x = 0.5*(xm + xp);
+
+    printf("in setaux %d%d%f\n",i,j,aux[0]);
+
+    if (is_ghost && ghost_invalid(i, j, mx, my, nghost, mint)) return;
+
+    /* set lat-long cell info */
+    if (coordinate_system == 2)
+    {
+       aux[1] = deg2rad * earth_radius*earth_radius * (sin(yp*deg2rad) - sin(ym*deg2rad)) / dy;
+       aux[2] = ym * deg2rad;
+    }
+
+    /* skip setting aux[0] in ghost cell if outside physical domain since
+     topo files may not cover ghost cell, and values should be extrapolated, which is done in next set of loops*/
+     if (((y>yupper) || (y<ylower)) && ((x>xupper) || (x<xlower))) return;
+
+    /* use input topography files if available */
+
+
 }
 
 __device__ bool ghost_invalid(int i, int j, int mx, int my, int nghost, int mint)
@@ -221,31 +254,3 @@ __device__ bool ghost_invalid(int i, int j, int mx, int my, int nghost, int mint
     return (inner || outer);
 }
 
-// __device__ double test_topo(double x) {
-//     extern __device__ int test_topography;
-//     extern __device__ double topo_location, topo_left, topo_right;
-//     extern __device__ double topo_x0, topo_x1, topo_x2;
-//     extern __device__ double topo_basin_depth, topo_shelf_slope, topo_shelf_depth, topo_beach_slope;
-
-//     double topography;
-
-//     if (test_topography == 1) {
-//         if (x < topo_location) {
-//             topography = topo_left;
-//         } else {
-//             topography = topo_right;
-//         }
-//     } else if (test_topography == 2) {
-//         if (x < topo_x0) {
-//             topography = topo_basin_depth;
-//         } else if (x >= topo_x0 && x < topo_x1) {
-//             topography = topo_shelf_slope * (x - topo_x0) + topo_basin_depth;
-//         } else if (x >= topo_x1 && x < topo_x2) {
-//             topography = topo_shelf_depth;
-//         } else {
-//             topography = topo_beach_slope * (x - topo_x2) + topo_shelf_depth;
-//         }
-//     }
-
-//     return topography;
-// }
