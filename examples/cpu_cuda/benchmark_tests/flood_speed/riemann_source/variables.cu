@@ -1,36 +1,77 @@
 #include "../flood_speed_user.h"
-#include <fc2d_cudaclaw.h>
+#include "variables.h"
+#include <math.h>
 #include <fc2d_cudaclaw_check.h>
-#include <fc2d_cudaclaw_options.h>
-#include <cudaclaw_user_fort.h>
-#include <fclaw2d_clawpatch.h>
-#include <fclaw2d_clawpatch_options.h>
-#include <fclaw2d_include_all.h>
 
-__constant__ double s_grav;
-__constant__ double dry_tolerance;
-__constant__ double earth_radius;
-__constant__ int coordinate_system;
-__constant__ int mcapa;
+/* Declare constant memory variables */
+__constant__ GeofloodVars d_geofloodVars;
+__constant__ TopoVars d_topoVars;
+__constant__ FrictionVars d_frictionVars;
+__constant__ AmrVars d_amrVars;
 
-void setprob_cuda()
-{
-    double grav;
-    double drytol;
-    double earth_rad;
-    int coordinate_system_;
-    int mcapa_;
+void setprob_cuda(){
+    int i = 0;
+    char * line = NULL, *p = NULL, *eptr;
+    size_t len = 0;
+    ssize_t read;
+    double arr[5];
     FILE *f = fopen("setprob.data","r");
-    fscanf(f,"%lf",&grav);
-    fscanf(f,"%lf",&dry_tolerance);
-    fscanf(f,"%lf",&earth_rad);
-    fscanf(f,"%d",&coordinate_system_);
-    fscanf(f,"%d",&mcapa_);
-    fclose(f);
 
-    CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(dry_tolerance, &drytol, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
+    while ((read = getline(&line, &len, f)) != -1) 
+    {
+        p =strtok(line, " "); // get first word
+        arr[i] = strtod(p,&eptr);  // convert to double
+        i++; 
+    }
+    fclose(f);
+    free(line);
+
+    /* === declare variables === */
+    /* topo variables */
+    int num_dtopo_, aux_finalized_;
+    double  dt_max_dtopo_;
+    double *t0dtopo_, *tfdtopo_;
+
+    /* friction variables */
+    int friction_index_;
+    bool variable_friction_;
+
+    /* amr variables */
+    double xupper_, yupper_, xlower_, ylower_;
+    double NEEDS_TO_BE_DEFINED_;
+
+    GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo_, tfdtopo_,  &dt_max_dtopo_, &NEEDS_TO_BE_DEFINED_,&variable_friction_, &friction_index_, &xupper_, &yupper_, &xlower_, &ylower_);
+    
+
+    /* === Create and populate structures on the host === */
+    GeofloodVars geofloodVars;
+    geofloodVars.gravity = arr[0];
+    geofloodVars.dry_tolerance = arr[1];
+    geofloodVars.earth_radius = arr[2];
+    geofloodVars.coordinate_system = (int) arr[3];
+    geofloodVars.mcapa = (int) arr[4];
+
+    TopoVars topoVars;
+    topoVars.num_dtopo = num_dtopo_;
+    topoVars.aux_finalized = aux_finalized_;
+    topoVars.dt_max_dtopo = dt_max_dtopo_;
+    topoVars.t0dtopo = t0dtopo_;
+    topoVars.tfdtopo = tfdtopo_;
+
+    FrictionVars frictionVars;
+    frictionVars.variable_friction = variable_friction_;
+    frictionVars.friction_index = friction_index_;
+
+    AmrVars amrVars;
+    amrVars.xupper = xupper_;
+    amrVars.yupper = yupper_;
+    amrVars.xlower = xlower_;
+    amrVars.ylower = ylower_;
+    amrVars.NEEDS_TO_BE_DEFINED = NEEDS_TO_BE_DEFINED_;
+
+    /* === Copy structures to device (constant memory) === */
+    CHECK(cudaMemcpyToSymbol(d_geofloodVars, &geofloodVars, sizeof(GeofloodVars)));
+    CHECK(cudaMemcpyToSymbol(d_topoVars, &topoVars, sizeof(TopoVars)));
+    CHECK(cudaMemcpyToSymbol(d_frictionVars, &frictionVars, sizeof(FrictionVars)));
+    CHECK(cudaMemcpyToSymbol(d_amrVars, &amrVars, sizeof(AmrVars)));
 }

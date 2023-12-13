@@ -24,6 +24,7 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #define maxiter 1
 
 #include "../flood_speed_user.h"
+#include "variables.h"
 #include <math.h>
 #include <fc2d_geoclaw.h>
 #include <fc2d_cudaclaw_check.h>
@@ -33,33 +34,10 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_include_all.h>
 
-/* Parameters to used on the device */
-__constant__ double s_grav;
-__constant__ double drytol;
-__constant__ double earth_radius;
-__constant__ double deg2rad;
-__constant__ int coordinate_system;
-__constant__ int mcapa;
+/* Extern declarations*/
+extern __constant__ GeofloodVars d_geofloodVars;
 
-/* topo variables */
-__constant__ int num_dtopo;
-__constant__ int aux_finalized;
-__constant__ double  dt_max_dtopo;
-__constant__ double *t0dtopo;
-__constant__ double *tfdtopo;
-
-/* friction variables */
-__constant__ int friction_index;
-__constant__ bool variable_friction;
-
-/* amr variables */
-__constant__ double xupper;
-__constant__ double yupper;
-__constant__ double xlower;
-__constant__ double ylower;
-__constant__ double NEEDS_TO_BE_DEFINED;
-
-/* function imports */
+/* function prototypes */
 __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
 
 __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
@@ -67,86 +45,18 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double bL, double bR, double uL, double uR, double vL, 
     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw);
 
-void setprob_cuda()
-{
-    int i = 0;
-    char * line = NULL, *p = NULL, *eptr;
-    size_t len = 0;
-    ssize_t read;
-    double arr[5];
-    FILE *f = fopen("setprob.data","r");
-
-    while ((read = getline(&line, &len, f)) != -1) 
-    {
-        p =strtok(line, " "); // get first word
-        arr[i] = strtod(p,&eptr);  // convert to double
-        i++; 
-    }
-    fclose(f);
-    free(line);
-
-    double grav = arr[0];
-    double dry_tol = arr[1];
-    double earth_rad = arr[2];
-    int coordinate_system_ = (int) arr[3];
-    int mcapa_ = (int) arr[4];
-
-    double pi = 3.14159265358979323846;
-    double deg2rad_host = pi / 180.0;
-
-    /* topo variables */
-    int num_dtopo_;
-    int aux_finalized_;
-    double  dt_max_dtopo_;
-    double *t0dtopo_, *tfdtopo_;
-
-    /* friction variables */
-    int friction_index_;
-    bool variable_friction_;
-
-    /* amr variables */
-    double xupper_, yupper_, xlower_, ylower_;
-    double NEEDS_TO_BE_DEFINED_;
-
-
-    GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo_, tfdtopo_,  &dt_max_dtopo_, &NEEDS_TO_BE_DEFINED_,$variable_friction_, &friction_index_, &xupper_, &yupper_, &xlower_, &ylower_);
-
-    /* copy to device */
-    CHECK(cudaMemcpyToSymbol(s_grav, &grav, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(drytol, &dry_tol, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(earth_radius, &earth_rad, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(coordinate_system, &coordinate_system_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(mcapa, &mcapa_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(deg2rad, &deg2rad_host, sizeof(double)));
-
-    /* Copy topo variables to device */
-    CHECK(cudaMemcpyToSymbol(num_dtopo, &num_dtopo_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(aux_finalized, &aux_finalized_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(dt_max_dtopo, &dt_max_dtopo_, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(t0dtopo, &t0dtopo_, sizeof(double*)));
-    CHECK(cudaMemcpyToSymbol(tfdtopo, &tfdtopo_, sizeof(double*)));
-
-    /* Copy friction variables to device */
-    CHECK(cudaMemcpyToSymbol(friction_index, &friction_index_, sizeof(int)));
-    CHECK(cudaMemcpyToSymbol(variable_friction, &variable_friction_, sizeof(bool)));
-
-    /* Copy amr variables to device */
-    CHECK(cudaMemcpyToSymbol(NEEDS_TO_BE_DEFINED, &NEEDS_TO_BE_DEFINED_, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(xupper, &xupper_, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(yupper, &yupper_, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(xlower, &xlower_, sizeof(double)));
-    CHECK(cudaMemcpyToSymbol(ylower, &ylower_, sizeof(double)));
-    
-   
-}
-
-
-
 __device__ void flood_speed_compute_speeds(int idir, int meqn, int mwaves, int maux,
                                             double ql[], double  qr[],
                                             double auxl[], double auxr[],
                                             double s[])
 {
+
+    /* Access the __constant__ variables in variables.h */
+    double s_grav = d_geofloodVars.gravity;
+    double drytol = d_geofloodVars.dry_tolerance;
+    double earth_radius = d_geofloodVars.earth_radius;
+    int coordinate_system = d_geofloodVars.coordinate_system;
+    int mcapa = d_geofloodVars.mcapa;
 
     int mu = 1+idir;
     // int mv = 2-idir;
@@ -195,6 +105,13 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                                 double fwave[], double s[], 
                                 double amdq[], double apdq[])
 {
+    /* Access the __constant__ variables in variables.h */
+    double s_grav = d_geofloodVars.gravity;
+    double drytol = d_geofloodVars.dry_tolerance;
+    double earth_radius = d_geofloodVars.earth_radius;
+    int coordinate_system = d_geofloodVars.coordinate_system;
+    int mcapa = d_geofloodVars.mcapa; 
+
     /* Local variables */
     double wall[3], fw[9], sw[3];
     double hR, hL, huR, huL, hvR, hvL, uR, uL, vR, vL, phiR, phiL;
@@ -439,6 +356,13 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                 double aux2[], double aux3[], int imp, 
                 double asdq[], double bmasdq[], double bpasdq[]) 
 {
+    /* Access the __constant__ variables in variables.h */
+    double s_grav = d_geofloodVars.gravity;
+    double drytol = d_geofloodVars.dry_tolerance;
+    double earth_radius = d_geofloodVars.earth_radius;
+    int coordinate_system = d_geofloodVars.coordinate_system;
+    int mcapa = d_geofloodVars.mcapa;
+
     int mw, mu, mv;
     double s[3], r[9], beta[3];
     double h, u, v;
@@ -570,6 +494,12 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double bL, double bR, double uL, double uR, double vL, 
     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw)
 {
+    /* Access the __constant__ variables in variables.h */
+    double s_grav = d_geofloodVars.gravity;
+    double drytol = d_geofloodVars.dry_tolerance;
+    double earth_radius = d_geofloodVars.earth_radius;
+    int coordinate_system = d_geofloodVars.coordinate_system;
+    int mcapa = d_geofloodVars.mcapa;
 
     /* Local variables */
     double A[9], r[9], lambda[3], del[3], beta[3];
@@ -863,6 +793,13 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, 
                             double *s1m, double *s2m, bool *rare1, bool *rare2)
 {
+    /* Access the __constant__ variables in variables.h */
+    double s_grav = d_geofloodVars.gravity;
+    double drytol = d_geofloodVars.dry_tolerance;
+    double earth_radius = d_geofloodVars.earth_radius;
+    int coordinate_system = d_geofloodVars.coordinate_system;
+    int mcapa = d_geofloodVars.mcapa;
+
     // Local variables
     double um, u1m, u2m, h0, F_max, F_min, dfdh, F0, slope, gL, gR;
     double sqrtgh1, sqrtgh2;

@@ -9,7 +9,7 @@ add_library(flood_speed_cpu_f OBJECT
   ../../../../src/fc2d_cudaflood/geolib_source/utility_module.f90
   ../../../../src/fc2d_cudaflood/geolib_source/topo_module.f90
   ../../../../src/fc2d_cudaflood/amrlib_source/amr_module.f90
-  ../../../../src/fc2d_cudaflood/fortran_source/extract_dt.f90
+  ../../../../src/fc2d_cudaflood/geolib_source/friction_module.f90
   ../../../../src/fc2d_cudaflood/fortran_source/extract_topo_variables.f90
 )
 
@@ -18,6 +18,7 @@ $<TARGET_OBJECTS:flood_speed_cpu_f>
 	flood_speed_user.cpp
 	flood_speed_options.c
 	flood_speed.cpp
+  riemann_source/variables.cu
   riemann_source/b4step2.cu
   riemann_source/geoflood_rp2.cu
   # riemann_source/geoflood_riemann_utils.cu

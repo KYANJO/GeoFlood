@@ -1,5 +1,8 @@
 ! Extracts b4step2 parameters to be used in C++ code
-subroutine get_b4step2_parameters(num_dtopo_val, aux_finalized_val, t0dtopo_val, tfdtopo_val, dt_max_dtopo_val, NEEDS_TO_BE_SET_val, variable_friction_val, friction_index_val, xupper_val, yupper_val, xlower_val, ylower_val)
+subroutine get_b4step2_parameters(num_dtopo_val, aux_finalized_val, t0dtopo_val, tfdtopo_val, &
+                                  dt_max_dtopo_val, NEEDS_TO_BE_SET_val, variable_friction_val, &
+                                  friction_index_val, xupper_val, yupper_val, xlower_val, ylower_val)
+
 
     ! =================== module imports ===================
     USE topo_module

@@ -35,6 +35,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
 
+#include "riemann_source/variables.h"
+
 #ifdef __cplusplus
 extern "C"
 {
