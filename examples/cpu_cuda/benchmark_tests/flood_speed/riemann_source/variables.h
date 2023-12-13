@@ -26,7 +26,7 @@ struct GeofloodVars{
 
 struct TopoVars{
     int num_dtopo,test_topography;
-    int aux_finalized, mtopofiles;
+    int aux_finalized, mtopofiles, mtoposize;
     double *t0dtopo, *tfdtopo;
     double dt_max_dtopo;
     double *topowork, *xlowtopo, *ylowtopo, *xhitopo, *yhitopo, *dxtopo, *dytopo;

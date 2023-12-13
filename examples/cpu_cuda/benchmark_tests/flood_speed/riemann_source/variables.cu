@@ -28,7 +28,7 @@ void setprob_cuda(){
 
     /* === declare variables === */
     /* topo variables */
-    int num_dtopo_, aux_finalized_,test_topography_,mtopofiles_;
+    int num_dtopo_, aux_finalized_,test_topography_,mtopofiles_,mtoposize_;
     double  dt_max_dtopo_;
     double *t0dtopo_, *tfdtopo_;
     double *topowork_, *xlowtopo_, *ylowtopo_, *xhitopo_, *yhitopo_, *dxtopo_, *dytopo_;
@@ -47,7 +47,7 @@ void setprob_cuda(){
                             &friction_index_, &xupper_, &yupper_, &xlower_, &ylower_,
                             &test_topography_, &mtopofiles_, topowork_, xlowtopo_, 
                             ylowtopo_, xhitopo_, yhitopo_, dxtopo_, dytopo_, mxtopo_,
-                            mytopo_, mtopoorder_, i0topo_, mtopo_);
+                            mytopo_, mtopoorder_, i0topo_, mtopo_, &mtoposize_);
     
 
     /* === Create and populate structures on the host === */
@@ -78,6 +78,7 @@ void setprob_cuda(){
     topoVars.mtopoorder = mtopoorder_;
     topoVars.i0topo = i0topo_;
     topoVars.mtopo = mtopo_;
+    topoVars.mtoposize = mtoposize_;
 
     FrictionVars frictionVars;
     frictionVars.variable_friction = variable_friction_;

@@ -17,6 +17,15 @@ __device__ void setaux_cuda(int mbc, int mx, int my, double xlow,
                             double ylow, double dx, double dy, int maux, 
                             double aux[], int is_ghost_in, int nghost, int mint,int i, int j);
 
+__device__ void cellgridintegrate(double topoint, double xim, double xcell, double xip, double yjm, 
+                                double ycell, double yjp, double xlowtopo[], double ylowtopo[], double xhitopo[], 
+                                double yhitopo[], double dxtopo[], double dytopo[], int mxtopo[], int mytopo[], 
+                                int mtopo[], int i0topo[], int mtopoorder[], int mtopofiles, int mtoposize, double topo[]);
+
+__device__ intersection(int indicator, double area, double xintlo, double xintc, double xinthi,
+                                    double yintlo, double yintc, double yinthi, double x1lo, double x1hi,
+                                    double y1lo, double y1hi, double x2lo, double x2hi, double y2lo, double y2hi);
+
 __device__ double fc2d_geoclaw_get_dt_max_dtopo();
 __device__ void fc2d_geoclaw_get_dtopo_interval(double tmin, double tmax);
 __device__ bool fc2d_geoclaw_check_dtopotime(double t, double tau);
@@ -173,6 +182,8 @@ __device__ void setaux_cuda(int mbc, int mx, int my, double xlow,
     double ylower = d_amrVars.ylower;
     double xupper = d_amrVars.xupper;
     double yupper = d_amrVars.yupper;
+    int test_topography = d_topoVars.test_topography;
+    int mtopofiles = d_topoVars.mtopofiles;
 
 
     bool is_ghost = (is_ghost_in != 0);
@@ -242,6 +253,10 @@ __device__ void setaux_cuda(int mbc, int mx, int my, double xlow,
      if (((y>yupper) || (y<ylower)) && ((x>xupper) || (x<xlower))) return;
 
     /* use input topography files if available */
+    if (mtopofiles > 0 && test_topography == 0)
+    {
+        double topo_integral = 0.0;
+    }
 
 
 }
@@ -253,4 +268,87 @@ __device__ bool ghost_invalid(int i, int j, int mx, int my, int nghost, int mint
 
     return (inner || outer);
 }
+
+__device__ void cellgridintegrate(double topoint, double xim, double xcell, double xip, double yjm, 
+                                  double ycell, double yjp, double xlowtopo[], double ylowtopo[], double xhitopo[], 
+                                  double yhitopo[], double dxtopo[], double dytopo[], int mxtopo[], int mytopo[], 
+                                  int mtopo[], int i0topo[], int mtopoorder[], int mtopofiles, int mtoposize, double topo[])
+{
+    /*  cellgridintegrate integrates a unique surface, over a rectangular cell
+     defined from data from multiple regular Cartesian grids
+     (using the finest data available in any region)
+
+     The rectangle has coords:
+     xim <= x <= xip, yjm <= y <= yjp, with center (x,y) = (xcell, ycell)
+
+     The intersection (with one particular grid has coords:
+     xintlo <= x <= xinthi, yintlo <= y <= yinthi, with center (x,y) = (xintc, yintc)
+     The _set_ version uses a recursive strategy using the formulas for
+     intersections of sets.
+    */
+
+    /* Intialize the integral of the surface */
+    topoint = 0.0;
+
+    /* determine the type of integration needed */
+    int im = 1;
+    int mfid,i0;
+    double cellarea;
+    /* first see if the grid cell is entirely in a fine topofile */
+    for (int m =1 ; m <= mtopofiles; m++)
+    {
+        /* look at topofiles, from fine to coarse */
+        mfid = mtopoorder[m];
+        i0 = i0topo[mfid];
+
+        /* check for intersection of cell and this topofile */
+        cellarea = (xip - xim)*(yjp - yjm);
+        intersection(indicator,area,xmlo,xmc,xmhi,ymlo,ymc,ymhi,xim,xip,yjm,yjp,xlowtopo[mfid],xhitopo[mfid],ylowtopo[mfid],yhitopo[mfid]);
+
+        if (indicator == 1) // cell overlaps grid
+        {
+            if (area == cellarea) // cell is entirely in grid
+            {
+                /* intergrate surface and getout of here */
+                topoint += topointergral()
+            }
+        }
+    }
+
+}
+
+__device__ intersection(int indicator, double area, double xintlo, double xintc, double xinthi,
+                        double yintlo, double yintc, double yinthi, double x1lo, double x1hi,
+                        double y1lo, double y1hi, double x2lo, double x2hi, double y2lo, double y2hi)
+{
+    /* find the intersection of two rectangles, return the intersection
+     and it's area, and indicator =1
+     if there is no intersection, indicator =0
+    */
+
+    /* Compute the intersection of the two rectangles */
+    xintlo = fmax(x1lo, x2lo);
+    xinthi = fmin(x1hi, x2hi);
+    yintlo = fmax(y1lo, y2lo);
+    yinthi = fmin(y1hi, y2hi);
+
+    /* compute the ceneter of the intersection */
+    xintc = 0.5*(xintlo + xinthi);
+    yintc = 0.5*(yintlo + yinthi);
+
+    if (xinthi > xintlo && yinthi > yintlo)
+    {
+        /* compute the area of the intersection */
+        area = (xinthi - xintlo)*(yinthi - yintlo);
+        indicator = 1;
+    }
+    else
+    {
+        /* no intersection */
+        area = 0.0;
+        indicator = 0;
+    }
+}
+
+
 

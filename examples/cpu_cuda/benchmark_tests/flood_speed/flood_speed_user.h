@@ -69,7 +69,7 @@ void GET_B4STEP2_PARAMETERS(const int* num_dtopo, const int* aux_finalized, doub
                             double tfdtopo[], const double* dt_max_dtopo, const double* NEEDS_TO_BE_DEFINED, 
                             const bool* variable_friction, const int* friction_index, const double* xupper, 
                             const double* yupper, const double* xlower, const double* ylower,
-                            const int* test_topograpghy, const int* mtopofiles, double topowork[], double xlowtopo[], double ylowtopo[], double xhitopo[], double yhitopo[], double dxtopo[], double dytopo[], int mxtopo[], int mytopo[], int mtopoorder[], int i0topo[], int mtopo[]);
+                            const int* test_topograpghy, const int* mtopofiles, double topowork[], double xlowtopo[], double ylowtopo[], double xhitopo[], double yhitopo[], double dxtopo[], double dytopo[], int mxtopo[], int mytopo[], int mtopoorder[], int i0topo[], int mtopo[], const int* mtoposize);
 
 void setprob_cuda();
 
