@@ -57,23 +57,23 @@ subroutine get_b4step2_parameters(num_dtopo_val, aux_finalized_val, t0dtopo_val,
         tfdtopo_val = tfdtopo(1:num_dtopo)
     endif
 
-    if (mtopofiles > 0) then
-        allocate(topowork_val(mtopofiles), xlowtopo_val(mtopofiles), ylowtopo_val(mtopofiles), xhitopo_val(mtopofiles), &
-        yhitopo_val(mtopofiles), dxtopo_val(mtopofiles), dytopo_val(mtopofiles))
-        allocate(mxtopo_val(mtopofiles), & 
-        mytopo_val(mtopofiles), mtopoorder_val(mtopofiles), i0topo_val(mtopofiles), mtopo_val(mtopofiles))
-        topowork_val = topowork(1:mtopofiles)
-        xlowtopo_val = xlowtopo(1:mtopofiles)
-        ylowtopo_val = ylowtopo(1:mtopofiles)
-        xhitopo_val = xhitopo(1:mtopofiles)
-        yhitopo_val = yhitopo(1:mtopofiles)
-        dxtopo_val = dxtopo(1:mtopofiles)
-        dytopo_val = dytopo(1:mtopofiles)
-        mxtopo_val = mxtopo(1:mtopofiles)
-        mytopo_val = mytopo(1:mtopofiles)
-        mtopoorder_val = mtopoorder(1:mtopofiles)
-        i0topo_val = i0topo(1:mtopofiles)
-        mtopo_val = mtopo(1:mtopofiles)
-    endif
+    ! if (mtopofiles > 0) then
+    !     allocate(topowork_val(mtopofiles), xlowtopo_val(mtopofiles), ylowtopo_val(mtopofiles), xhitopo_val(mtopofiles), &
+    !     yhitopo_val(mtopofiles), dxtopo_val(mtopofiles), dytopo_val(mtopofiles))
+    !     allocate(mxtopo_val(mtopofiles), & 
+    !     mytopo_val(mtopofiles), mtopoorder_val(mtopofiles), i0topo_val(mtopofiles), mtopo_val(mtopofiles))
+    !     topowork_val = topowork(1:mtopofiles)
+    !     xlowtopo_val = xlowtopo(1:mtopofiles)
+    !     ylowtopo_val = ylowtopo(1:mtopofiles)
+    !     xhitopo_val = xhitopo(1:mtopofiles)
+    !     yhitopo_val = yhitopo(1:mtopofiles)
+    !     dxtopo_val = dxtopo(1:mtopofiles)
+    !     dytopo_val = dytopo(1:mtopofiles)
+    !     mxtopo_val = mxtopo(1:mtopofiles)
+    !     mytopo_val = mytopo(1:mtopofiles)
+    !     mtopoorder_val = mtopoorder(1:mtopofiles)
+    !     i0topo_val = i0topo(1:mtopofiles)
+    !     mtopo_val = mtopo(1:mtopofiles)
+    ! endif
 
 end subroutine get_b4step2_parameters

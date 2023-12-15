@@ -174,20 +174,6 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     hvL = qr[mv];
     hvR = ql[mv];
 
-      // Debugging check for NaNs 
-    //   print at only one thread
-    // int tid = threadIdx.x;
-    // if (tid == 0) {
-    //   printf("hL = %e, hR = %e\n", hL, hR);
-    //   printf("huL = %e, huR = %e\n", huL, huR);
-    //   printf("hvL = %e, hvR = %e\n", hvL, hvR);
-    //   printf("uL = %e, uR = %e\n", uL, uR);
-    //   printf("vL = %e, vR = %e\n", vL, vR);
-    //   printf("phiL = %e, phiR = %e\n", phiL, phiR);
-    //   printf("bL = %e, bR = %e\n", bL, bR);
-    // }
-
-
     // Check for wet/dry left boundary
     if (hR > drytol) {
         uR = huR / hR;
@@ -215,7 +201,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         vL = 0.0;
         phiL = 0.0;
     }
-
+  
     /* left and right surfaces depth inrelation to topography */
     wall[0] = 1.0;
     wall[1] = 1.0;
@@ -278,6 +264,18 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     /* === solve Riemann problem === */
     riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
 
+    // Debugging check for NaNs 
+    // if (tid == 0) {
+    //     printf("hL = %e, hR = %e\n", hL, hR);
+    //     printf("huL = %e, huR = %e\n", huL, huR);
+    //     printf("hvL = %e, hvR = %e\n", hvL, hvR);
+    //     printf("uL = %e, uR = %e\n", uL, uR);
+    //     printf("vL = %e, vR = %e\n", vL, vR);
+    //     printf("phiL = %e, phiR = %e\n", phiL, phiR);
+    //     printf("bL = %e, bR = %e\n", bL, bR);
+    // }
+
+
     // eliminate ghost fluxes for wall
     for (mw=0; mw<3; mw++) {
         sw[mw] *= wall[mw];
@@ -293,6 +291,14 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         fwave[mw + mu*mwaves] = fw[mw + mu*3];
         fwave[mw + mv*mwaves] = fw[mw + mv*3];
     }
+
+    // Debugging check for NaNs
+    // if (tid == 0) {
+    //     printf("s1 = %e, s2 = %e, s3 = %e\n", s[0], s[1], s[2]);
+    //     printf("fwave[0] = %e, fwave[1] = %e, fwave[2] = %e\n", fwave[0], fwave[1], fwave[2]);
+    //     printf("fwave[3] = %e, fwave[4] = %e, fwave[5] = %e\n", fwave[3], fwave[4], fwave[5]);
+    //     printf("fwave[6] = %e, fwave[7] = %e, fwave[8] = %e\n", fwave[6], fwave[7], fwave[8]);
+    // }
 
     label30: // (similar to 30 continue in Fortran)
 
@@ -332,6 +338,11 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
             apdq[mw] += 0.5*fwave[mw + mv*mwaves];
         }
     }
+    // Debugging check for NaNs
+    // if (tid == 0) {
+    //     printf("amdq[0] = %e, amdq[1] = %e, amdq[2] = %e\n", amdq[0], amdq[1], amdq[2]);
+    //     printf("apdq[0] = %e, apdq[1] = %e, apdq[2] = %e\n", apdq[0], apdq[1], apdq[2]);
+    // }
 }
 
 
@@ -374,6 +385,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     h = (imp == 0) ? qr[0] : ql[0];
 
+    int tid = threadIdx.x;
+
     // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
     if (h > drytol) {
         /* Compute velocities in relevant cell, and other quantities */
@@ -392,6 +405,11 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             topo1 = aux1[0];
             topo3 = aux3[0];
         }
+
+        // Debugging check for NaNs
+        // if (tid == 0) {
+        //     printf("h = %e, u = %e, v = %e, eta = %e, topo1 = %e, topo3 = %e\n", h, u, v, eta, topo1, topo3);
+        // }
 
         /* Check if cell that transverse wave go into are both too high: */
         // if (eta < fmin(topo1, topo3)) return; 
@@ -429,10 +447,20 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             s[1] = v;
             s[2] = v + sqrt(s_grav * h);
 
+            // Debugging check for NaNs
+            // if (tid == 0) {
+            //     printf("s[0] = %e, s[1] = %e, s[2] = %e\n", s[0], s[1], s[2]);
+            // }
+
             /* Determine asdq decomposition (beta) */
             delf1 = asdq[0];
             delf2 = asdq[mu];
             delf3 = asdq[mv];
+
+            // Debugging check for NaNs
+            if (tid == 0) {
+                printf("delf1 = %e, delf2 = %e, delf3 = %e\n", delf1, delf2, delf3);
+            }
 
             beta[0] = (s[2]*delf1 - delf3) / (s[2] - s[0]);
             beta[1] = -u*delf1 + delf2;
@@ -451,6 +479,12 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             r[mu + 2*mwaves] = u;
             r[mv + 2*mwaves] = s[2];
 
+            // Debugging check for NaNs
+            // if (tid == 0) {
+
+            //     printf("beta[0] = %e, beta[1] = %e, beta[2] = %e\n", beta[0], beta[1], beta[2]);
+            // }
+
             /* Compute transverse fluctuations */
             for (mw = 0; mw < 3; mw++) {
                 if ((s[mw] < 0.0) && (eta >= topo1)) {
@@ -463,6 +497,11 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                     bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[mw + 2*mwaves];
                 }
             }
+            // Debugging check for NaNs
+            // if (tid == 0) {
+            //     printf("bmasdq[0] = %e, bmasdq[1] = %e, bmasdq[2] = %e\n", bmasdq[0], bmasdq[1], bmasdq[2]);
+            //     printf("bpasdq[0] = %e, bpasdq[1] = %e, bpasdq[2] = %e\n", bpasdq[0], bpasdq[1], bpasdq[2]);
+            // }
         }
     }
 }

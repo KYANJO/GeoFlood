@@ -322,11 +322,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             //         &t,&dt,&maux,auxr);
 
             //   print at only one thread; debug auxr
-            int tid = threadIdx.x;
-            if (tid == 0)
-            {
-                printf("auxr[0] = %f\n", auxr[0]);
-            }
+            // int tid = threadIdx.x;
+            // if (tid == 0)
+            // {
+            //     printf("auxr[0] = %f\n", auxr[0]);
+            // }
 
 
                     

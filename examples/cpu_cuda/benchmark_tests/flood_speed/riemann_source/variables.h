@@ -14,6 +14,7 @@ extern "C"
 
 #define PI 3.14159265358979323846
 #define deg2rad (PI / 180.0)
+#define rad2deg (180.0 / PI)
 
 /* Define define and declare structures */
 struct GeofloodVars{

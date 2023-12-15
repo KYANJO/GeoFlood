@@ -58,42 +58,42 @@ void setprob_cuda(){
     geofloodVars.coordinate_system = (int) arr[3];
     geofloodVars.mcapa = (int) arr[4];
 
-    TopoVars topoVars;
-    topoVars.num_dtopo = num_dtopo_;
-    topoVars.aux_finalized = aux_finalized_;
-    topoVars.dt_max_dtopo = dt_max_dtopo_;
-    topoVars.t0dtopo = t0dtopo_;
-    topoVars.tfdtopo = tfdtopo_;
-    topoVars.test_topography = test_topography_;
-    topoVars.mtopofiles = mtopofiles_;
-    topoVars.topowork = topowork_;
-    topoVars.xlowtopo = xlowtopo_;
-    topoVars.ylowtopo = ylowtopo_;
-    topoVars.xhitopo = xhitopo_;
-    topoVars.yhitopo = yhitopo_;
-    topoVars.dxtopo = dxtopo_;
-    topoVars.dytopo = dytopo_;
-    topoVars.mxtopo = mxtopo_;
-    topoVars.mytopo = mytopo_;
-    topoVars.mtopoorder = mtopoorder_;
-    topoVars.i0topo = i0topo_;
-    topoVars.mtopo = mtopo_;
-    topoVars.mtoposize = mtoposize_;
+    // TopoVars topoVars;
+    // topoVars.num_dtopo = num_dtopo_;
+    // topoVars.aux_finalized = aux_finalized_;
+    // topoVars.dt_max_dtopo = dt_max_dtopo_;
+    // topoVars.t0dtopo = t0dtopo_;
+    // topoVars.tfdtopo = tfdtopo_;
+    // topoVars.test_topography = test_topography_;
+    // topoVars.mtopofiles = mtopofiles_;
+    // topoVars.topowork = topowork_;
+    // topoVars.xlowtopo = xlowtopo_;
+    // topoVars.ylowtopo = ylowtopo_;
+    // topoVars.xhitopo = xhitopo_;
+    // topoVars.yhitopo = yhitopo_;
+    // topoVars.dxtopo = dxtopo_;
+    // topoVars.dytopo = dytopo_;
+    // topoVars.mxtopo = mxtopo_;
+    // topoVars.mytopo = mytopo_;
+    // topoVars.mtopoorder = mtopoorder_;
+    // topoVars.i0topo = i0topo_;
+    // topoVars.mtopo = mtopo_;
+    // topoVars.mtoposize = mtoposize_;
 
-    FrictionVars frictionVars;
-    frictionVars.variable_friction = variable_friction_;
-    frictionVars.friction_index = friction_index_;
+    // FrictionVars frictionVars;
+    // frictionVars.variable_friction = variable_friction_;
+    // frictionVars.friction_index = friction_index_;
 
-    AmrVars amrVars;
-    amrVars.xupper = xupper_;
-    amrVars.yupper = yupper_;
-    amrVars.xlower = xlower_;
-    amrVars.ylower = ylower_;
-    amrVars.NEEDS_TO_BE_DEFINED = NEEDS_TO_BE_DEFINED_;
+    // AmrVars amrVars;
+    // amrVars.xupper = xupper_;
+    // amrVars.yupper = yupper_;
+    // amrVars.xlower = xlower_;
+    // amrVars.ylower = ylower_;
+    // amrVars.NEEDS_TO_BE_DEFINED = NEEDS_TO_BE_DEFINED_;
 
     /* === Copy structures to device (constant memory) === */
     CHECK(cudaMemcpyToSymbol(d_geofloodVars, &geofloodVars, sizeof(GeofloodVars)));
-    CHECK(cudaMemcpyToSymbol(d_topoVars, &topoVars, sizeof(TopoVars)));
-    CHECK(cudaMemcpyToSymbol(d_frictionVars, &frictionVars, sizeof(FrictionVars)));
-    CHECK(cudaMemcpyToSymbol(d_amrVars, &amrVars, sizeof(AmrVars)));
+    // CHECK(cudaMemcpyToSymbol(d_topoVars, &topoVars, sizeof(TopoVars)));
+    // CHECK(cudaMemcpyToSymbol(d_frictionVars, &frictionVars, sizeof(FrictionVars)));
+    // CHECK(cudaMemcpyToSymbol(d_amrVars, &amrVars, sizeof(AmrVars)));
 }

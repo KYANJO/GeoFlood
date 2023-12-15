@@ -3,6 +3,7 @@ add_library(flood_speed_cpu_f OBJECT
   riemann_source/setprob.f90
   rpn2cons_update.f
   fortran/fc2d_geoflood_bc2.f90
+  # fortran/flood_speed_bc.f90
   ../../../../src/fc2d_cudaflood/hydrograph/hydrograh_module.f90
   ../../../../src/fc2d_cudaflood/geolib_source/geoclaw_module.f90 
   ../../../../src/fc2d_cudaflood/geolib_source/refinement_module.f90
