@@ -43,7 +43,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
 __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
-    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw);
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir);
 
 __device__ void flood_speed_compute_speeds(int idir, int meqn, int mwaves, int maux,
                                             double ql[], double  qr[],
@@ -99,11 +99,16 @@ void flood_speed_assign_speeds(cudaclaw_cuda_speeds_t *speeds)
 }
 
 /* Normal Riemann solver for the 2d shallow water equations with topography */
+// __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
+//                                 int maux, double ql[], double qr[],
+//                                 double auxl[], double auxr[],
+//                                 double fwave[], double s[], 
+//                                 double amdq[], double apdq[], int ix, int iy)
 __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
-                                int maux, double ql[], double qr[],
-                                double auxl[], double auxr[],
+                                int maux, double q_l[], double q_r[],
+                                double aux_l[], double aux_r[],
                                 double fwave[], double s[], 
-                                double amdq[], double apdq[])
+                                double amd_q[], double apd_q[], int ix, int iy)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -121,16 +126,42 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     bool rare1, rare2;
     int mw, mu, mv;
 
+    /* Swapping left to right  (cudaclaw_flux2.cu)*/
+    double *qr = q_l;
+    double *ql = q_r;
+    double *auxr = aux_l;
+    double *auxl = aux_r;
+    double *amdq = apd_q;
+    double *apdq = amd_q;
+
+       //   print at only one thread
+    //    int mx = 16, my = 16, mbc = 2;
+    // //    int thread_index = threadIdx.x;
+    //    int ifaces_x, ifaces_y;
+    //   ifaces_x = mx + 2*mbc-1;
+    //   ifaces_y = my + 2*mbc-1;
+    //   int ix = thread_index % ifaces_x;
+    //   int iy = thread_index/ifaces_x;
+
+      bool debug;
+      if (idir == 0)
+      {
+        debug = 1;
+      }
+      else{
+        debug = 0;
+      }
+
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
-    // if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
-    //     printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
-    // }
+    if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
+        printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
+    }
 
     // Initialize Riemann problem for the grid interface 
     for (mw=0; mw<mwaves; ++mw)
     {
-        sw[mw] = 0.0;
+        s[mw] = 0.0;
         fwave[mw + 0*mwaves] = 0.0;
         fwave[mw + 1*mwaves] = 0.0; 
         fwave[mw + 2*mwaves] = 0.0;
@@ -155,141 +186,196 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         ql[2] = 0.0;
     }
 
-     //   print at only one thread
-     int tid = threadIdx.x;
-
-    // Skip problem if in a completely dry area
-    if (qr[0] <= drytol && ql[0] <= drytol) {
-        goto label30;
-    }
-
-    /* Riemann problem variables */
-    hL  = qr[0];
-    hR  = ql[0];
-    huL = qr[mu];
-    huR = ql[mu];
-    bL = auxr[0];
-    bR = auxl[0];
-
-    hvL = qr[mv];
-    hvR = ql[mv];
-
-    // Check for wet/dry left boundary
-    if (hR > drytol) {
-        uR = huR / hR;
-        vR = hvR / hR;
-        phiR = 0.5 * s_grav * hR * hR + huR * huR / hR;
-    } else {
-        hR = 0.0;
-        huR = 0.0;
-        hvR = 0.0;
-        uR = 0.0;
-        vR = 0.0;
-        phiR = 0.0;
-    }
-
-    // Check for wet/dry right boundary
-    if (hL > drytol) {
-        uL = huL / hL;
-        vL = hvL / hL;
-        phiL = 0.5 * s_grav * hL * hL + huL * huL / hL;
-    } else {
-        hL = 0.0;
-        huL = 0.0;
-        hvL = 0.0;
-        uL = 0.0;
-        vL = 0.0;
-        phiL = 0.0;
-    }
-  
-    /* left and right surfaces depth inrelation to topography */
-    wall[0] = 1.0;
-    wall[1] = 1.0;
-    wall[2] = 1.0;
-    if (hR <= drytol) {
-        /* determine the wave structure */
-        riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
-        hstartest = fmax(hL,hstar);
-        if (hstartest + bL < bR) {
-            /* hL+bL < bR and hstar+bL < bR, so water can't overtop right cell 
-            (move into right cell) so right state should become ghost values 
-            that mirror left for wall problem) */
-            wall[1] = 0.0;
-            wall[2] = 0.0;
-            hR = hL;
-            huR = -huL;
-            bR = bL;
-            phiR = phiL;
-            uR = -uL;
-            vR = vL;
-            /* here we already have huR =- huL, so we don't need to change it */
-        } else if (hL+bL < bR) {
-            /* hL+bL < bR and hstar+bL >bR, so we set bR to the water level in 
-            the left cell so that water can possibly overtop the right cell (move into the right cell) */ 
-            bR = hL + bL;
-        }
-    } else if (hL <= drytol) { /* right surface is lower than left topo */
-        /* determine the Riemann structure */
-        riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
-        hstartest = fmax(hR,hstar);
-        if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
-        {
-            wall[0] = 0.0;
-            wall[1] = 0.0;
-            hL = hR;
-            huL = -huR;
-            bL = bR;
-            phiL = phiR;
-            uL = -uR;
-            vL = vR;
-        } else if (hR+bR < bL) {
-            bL = hR + bR;
-        }
-    }
-
-    /* determine wave speeds */
-    sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
-    sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
-
-    uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe average
-    chat = sqrt(0.5*s_grav*(hL+hR)); // Roe average
-    sRoe1 = uhat - chat; // Roe wave speed 1 wave
-    sRoe2 = uhat + chat; // Roe wave speed 2 wave
-
-    sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
-    sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
-
-    /* --- end of initializing --- */
-
-    /* === solve Riemann problem === */
-    riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw);
-
-    // Debugging check for NaNs 
-    // if (tid == 0) {
-    //     printf("hL = %e, hR = %e\n", hL, hR);
-    //     printf("huL = %e, huR = %e\n", huL, huR);
-    //     printf("hvL = %e, hvR = %e\n", hvL, hvR);
-    //     printf("uL = %e, uR = %e\n", uL, uR);
-    //     printf("vL = %e, vR = %e\n", vL, vR);
-    //     printf("phiL = %e, phiR = %e\n", phiL, phiR);
-    //     printf("bL = %e, bR = %e\n", bL, bR);
+    // if (debug){
+    //     printf("ix = %d, iy = %d\n " \ 
+    //     "qr[0] = %.16f, ql[0] = %.16f\n" \
+    //     "qr[1] = %.16f, ql[1] = %.16f\n" \
+    //     "qr[2] = %.16f, ql[2] = %.16f\n\n", ix,iy,qr[0],ql[0],qr[1],ql[1],qr[2],ql[2]);
     // }
 
+    // Skip problem if in a completely dry area
+    // if (qr[0] <= drytol && ql[0] <= drytol) {
+    //     goto label30;
+    // }
 
-    // eliminate ghost fluxes for wall
-    for (mw=0; mw<3; mw++) {
-        sw[mw] *= wall[mw];
-        fw[mw] *= wall[mw];
-        fw[mw + mu*3] *= wall[mw];
-        fw[mw + mv*3] *= wall[mw];
-    }
+    if (qr[0] > drytol || ql[0] > drytol) {
+        /* Riemann problem variables */
+        hL  = qr[0];
+        hR  = ql[0];
+        huL = qr[mu];
+        huR = ql[mu];
+        bL = auxr[0];
+        bR = auxl[0];
 
-    // update fwave and corresponding speeds
-    for (mw=0; mw<mwaves; mw++) {
-        s[mw] = sw[mw];
-        fwave[mw + 0*mwaves] = fw[mw];
-        fwave[mw + mu*mwaves] = fw[mw + mu*3];
-        fwave[mw + mv*mwaves] = fw[mw + mv*3];
+        hvL = qr[mv];
+        hvR = ql[mv];
+
+        // Check for wet/dry left boundary
+        if (hR > drytol) {
+            uR = huR / hR;
+            vR = hvR / hR;
+            phiR = 0.5 * s_grav * (hR * hR) + (huR * huR) / hR;
+        } else {
+            hR = 0.0;
+            huR = 0.0;
+            hvR = 0.0;
+            uR = 0.0;
+            vR = 0.0;
+            phiR = 0.0;
+        }
+
+        // Check for wet/dry right boundary
+        if (hL > drytol) {
+            uL = huL / hL;
+            vL = hvL / hL;
+            phiL = 0.5 * s_grav * (hL * hL) + (huL * huL) / hL;
+        } else {
+            hL = 0.0;
+            huL = 0.0;
+            hvL = 0.0;
+            uL = 0.0;
+            vL = 0.0;
+            phiL = 0.0;
+        }
+    
+        // if (debug){
+        //     printf("ix = %d, iy = %d\n " \ 
+        //     "hL = %.16f, hR = %.16f\n" \
+        //     "huL = %.16f, huR = %.16f\n" \
+        //     "hvL = %.16f, hvR = %.16f\n" \
+        //     "uL = %.16f, uR = %.16f\n" \
+        //     "vL = %.16f, vR = %.16f\n" \
+        //     "phiL = %.16f, phiR = %.16f\n" \
+        //     "bL = %.16f, bR = %.16f\n\n", ix,iy,hL,hR,huL,huR,hvL,hvR,uL,uR,vL,vR,phiL,phiR,bL,bR);
+        // }
+
+        /* left and right surfaces depth inrelation to topography */
+        wall[0] = 1.0;
+        wall[1] = 1.0;
+        wall[2] = 1.0;
+        if (hR <= drytol) {
+            /* determine the wave structure */
+            riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
+
+        //     if (debug){
+        //     printf("ix = %d, iy = %d\n " \ 
+        //     "hL = %.16f, uL = %.16f\n" \
+        //     "hstar = %.16f\n" \
+        //     "s1m = %.16f, s2m = %.16f\n" \
+        //     "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,uL,hstar,s1m,s2m,rare1,rare2);
+        // }
+
+            hstartest = fmax(hL,hstar);
+            if (hstartest + bL < bR) {
+                /* hL+bL < bR and hstar+bL < bR, so water can't overtop right cell 
+                (move into right cell) so right state should become ghost values 
+                that mirror left for wall problem) */
+                wall[1] = 0.0;
+                wall[2] = 0.0;
+                hR = hL;
+                huR = -huL;
+                bR = bL;
+                phiR = phiL;
+                uR = -uL;
+                vR = vL;
+                /* here we already have huR =- huL, so we don't need to change it */
+            } else if (hL+bL < bR) {
+                /* hL+bL < bR and hstar+bL >bR, so we set bR to the water level in 
+                the left cell so that water can possibly overtop the right cell (move into the right cell) */ 
+                bR = hL + bL;
+            }
+        } else if (hL <= drytol) { /* right surface is lower than left topo */
+            /* determine the Riemann structure */
+            riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
+            hstartest = fmax(hR,hstar);
+
+            // if (debug){
+            //     printf("ix = %d, iy = %d\n " \ 
+            //     "hR = %.16f, uR = %.16f\n" \
+            //     "hstar = %.16f\n" \
+            //     "s1m = %.16f, s2m = %.16f\n" \
+            //     "rare1 = %d, rare2 = %d\n\n", ix,iy,hR,uR,hstar,s1m,s2m,rare1,rare2);
+            // }
+
+            if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
+            {
+                wall[0] = 0.0;
+                wall[1] = 0.0;
+                hL = hR;
+                huL = -huR;
+                bL = bR;
+                phiL = phiR;
+                uL = -uR;
+                vL = vR;
+            } else if (hR+bR < bL) {
+                bL = hR + bR;
+            }
+        }
+
+        // if (debug){
+        //     printf("ix = %d, iy = %d\n " \ 
+        //     "hL = %.16f, hR = %.16f\n" \
+        //     "huL = %.16f, huR = %.16f\n" \
+        //     "hvL = %.16f, hvR = %.16f\n" \
+        //     "uL = %.16f, uR = %.16f\n" \
+        //     "vL = %.16f, vR = %.16f\n" \
+        //     "phiL = %.16f, phiR = %.16f\n" \
+        //     "bL = %.16f, bR = %.16f\n\n", ix,iy,hL,hR,huL,huR,hvL,hvR,uL,uR,vL,vR,phiL,phiR,bL,bR);
+        // }
+
+        /* determine wave speeds */
+        sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
+        sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
+
+        uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe average
+        chat = sqrt(0.5*s_grav*(hL+hR)); // Roe average
+        sRoe1 = uhat - chat; // Roe wave speed 1 wave
+        sRoe2 = uhat + chat; // Roe wave speed 2 wave
+
+        sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
+        sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
+
+        // if (debug){
+        //     printf("ix = %d, iy = %d\n " \ 
+        //     "sL = %.16f, sR = %.16f\n" \ 
+        //     "sRoe1 = %.16f, sRoe2 = %.16f\n" \ 
+        //     "sE1 = %.16f, sE2 = %.16f\n\n", ix,iy,sL,sR,sRoe1,sRoe2,sE1,sE2);
+        // }
+        /* --- end of initializing --- */
+
+        /* === solve Riemann problem === */
+        // riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
+        riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
+
+        
+
+        // Debugging check for NaNs 
+        // if (tid == 0) {
+        //     printf("hL = %e, hR = %e\n", hL, hR);
+        //     printf("huL = %e, huR = %e\n", huL, huR);
+        //     printf("hvL = %e, hvR = %e\n", hvL, hvR);
+        //     printf("uL = %e, uR = %e\n", uL, uR);
+        //     printf("vL = %e, vR = %e\n", vL, vR);
+        //     printf("phiL = %e, phiR = %e\n", phiL, phiR);
+        //     printf("bL = %e, bR = %e\n", bL, bR);
+        // }
+
+
+        // eliminate ghost fluxes for wall
+        for (mw=0; mw<3; mw++) {
+            sw[mw] *= wall[mw];
+            fw[mw] *= wall[mw];
+            fw[mw + 1*mwaves] *= wall[mw];
+            fw[mw + 2*mwaves] *= wall[mw];
+        }
+
+        // update fwave and corresponding speeds
+        for (mw=0; mw<mwaves; mw++) {
+            s[mw] = sw[mw];
+            fwave[mw] = fw[mw];
+            fwave[mw + mu*mwaves] = fw[mw + 1*mwaves];
+            fwave[mw + mv*mwaves] = fw[mw + 2*mwaves];
+        }
     }
 
     // Debugging check for NaNs
@@ -300,7 +386,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     //     printf("fwave[6] = %e, fwave[7] = %e, fwave[8] = %e\n", fwave[6], fwave[7], fwave[8]);
     // }
 
-    label30: // (similar to 30 continue in Fortran)
+    // label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
@@ -313,9 +399,9 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         // update fwave and corresponding speeds
         for (mw=0; mw<mwaves; mw++) {
             s[mw] = dxdc*s[mw];
-            fwave[mw + 0*mwaves] = dxdc*fwave[mw];
-            fwave[mw + mu*mwaves] = dxdc*fwave[mw + mu*mwaves];
-            fwave[mw + mv*mwaves] = dxdc*fwave[mw + mv*mwaves];
+            fwave[mw] = dxdc*fwave[mw];
+            fwave[mw + mwaves] = dxdc*fwave[mw + mwaves];
+            fwave[mw + 2*mwaves] = dxdc*fwave[mw + 2*mwaves];
         }
     }
 
@@ -323,19 +409,19 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     for (mw=0; mw<mwaves; mw++) {
         if (s[mw] < 0.0) {
             amdq[mw] += fwave[mw];
-            amdq[mw] += fwave[mw + mu*mwaves];
-            amdq[mw] += fwave[mw + mv*mwaves];
+            amdq[mw] += fwave[mw + 1*mwaves];
+            amdq[mw] += fwave[mw + 2*mwaves];
         } else if (s[mw] > 0.0) {
             apdq[mw] += fwave[mw];
-            apdq[mw] += fwave[mw + mu*mwaves];
-            apdq[mw] += fwave[mw + mv*mwaves];
+            apdq[mw] += fwave[mw + 1*mwaves];
+            apdq[mw] += fwave[mw + 2*mwaves];
         } else {
             amdq[mw] += 0.5*fwave[mw];
-            amdq[mw] += 0.5*fwave[mw + mu*mwaves];
-            amdq[mw] += 0.5*fwave[mw + mv*mwaves];
+            amdq[mw] += 0.5*fwave[mw + 1*mwaves];
+            amdq[mw] += 0.5*fwave[mw + 2*mwaves];
             apdq[mw] += 0.5*fwave[mw];
-            apdq[mw] += 0.5*fwave[mw + mu*mwaves];
-            apdq[mw] += 0.5*fwave[mw + mv*mwaves];
+            apdq[mw] += 0.5*fwave[mw + 1*mwaves];
+            apdq[mw] += 0.5*fwave[mw + 2*mwaves];
         }
     }
     // Debugging check for NaNs
@@ -365,7 +451,7 @@ void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
 __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                 double ql[], double qr[], double aux1[], 
                 double aux2[], double aux3[], int imp, 
-                double asdq[], double bmasdq[], double bpasdq[]) 
+                double asdq[], double bmasdq[], double bpasdq[], int ix, int iy) 
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -385,8 +471,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     h = (imp == 0) ? qr[0] : ql[0];
 
-    int tid = threadIdx.x;
-
+    bool debug = (idir == 0) ? 1 : 0;
+  
     // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
     if (h > drytol) {
         /* Compute velocities in relevant cell, and other quantities */
@@ -448,9 +534,10 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             s[2] = v + sqrt(s_grav * h);
 
             // Debugging check for NaNs
-            // if (tid == 0) {
-            //     printf("s[0] = %e, s[1] = %e, s[2] = %e\n", s[0], s[1], s[2]);
-            // }
+            if (debug) {
+                printf("ix = %d, iy = %d\n " \
+                "s[0] = %e, s[1] = %e, s[2] = %e\n", ix,iy, s[0], s[1], s[2]);
+            }
 
             /* Determine asdq decomposition (beta) */
             delf1 = asdq[0];
@@ -458,9 +545,9 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             delf3 = asdq[mv];
 
             // Debugging check for NaNs
-            if (tid == 0) {
-                printf("delf1 = %e, delf2 = %e, delf3 = %e\n", delf1, delf2, delf3);
-            }
+            // if (debug) {
+            //     printf("delf1 = %e, delf2 = %e, delf3 = %e\n", delf1, delf2, delf3);
+            // }
 
             beta[0] = (s[2]*delf1 - delf3) / (s[2] - s[0]);
             beta[1] = -u*delf1 + delf2;
@@ -531,7 +618,7 @@ void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
 __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
-    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw)
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -557,6 +644,8 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     int mu = 1; // x-direction
     int mv = 2; // y-direction
 
+    bool debug = (idir == 0) ? 1 : 0;
+
     /* determine del vectors */
     delh = hR - hL;
     delhu = huR - huL;
@@ -567,6 +656,19 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     /* Determine the Riemann structure */
     riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2);
 
+    if (ix == 7 && iy == 15) {
+        // if ((hL >= 0.3280909317849093) && (hR >= 0.3280909317849093)){
+            if (debug){
+                printf("ix = %d, iy = %d\n " \ 
+                "hL = %.16f, hR = %.16f\n" \
+                "uL = %.16f, uR = %.16f\n" \
+                "hm = %.16f\n" \
+                "s1m = %.16f, s2m = %.16f\n" \
+                "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2);
+            }
+        // }
+    }
+   
     /* For the solver to handle depth negativity, depth dh is included in the decompostion which gives as acess to using the depth positive semidefinite solver (HLLE). This makes the system to have 3 waves instead of 2. where the 1st and 3rd are the eigenpairs are related to the flux Jacobian matrix of the original SWE (since s1<s2<s3, and have been modified by Einfeldt to handle depth non-negativity) and the 2nd is refered to as the the entropy corrector wave since its introduced to correct entropy violating solutions with only 2 waves. */
     
     /* The 1st and 3rd speeds are the eigenvalues of the Jacobian matrix of the original SWE modified by Einfeldt's for use with the HLLE solver. */
@@ -737,9 +839,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
                 A[mw + mwaves] = r[mw + mwaves];
                 A[mw + 2*mwaves] = r[mw + 2*mwaves];
             }
-            A[mwaves*k + 0] = del[0];
-            A[mwaves*k + 1] = del[1];
-            A[mwaves*k + 2] = del[2];
+            A[k] = del[0];
+            A[mwaves + k] = del[1];
+            A[2*mwaves + k] = del[2];
             det1 = A[0]*(A[mwaves + mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mwaves + mv]);
             det2 = A[mwaves]*(A[mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mv]);
             det3 = A[2*mwaves]*(A[mu]*A[mwaves + mv] - A[mwaves + mu]*A[mv]);
@@ -926,3 +1028,5 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
         }
     }
 } /* End of riemanntype function */
+
+

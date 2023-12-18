@@ -95,7 +95,6 @@ void run_program(fclaw2d_global_t* glob)
                                     clawopt->mwaves,
                                     clawopt->use_fwaves);
         fc2d_cudaclaw_solver_initialize(glob);
-        // fc2d_geoclaw_solver_initialize(glob); //initialize cuda solver using geoclaw solver
     }
     else
     {
@@ -103,8 +102,7 @@ void run_program(fclaw2d_global_t* glob)
     }
     
     flood_speed_link_solvers(glob);
-
-    // if(user_opt -> cuda == 0) 
+    
     fc2d_geoclaw_module_setup(glob);
 
     /* ---------------------------------------------------------------
@@ -147,19 +145,19 @@ main (int argc, char **argv)
     int retval;
 
      /* Create new options packages */
-    fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
-    clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
-    cuclaw_opt =          fc2d_geoclaw_options_register(app,"cudaclaw","fclaw_options.ini");
+    fclaw_opt       =             fclaw_options_register(app,  NULL,       "geoflood.ini");
+    clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "geoflood.ini");
+    cuclaw_opt =          fc2d_geoclaw_options_register(app,"cudaflood","geoflood.ini");
     
-    // geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
-    user_opt =                flood_speed_options_register(app,"fclaw_options.ini"); 
+    // geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "geoflood.ini");
+    user_opt =                flood_speed_options_register(app,"geoflood.ini"); 
 
     /* Read configuration file(s) and command line, and process options */
     int first_arg;
     fclaw_exit_type_t vexit;
     options = fclaw_app_get_options (app);
     retval = fclaw_options_read_from_file(options);
-    vexit =  fclaw_app_options_parse (app, &first_arg,"fclaw_options.ini.used");
+    vexit =  fclaw_app_options_parse (app, &first_arg,"geoflood.ini.used");
 
     /* Run the program */
     if (!retval & !vexit)

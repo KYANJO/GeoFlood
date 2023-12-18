@@ -90,6 +90,7 @@
               topo3 = aux3(1,i)
          endif
 
+
          ! check if cell that transverse waves go into are both too high:
          ! Note: prior to v5.8.0 this checked against max rather than min
          if (eta < min(topo1,topo3)) cycle  ! go to next i
@@ -136,11 +137,15 @@ c        Determine some speeds necessary for the Jacobian
          s(2) = v
          s(3) = v + dsqrt(g*h)
 
+c         write(*,*) 's=',s(1:3)
+
 c        Determine asdq decomposition (beta)
 
          delf1 = asdq(1,i)
          delf2 = asdq(mu,i)
          delf3 = asdq(mv, i)
+
+c         write(*,*) 'delf=',delf1,delf2,delf3
 
          ! v5.8.0: fixed bug in beta(2): u in place of s(2)=v
          beta(1) = (s(3)*delf1 - delf3) / (s(3) - s(1))
@@ -160,6 +165,7 @@ c        Set-up eigenvectors
          r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,3) = s(3)
 
+c         write (*,*) ' beta=',beta(1:3)
 
          ! compute fluctuations
 
@@ -175,7 +181,9 @@ c        Set-up eigenvectors
             endif
          enddo  ! loop on mw
 
-
+c         write (*,*) ' bmasdq=',bmasdq(1:3,i)
+c         write(*,*) ' bpasdq=',bpasdq(1:3,i)      
+         
       enddo  ! loop on i
 
       return

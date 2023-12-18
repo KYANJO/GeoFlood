@@ -107,7 +107,7 @@ void cudaclaw_compute_speeds(const int mx,   const int my,
     double maxcfl = 0;
 
 
-#if 1
+#if 0
     if (b4step2 != NULL)
     {
         for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
@@ -286,7 +286,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     double maxcfl = 0;
 
-#if 1
+#if 0
     if (b4step2 != NULL)
     {
         for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
@@ -320,16 +320,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     t,dt,maux,auxr,i,j);
             // b4step2(&mbc,&mx,&my,&meqn,qr,&xlower,&ylower,&dx,&dy, 
             //         &t,&dt,&maux,auxr);
-
-            //   print at only one thread; debug auxr
-            // int tid = threadIdx.x;
-            // if (tid == 0)
-            // {
-            //     printf("auxr[0] = %f\n", auxr[0]);
-            // }
-
-
-                    
+    
             for(int m = 0; m < maux; m++)
             {
                 /* In case aux is set by b4step2 */
@@ -385,7 +376,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 auxl[m] = aux[I_aux - 1];
             }               
 
-            rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq);
+            rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, ix,iy); //<- added  thread_index
+            // rpn2(0, meqn, mwaves, maux, qr, ql, auxr, auxl, wave, s,  apdq, amdq, ix,iy);
 
             for (int mq = 0; mq < meqn; mq++) 
             {
@@ -438,8 +430,10 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 int I_aux = I + m*zs;
                 auxd[m] = aux[I_aux - ys];
             }               
-
-            rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq);
+            
+    
+            rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq,ix,iy);
+            // rpn2(1, meqn, mwaves, maux, qr, qd, auxr, auxd, wave, s, bpdq, bmdq, ix,iy);
 
             /* Set value at bottom interface of cell I */
             for (int mq = 0; mq < meqn; mq++) 
@@ -704,7 +698,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }            
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq);
+        // printf("meqn = %d, mwaves = %d", meqn,mwaves);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq,ix,iy);
         
 
         for(int mq = 0; mq < meqn; mq++)
@@ -780,7 +775,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -845,7 +840,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -919,7 +914,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -993,7 +988,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -1069,7 +1064,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -1137,7 +1132,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -1213,7 +1208,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq,ix,iy);
 
         for(int mq = 0; mq < meqn; mq++)
         {

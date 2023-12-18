@@ -65,6 +65,17 @@ c
 
       logical rare1,rare2
 
+      logical debug
+      double precision :: dtcom, dxcom, dycom, tcom
+      integer :: icom, jcom
+      common /comxyt/ dtcom,dxcom,dycom,tcom,icom,jcom   
+
+      if (ixy == 1) then
+         debug = .true.
+      else
+         debug  = .false.
+      endif
+
       ! In case there is no pressure forcing
       pL = 0.d0
       pR = 0.d0
@@ -108,6 +119,14 @@ c        !set normal direction
                ql(3,i)=0.d0
          endif
 
+c        if (debug) then
+c           write(6,*) 'i = ', i, ' j = ' , jcom
+c           write(*,*) 'qr = ', qr(1,i-1), ' ql = ', ql(1,i)
+c           write(*,*) 'qr = ', qr(2,i-1), ' ql = ', ql(2,i)
+c           write(*,*) 'qr = ', qr(3,i-1), ' ql = ', ql(3,i)
+c           write(6,*) ' '
+c        endif 
+
          !skip problem if in a completely dry area
          if (qr(1,i-1) <= drytol .and. ql(1,i) <= drytol) then
             go to 30
@@ -123,15 +142,6 @@ c        !set normal direction
          
          hvL=qr(nv,i-1) 
          hvR=ql(nv,i)
-
-         write (*,*) 'hL = ', hL, ' hR = ', hR
-         write (*,*) 'huL = ', huL, ' huR = ', huR
-         write (*,*) 'hvL = ', hvL, ' hvR = ', hvR
-         write (*,*) 'uL = ', uL, ' uR = ', uR
-         write (*,*) 'vL = ', vL, ' vR = ', vR
-         write (*,*) 'phiL = ', phiL, ' phiR = ', phiR
-         write (*,*) 'bL = ', bL, ' bR = ', bR
-         stop
 
          !check for wet/dry boundary
          if (hR.gt.drytol) then
@@ -160,12 +170,34 @@ c        !set normal direction
             phiL = 0.d0
          endif
 
+c        if (debug) then
+c              write(6,*) 'i = ', i, ' j = ' , jcom
+c              write(*,*) 'hL = ', hL, ' hR = ', hR
+c              write(*,*) 'huL = ', huL, ' huR = ', huR
+c              write(*,*) 'hvL = ', hvL, ' hvR = ', hvR
+c              write(*,*) 'uL = ', uL, ' uR = ', uR
+c              write(*,*) 'vL = ', vL, ' vR q= ', vR
+c              write(*,*) 'phiL = ', phiL, ' phiR = ', phiR
+c              write(*,*) 'bL = ', bL, ' bR = ', bR
+c              write(6,*) ' '
+c           endif
+
          wall(1) = 1.d0
          wall(2) = 1.d0
          wall(3) = 1.d0
          if (hR.le.drytol) then
             call riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,
      &                                  rare1,rare2,1,drytol,g)
+c
+c       if (debug) then
+c           write(6,*) 'i = ', i, ' j = ' , jcom
+c           write(*,*) 'hL = ', hL, ' uL = ', uL
+c             write(*,*) 'hstar = ', hstar
+c             write(*,*) 's1m = ', s1m, ' s2m = ', s2m
+c             write(*,*) 'rare1 = ', rare1, ' rare2 = ', rare2
+c             write(6,*) ' '
+c          endif
+c
             hstartest=max(hL,hstar)
             if (hstartest+bL.lt.bR) then !right state should become ghost values that mirror left for wall problem
 c                bR=hstartest+bL
@@ -183,6 +215,16 @@ c                bR=hstartest+bL
          elseif (hL.le.drytol) then ! right surface is lower than left topo
             call riemanntype(hR,hR,-uR,uR,hstar,s1m,s2m,
      &                                  rare1,rare2,1,drytol,g)
+
+c            if (debug) then
+c             write(6,*) 'i = ', i, ' j = ' , jcom
+c             write(*,*) 'hL = ', hL, ' uL = ', uL
+c               write(*,*) 'hstar = ', hstar
+c               write(*,*) 's1m = ', s1m, ' s2m = ', s2m
+c               write(*,*) 'rare1 = ', rare1, ' rare2 = ', rare2
+c               write(6,*) ' '
+c            endif
+c
             hstartest=max(hR,hstar)
             if (hstartest+bR.lt.bL) then  !left state should become ghost values that mirror right
 c               bL=hstartest+bR
@@ -199,6 +241,18 @@ c               bL=hstartest+bR
             endif
          endif
 
+c        if (debug) then
+c          write(6,*) 'i = ', i, ' j = ' , jcom
+c          write(*,*) 'hL = ', hL, ' hR = ', hR
+c          write(*,*) 'huL = ', huL, ' huR = ', huR
+c          write(*,*) 'hvL = ', hvL, ' hvR = ', hvR
+c          write(*,*) 'uL = ', uL, ' uR = ', uR
+c          write(*,*) 'vL = ', vL, ' vR q= ', vR
+c          write(*,*) 'phiL = ', phiL, ' phiR = ', phiR
+c          write(*,*) 'bL = ', bL, ' bR = ', bR
+c          write(6,*) ' '
+c       endif
+
          !determine wave speeds
          sL=uL-sqrt(g*hL) ! 1 wave speed of left state
          sR=uR+sqrt(g*hR) ! 2 wave speed of right state
@@ -211,14 +265,22 @@ c               bL=hstartest+bR
          sE1 = min(sL,sRoe1) ! Eindfeldt speed 1 wave
          sE2 = max(sR,sRoe2) ! Eindfeldt speed 2 wave
 
+
          !--------------------end initializing...finally----------
          !solve Riemann problem.
+c       if (debug) then
+c          write(6,*) 'i = ', i, ' j = ' , jcom
+c          write(*,*) 'sL = ', sL, ' sR = ', sR
+c          write(*,*) 'sRoe1 = ', sRoe1, ' sRoe2 = ', sRoe2
+c          write(*,*) 'sE1 = ', sE1, ' sE2 = ', sE2
+c          write(6,*) ' '
+c       endif
 
          maxiter = 1
 
          call riemann_aug_JCP(maxiter,3,3,hL,hR,huL,
      &        huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,
-     &                                    drytol,g,rho,sw,fw)
+     &                                    drytol,g,rho,sw,fw,i,jcom,ixy)
 
 C          call riemann_ssqfwave(maxiter,meqn,mwaves,hL,hR,huL,huR,
 C      &     hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,
@@ -228,6 +290,15 @@ C          call riemann_fwave(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,
 C      &      bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,rho,sw,
 C      &      fw)
 
+c         write (*,*) 'hL = ', hL, ' hR = ', hR
+c        write (*,*) 'huL = ', huL, ' huR = ', huR
+c        write (*,*) 'hvL = ', hvL, ' hvR = ', hvR
+c        write (*,*) 'uL = ', uL, ' uR = ', uR
+c        write (*,*) 'vL = ', vL, ' vR q= ', vR
+c        write (*,*) 'phiL = ', phiL, ' phiR = ', phiR
+c        write (*,*) 'bL = ', bL, ' bR = ', bR
+c        stop
+c
 c        !eliminate ghost fluxes for wall
          do mw=1,3
             sw(mw)=sw(mw)*wall(mw)
@@ -245,6 +316,15 @@ c        !eliminate ghost fluxes for wall
 !            write(51,515) sw(mw),fw(1,mw),fw(2,mw),fw(3,mw)
 !515         format("++sw",4e25.16)
          enddo
+
+c         write out speeds and fwaves
+c          write(*,*) 's = ', s(1,i), s(2,i), s(3,i)
+c           write(*,*) 'fwave = ', fwave(1,1,i), fwave(2,1,i), fwave(3,1,i)
+c            write(*,*) 'fwave = ', fwave(1,2,i), fwave(2,2,i), fwave(3,2,i)
+c            write(*,*) 'fwave = ', fwave(1,3,i), fwave(2,3,i), fwave(3,3,i)
+         
+c         stop
+
 
  30      continue
       enddo
@@ -289,6 +369,10 @@ c============= compute fluctuations=============================================
                  apdq(1:3,i) = apdq(1:3,i) + 0.5d0 * fwave(1:3,mw,i)
                endif
             enddo
+c        write out fluctuations
+c         write(*,*) 'amdq = ', amdq(1:3,i)
+c         write(*,*) 'apdq = ', apdq(1:3,i)
+         
          enddo
 !--       do i=2-mbc,mx+mbc
 !--            do m=1,meqn

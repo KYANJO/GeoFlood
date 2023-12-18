@@ -1,7 +1,7 @@
 c-----------------------------------------------------------------------
       subroutine riemann_aug_JCP(maxiter,meqn,mwaves,hL,hR,huL,huR,
      &   hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,pL,pR,sE1,sE2,drytol,g,rho,
-     &   sw,fw)
+     &   sw,fw,i,j,ixy)
 
       ! solve shallow water equations given single left and right states
       ! This solver is described in J. Comput. Phys. (6): 3089-3113, March 2008
@@ -44,6 +44,15 @@ c-----------------------------------------------------------------------
 
       logical rare1,rare2,rarecorrector,rarecorrectortest,sonic
 
+      logical debug
+      integer ixy, i, j
+
+      if (ixy == 1) then
+         debug = .true.
+      else
+         debug  = .false.
+      endif
+
       !determine del vectors
       delh = hR-hL
       delhu = huR-huL
@@ -55,6 +64,17 @@ c-----------------------------------------------------------------------
       call riemanntype(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2,
      &                                          1,drytol,g)
 
+      if ( (i == 7) .and. (j == 15)) then
+         if (debug) then
+            write(6,*) 'i = ', i, ' j = ' , j
+            write(6,*) 'hL = ', hL, ' hR = ', hR
+            write(6,*) 'uL = ', uL, ' uR = ', uR
+            write(6,*) 'hm = ', hm
+            write(6,*) 's1m = ', s1m, ' s2m = ', s2m
+            write(6,*) 'rare1 = ', rare1, ' rare2 = ', rare2
+            write(6,*) ' '
+         endif
+      endif
 
       lambda(1)= min(sE1,s2m) !Modified Einfeldt speed
       lambda(3)= max(sE2,s1m) !Modified Eindfeldt speed

@@ -26,28 +26,28 @@ void setprob_cuda(){
     fclose(f);
     free(line);
 
-    /* === declare variables === */
-    /* topo variables */
-    int num_dtopo_, aux_finalized_,test_topography_,mtopofiles_,mtoposize_;
-    double  dt_max_dtopo_;
-    double *t0dtopo_, *tfdtopo_;
-    double *topowork_, *xlowtopo_, *ylowtopo_, *xhitopo_, *yhitopo_, *dxtopo_, *dytopo_;
-    int *mxtopo_, *mytopo_, *mtopoorder_, *i0topo_, *mtopo_;
+    // /* === declare variables === */
+    // /* topo variables */
+    // int num_dtopo_, aux_finalized_,test_topography_,mtopofiles_,mtoposize_;
+    // double  dt_max_dtopo_;
+    // double *t0dtopo_, *tfdtopo_;
+    // double *topowork_, *xlowtopo_, *ylowtopo_, *xhitopo_, *yhitopo_, *dxtopo_, *dytopo_;
+    // int *mxtopo_, *mytopo_, *mtopoorder_, *i0topo_, *mtopo_;
     
-    /* friction variables */
-    int friction_index_;
-    bool variable_friction_;
+    // /* friction variables */
+    // int friction_index_;
+    // bool variable_friction_;
 
-    /* amr variables */
-    double xupper_, yupper_, xlower_, ylower_;
-    double NEEDS_TO_BE_DEFINED_;
+    // /* amr variables */
+    // double xupper_, yupper_, xlower_, ylower_;
+    // double NEEDS_TO_BE_DEFINED_;
 
-    GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo_, tfdtopo_,  
-                            &dt_max_dtopo_, &NEEDS_TO_BE_DEFINED_,&variable_friction_,
-                            &friction_index_, &xupper_, &yupper_, &xlower_, &ylower_,
-                            &test_topography_, &mtopofiles_, topowork_, xlowtopo_, 
-                            ylowtopo_, xhitopo_, yhitopo_, dxtopo_, dytopo_, mxtopo_,
-                            mytopo_, mtopoorder_, i0topo_, mtopo_, &mtoposize_);
+    // GET_B4STEP2_PARAMETERS(&num_dtopo_, &aux_finalized_, t0dtopo_, tfdtopo_,  
+    //                         &dt_max_dtopo_, &NEEDS_TO_BE_DEFINED_,&variable_friction_,
+    //                         &friction_index_, &xupper_, &yupper_, &xlower_, &ylower_,
+    //                         &test_topography_, &mtopofiles_, topowork_, xlowtopo_, 
+    //                         ylowtopo_, xhitopo_, yhitopo_, dxtopo_, dytopo_, mxtopo_,
+    //                         mytopo_, mtopoorder_, i0topo_, mtopo_, &mtoposize_);
     
 
     /* === Create and populate structures on the host === */

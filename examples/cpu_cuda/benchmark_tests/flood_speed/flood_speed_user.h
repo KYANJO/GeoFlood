@@ -87,13 +87,13 @@ void FLOOD_SPEED_SETPROB(const double* grav, const double* drytol,
                          const double* earth_radius, const int* coord_system,
                          const int* mcapa);
 #endif
-// #define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
+#define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 
-// void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
-//                     const int* mx, const int* my,
-//                     const double* xlower, const double* ylower,
-//                     const double* dx, const double* dy,
-//                     double q[], const int* maux, double aux[]);
+void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    double q[], const int* maux, double aux[]);
 
 // //  BC (Fortran to c)
 #define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)

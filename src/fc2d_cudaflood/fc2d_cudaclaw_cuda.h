@@ -36,6 +36,7 @@ extern "C"
 
 /* linear block length (set by configuration)  */
 #if !defined(FC2D_CUDACLAW_BLOCK_SIZE)
+// #define FC2D_CUDACLAW_BLOCK_SIZE 128
 #define FC2D_CUDACLAW_BLOCK_SIZE 128
 #endif    
 
@@ -59,13 +60,13 @@ typedef void (*cudaclaw_cuda_rpn2_t)(int idir, int meqn, int mwaves, int maux,
                                      double ql[], double qr[], 
                                      double auxl[], double auxr[],
                                      double wave[], double s[], 
-                                     double amdq[], double apdq[]);
+                                     double amdq[], double apdq[], int ix, int iy);
 
 typedef void (*cudaclaw_cuda_rpt2_t)(int idir, int meqn, int mwaves, int maux,
                                      double ql[], double qr[], 
                                      double aux1[], double aux2[], double aux3[],
                                      int imp, double dsdq[],
-                                     double bmasdq[], double bpasdq[]);
+                                     double bmasdq[], double bpasdq[], int ix, int iy);
 
 typedef void (*cudaclaw_cuda_speeds_t)(int idir, int meqn, int mwaves, int maux,
                                        double ql[], double  qr[],

@@ -1,7 +1,7 @@
 # Add boundary conditions as a library
 add_library(flood_speed_cpu_f OBJECT
   riemann_source/setprob.f90
-  rpn2cons_update.f
+  # rpn2cons_update.f
   fortran/fc2d_geoflood_bc2.f90
   # fortran/flood_speed_bc.f90
   ../../../../src/fc2d_cudaflood/hydrograph/hydrograh_module.f90
@@ -12,6 +12,7 @@ add_library(flood_speed_cpu_f OBJECT
   ../../../../src/fc2d_cudaflood/amrlib_source/amr_module.f90
   ../../../../src/fc2d_cudaflood/geolib_source/friction_module.f90
   ../../../../src/fc2d_cudaflood/fortran_source/extract_topo_variables.f90
+  qinit.f90
 )
 
 add_executable(flood_speed_cpucuda 
