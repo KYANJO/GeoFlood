@@ -289,7 +289,7 @@ class GeoFlooddata(object):
             '   ascii-out': ascii_out
             }
             
-        geoflood['cudaclaw'] = {
+        geoflood['cudaflood'] = {
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
             '   #   1 => Godunov,': None,  
