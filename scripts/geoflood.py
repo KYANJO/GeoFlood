@@ -24,7 +24,7 @@ class GeoFlooddata(object):
         self.subcycle = False
         self.output = True
         self.output_gauges = True
-        self.cuda = False
+        self.cuda = None
         self.gravity = 9.81
         self.dry_tolerance = 1e-3
         self.earth_radius = 6371220.0
@@ -239,7 +239,7 @@ class GeoFlooddata(object):
 
         #print(clawdata.output_format)
         #print(ascii_out)
-        if self.cuda == False:
+        if self.cuda == None:
             geoflood['geoclaw'] = {
                 '   # normal and transverse order': None,
                 '   # Order of accuracy:': None,
@@ -288,7 +288,7 @@ class GeoFlooddata(object):
                 '   # Output' : None,
                 '   ascii-out': ascii_out
                 }
-        elif self.cuda == True:    
+        elif self.cuda == True or self.cuda == False:    
             geoflood['cudaflood'] = {
                 '   # normal and transverse order': None,
                 '   # Order of accuracy:': None,
