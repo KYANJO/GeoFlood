@@ -194,11 +194,11 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     // }
 
     // Skip problem if in a completely dry area
-    // if (qr[0] <= drytol && ql[0] <= drytol) {
-    //     goto label30;
-    // }
+    if (qr[0] <= drytol && ql[0] <= drytol) {
+        goto label30;
+    }
 
-    if (qr[0] > drytol || ql[0] > drytol) {
+    // if (qr[0] > drytol || ql[0] > drytol) {
         /* Riemann problem variables */
         hL  = qr[0];
         hR  = ql[0];
@@ -344,7 +344,6 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         /* --- end of initializing --- */
 
         /* === solve Riemann problem === */
-        // riemann_aug_JCP(3,3,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
         riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
 
         
@@ -376,7 +375,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
             fwave[mw + mu*mwaves] = fw[mw + 1*mwaves];
             fwave[mw + mv*mwaves] = fw[mw + 2*mwaves];
         }
-    }
+    // }
 
     // Debugging check for NaNs
     // if (tid == 0) {
@@ -386,7 +385,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     //     printf("fwave[6] = %e, fwave[7] = %e, fwave[8] = %e\n", fwave[6], fwave[7], fwave[8]);
     // }
 
-    // label30: // (similar to 30 continue in Fortran)
+    label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
@@ -461,7 +460,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     int mcapa = d_geofloodVars.mcapa;
 
     int mw, mu, mv;
-    double s[3], r[9], beta[3];
+    double s[3], beta[3];
+    double r[3][3];
     double h, u, v;
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
@@ -554,17 +554,26 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             beta[2] = (delf3 - s[0]*delf1) / (s[2] - s[0]);
 
             /* set-up eigenvectors */
-            r[0] = 1.0;
-            r[mu] = u;
-            r[mv] = s[0];
+            // r[0] = 1.0;
+            // r[mu] = u;
+            // r[mv] = s[0];
+            r[0][0] = 1.0;
+            r[1][0] = u;
+            r[2][0] = s[0];
 
-            r[0 + mwaves] = 0.0;
-            r[mu + mwaves] = 1.0;
-            r[mv + mwaves] = 0.0;
+            // r[0 + mwaves] = 0.0;
+            // r[mu + mwaves] = 1.0;
+            // r[mv + mwaves] = 0.0;
+            r[0][1] = 0.0;
+            r[1][1] = 1.0;
+            r[2][1] = 0.0;
 
-            r[0 + 2*mwaves] = 1.0;
-            r[mu + 2*mwaves] = u;
-            r[mv + 2*mwaves] = s[2];
+            // r[0 + 2*mwaves] = 1.0;
+            // r[mu + 2*mwaves] = u;
+            // r[mv + 2*mwaves] = s[2];
+            r[0][2] = 1.0;
+            r[1][2] = u;
+            r[2][2] = s[2];
 
             // Debugging check for NaNs
             // if (tid == 0) {
@@ -575,13 +584,19 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             /* Compute transverse fluctuations */
             for (mw = 0; mw < 3; mw++) {
                 if ((s[mw] < 0.0) && (eta >= topo1)) {
-                    bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
-                    bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
-                    bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[mw + 2*mwaves];
+                    // bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
+                    // bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
+                    // bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[mw + 2*mwaves];
+                    bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[0][mw];
+                    bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[1][mw];
+                    bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[2][mw];
                 } else if ((s[mw] > 0.0) && (eta >= topo3)) {
-                    bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
-                    bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
-                    bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[mw + 2*mwaves];
+                    // bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
+                    // bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
+                    // bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[mw + 2*mwaves];
+                    bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[0][mw];
+                    bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[1][mw];
+                    bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[2][mw];
                 }
             }
             // Debugging check for NaNs
@@ -628,7 +643,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     int mcapa = d_geofloodVars.mcapa;
 
     /* Local variables */
-    double A[9], r[9], lambda[3], del[3], beta[3];
+    // double A[9], r[9], lambda[3], del[3], beta[3];
+    double lambda[3], beta[3],del[3];
+    double A[3][3], r[3][3];
     double delh, delhu, delphi, delb, delnorm;
     double rare1st, rare2st, sdelta, raremin, raremax;
     double criticaltol, convergencetol;
@@ -718,17 +735,23 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
     /* determining modified eigen vectors */
     for (mw = 0; mw < mwaves; mw++) {   
-        r[mw] = 1.0; 
-        r[mw + mwaves] = lambda[mw]; 
-        r[mw + 2*mwaves] = pow(lambda[mw],2.0);
+        // r[mw] = 1.0; 
+        // r[mw + mwaves] = lambda[mw]; 
+        // r[mw + 2*mwaves] = pow(lambda[mw],2.0);
+        r[0][mw] = 1.0;
+        r[1][mw] = lambda[mw];
+        r[2][mw] = pow(lambda[mw],2.0);
     }
 
     /* no strong rarefaction wave */
     if (!rarecorrector) {
         lambda[1]= 0.5*(lambda[0] + lambda[2]);
-        r[mwaves] = 0.0; // r[0,1]
-        r[mwaves + mu] = 0.0; // r[1,1]
-        r[mwaves + mv] = 1.0; // r[2,1]
+        // r[mwaves] = 0.0; // r[0,1]
+        // r[mwaves + mu] = 0.0; // r[1,1]
+        // r[mwaves + mv] = 1.0; // r[2,1]
+        r[0][1] = 0.0;
+        r[1][1] = 0.0;
+        r[2][1] = 1.0;
     }
 
     /* === Determine the steady state wave === */
@@ -747,7 +770,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
     /* iterate to better find the steady state wave */
     convergencetol = 1e-6;
-    for (iter=0; iter < maxiter; iter++) {
+    for (iter=1; iter <= maxiter; iter++) {
         /* determine steady state wave (this will be subtracted from the delta vectors */
         if (fmin(hLstar,hRstar) < drytol && rarecorrector) {
             rarecorrector = false;
@@ -758,9 +781,12 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
             huLstar = uLstar*hLstar;
             huRstar = uRstar*hRstar;
             lambda[1] = 0.5*(lambda[0] + lambda[2]);
-            r[mwaves] = 0.0; // r[0,1]
-            r[mwaves + mu] = 0.0; // r[1,1]
-            r[mwaves + mv] = 1.0; // r[2,1]
+            // r[mwaves] = 0.0; // r[0,1]
+            // r[mwaves + mu] = 0.0; // r[1,1]
+            // r[mwaves + mv] = 1.0; // r[2,1]
+            r[0][1] = 0.0;
+            r[1][1] = 0.0;
+            r[2][1] = 1.0;
         }
 
         /* For any two states; Q_i and Q_i-1, eigen values of SWE must satify: lambda(q_i)*lambda(q_i-1) = u^2 -gh, writing this conditon as a function of Q_i and Q_i-1, u and h become averages in lambda(q_i)*lambda(q_i-1) = u^2 -gh and these averages are denoted by bar and tilde. */
@@ -818,33 +844,45 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         deldelphi = fmin(deldelphi, s_grav * fmax(-hLstar * delb, -hRstar * delb));
         deldelphi = fmax(deldelphi, s_grav * fmin(-hLstar * delb, -hRstar * delb));
 
-        /* Determine coefficients beta(k) using crammer's rule
-          first determine the determinant of the eigenvector matrix */
-        det1 = r[0]*(r[mwaves + mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mwaves + mv]);
-        det2 = r[mwaves]*(r[mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mv]);
-        det3 = r[2*mwaves]*(r[mu]*r[mwaves + mv] - r[mwaves + mu]*r[mv]);
-        determinant = det1 - det2 + det3;
-
         /* determine the delta vectors */
         del[0] = delh - deldelh;
         del[1] = delhu;
         del[2] = delphi - deldelphi;  
+
+        /* Determine coefficients beta(k) using crammer's rule
+          first determine the determinant of the eigenvector matrix */
+        // det1 = r[0]*(r[mwaves + mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mwaves + mv]);
+        // det2 = r[mwaves]*(r[mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mv]);
+        // det3 = r[2*mwaves]*(r[mu]*r[mwaves + mv] - r[mwaves + mu]*r[mv]);
+        det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
+        det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
+        det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
+        determinant = det1 - det2 + det3;
 
         /* solve for beta(k) */
         for(k=0; k < 3; k++)
         {   
             for(mw=0; mw < 3; mw++)
             {
-                A[mw] = r[mw]; 
-                A[mw + mwaves] = r[mw + mwaves];
-                A[mw + 2*mwaves] = r[mw + 2*mwaves];
+                // A[mw] = r[mw]; 
+                // A[mw + mwaves] = r[mw + mwaves];
+                // A[mw + 2*mwaves] = r[mw + 2*mwaves];
+                A[0][mw] = r[0][mw];
+                A[1][mw] = r[1][mw];
+                A[2][mw] = r[2][mw];
             }
-            A[k] = del[0];
-            A[mwaves + k] = del[1];
-            A[2*mwaves + k] = del[2];
-            det1 = A[0]*(A[mwaves + mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mwaves + mv]);
-            det2 = A[mwaves]*(A[mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mv]);
-            det3 = A[2*mwaves]*(A[mu]*A[mwaves + mv] - A[mwaves + mu]*A[mv]);
+            // A[k] = del[0];
+            // A[mwaves + k] = del[1];
+            // A[2*mwaves + k] = del[2];
+            // det1 = A[0]*(A[mwaves + mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mwaves + mv]);
+            // det2 = A[mwaves]*(A[mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mv]);
+            // det3 = A[2*mwaves]*(A[mu]*A[mwaves + mv] - A[mwaves + mu]*A[mv]);
+            A[0][k] = del[0];
+            A[1][k] = del[1];
+            A[2][k] = del[2];
+            det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
+            det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
+            det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
             beta[k] = (det1 - det2 + det3)/determinant;
         }
 
@@ -866,8 +904,10 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         {
             if (lambda[mw] < 0.0)
             {
-                hLstar = hLstar + beta[mw]*r[mw]; 
-                huLstar = huLstar + beta[mw]*r[mw + mwaves]; 
+                // hLstar = hLstar + beta[mw]*r[mw]; 
+                // huLstar = huLstar + beta[mw]*r[mw + mwaves]; 
+               hLstar = hLstar + beta[mw]*r[0][mw];
+               huLstar = huLstar + beta[mw]*r[2][mw];
             }
         }
 
@@ -876,8 +916,10 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         {
             if (lambda[mw] > 0.0)
             {
-                hRstar = hRstar - beta[mw]*r[mw]; 
-                huRstar = huRstar - beta[mw]*r[mw + mwaves]; 
+                // hRstar = hRstar - beta[mw]*r[mw]; 
+                // huRstar = huRstar - beta[mw]*r[mw + mwaves]; 
+                hRstar = hRstar - beta[mw]*r[0][mw];
+                huRstar = huRstar - beta[mw]*r[2][mw];
             }
         }
 
@@ -908,9 +950,12 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     for (mw=0; mw < mwaves; mw++)
     {
         sw[mw] = lambda[mw];
-        fw[mw] = beta[mw]*r[mw + mwaves]; 
-        fw[mw + mwaves] = beta[mw]*r[mw + 2*mwaves]; 
-        fw[mw + 2*mwaves] = beta[mw]*r[mw + mwaves]; 
+        // fw[mw] = beta[mw]*r[mw + mwaves]; 
+        // fw[mw + mwaves] = beta[mw]*r[mw + 2*mwaves]; 
+        // fw[mw + 2*mwaves] = beta[mw]*r[mw + mwaves]; 
+        fw[mw] = beta[mw]*r[1][mw];
+        fw[mw + mwaves] = beta[mw]*r[2][mw];
+        fw[mw + 2*mwaves] = beta[mw]*r[1][mw];
     }
 
     // find transverse components (ie huv jumps)
@@ -982,7 +1027,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
             accurate Riemann solution */
             /* Root finding using a Newton iteration on sqrt(h) */
             h0 = h_max;
-            for (iter = 0; iter < maxiter; iter++) {
+            for (iter = 1; iter <= maxiter; iter++) {
                 gL = sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / hL));
                 gR = sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / hR));
                 F0 = delu + (h0 - hL) * gL + (h0 - hR) * gR;
@@ -1001,7 +1046,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
             *rare2 = false;
         } else { // 1-shock or 1-rarefaction
             h0 = h_min;
-            for (iter = 0; iter < maxiter; iter++) {
+            for (iter = 1; iter <= maxiter; iter++) {
                 F0 = delu + 2.0 * (sqrt(s_grav * h0) - sqrt(s_grav * h_max)) + (h0 - h_min) * sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / h_min));
                 slope = (F_max - F0) / (h_max - h_min);
                 h0 = h0 - F0 / slope;
