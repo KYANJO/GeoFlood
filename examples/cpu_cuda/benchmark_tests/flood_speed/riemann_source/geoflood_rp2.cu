@@ -907,7 +907,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
                 // hLstar = hLstar + beta[mw]*r[mw]; 
                 // huLstar = huLstar + beta[mw]*r[mw + mwaves]; 
                hLstar = hLstar + beta[mw]*r[0][mw];
-               huLstar = huLstar + beta[mw]*r[2][mw];
+               huLstar = huLstar + beta[mw]*r[1][mw];
             }
         }
 
@@ -919,7 +919,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
                 // hRstar = hRstar - beta[mw]*r[mw]; 
                 // huRstar = huRstar - beta[mw]*r[mw + mwaves]; 
                 hRstar = hRstar - beta[mw]*r[0][mw];
-                huRstar = huRstar - beta[mw]*r[2][mw];
+                huRstar = huRstar - beta[mw]*r[1][mw];
             }
         }
 
