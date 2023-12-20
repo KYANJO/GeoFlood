@@ -31,11 +31,11 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 2  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 1
+output_style = 3
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
@@ -48,8 +48,9 @@ if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
-    step_interval = 1800   # Create output file every 10 steps
-    total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
+    step_interval = 1   # Create output file every 10 steps
+    total_steps = 1   # ... for a total of 500 steps (so 50 output files total)
+    n_hours = 5.0              # Total number of hours in simulation
 
 #-------------------  Computational coarse grid ---------------------------------------
 # grid_resolution = 5  # meters ~ 80000 nodes
@@ -59,11 +60,11 @@ if output_style == 3:
 mx = 16 # Number of x grids per block
 my = 16 # Number of y grids per block
 
-mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 2  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 0
-maxlevel = 1 #resolution based on levels
+maxlevel = 0 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -239,7 +240,8 @@ def setrun(claw_pkg='geoclaw'):
         clawdata.output_step_interval = step_interval
         clawdata.total_steps = total_steps
         clawdata.output_t0 = True
-        clawdata.tfinal = total_steps*fixed_dt
+        clawdata.tfinal = 60*60*n_hours
+        clawdata.num_output_times = int(total_steps/step_interval) + 1
 
     clawdata.output_format = 'ascii'      # 'ascii' or 'netcdf'
 
@@ -275,8 +277,8 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.75
-    clawdata.cfl_max = 1.0
+    clawdata.cfl_desired = 0.45
+    clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -286,7 +288,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -295,7 +297,7 @@ def setrun(claw_pkg='geoclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 2
+    clawdata.transverse_waves = 0
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 3
@@ -332,7 +334,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'user'
+    clawdata.bc_lower[0] = 'wall'
     clawdata.bc_upper[0] = 'wall'
 
     clawdata.bc_lower[1] = 'wall'
@@ -398,9 +400,9 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
 
-    geoflooddata.subcycle = True
-    geoflooddata.output = True
-    geoflooddata.output_gauges = True
+    geoflooddata.subcycle = False
+    geoflooddata.output = False
+    geoflooddata.output_gauges = False
 
 
     # Block dimensions for non-square domains
@@ -410,7 +412,7 @@ def setrun(claw_pkg='geoclaw'):
      # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = True
+    geoflooddata.tikz_out = False
     geoflooddata.tikz_figsize = "4 8"
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
@@ -438,6 +440,7 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
+    geoflooddata.report_timing_verbosity = 'wall'
 
     # -----------------------------------------------
     # setrob parameters:

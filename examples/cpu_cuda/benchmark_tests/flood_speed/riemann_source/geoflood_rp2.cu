@@ -156,7 +156,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     //   int iy = thread_index/ifaces_x;  
 
       bool debug;
-      if (idir == 0)
+      if (idir == 0 && ix == 7 && iy == 0)
       {
         debug = 1;
       }
@@ -368,8 +368,8 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         /* --- end of initializing --- */
 
         /* === solve Riemann problem === */
-        // riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
-        riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,&sw1,&sw2,&sw3,&fw11,&fw12,&fw13,&fw21,&fw22,&fw23,&fw31,&fw32,&fw33,ix,iy,idir);
+        riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
+        // riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,&sw1,&sw2,&sw3,&fw11,&fw12,&fw13,&fw21,&fw22,&fw23,&fw31,&fw32,&fw33,ix,iy,idir);
         
         // Debugging check for NaNs 
         // if (tid == 0) {
@@ -384,44 +384,44 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
 
         // eliminate ghost fluxes for wall
-        // for (mw=0; mw<3; mw++) {
-        //     sw[mw] *= wall[mw];
-        //     fw[mw] *= wall[mw];
-        //     fw[mw + 1*mwaves] *= wall[mw];
-        //     fw[mw + 2*mwaves] *= wall[mw];
-        // }
-        sw1 *= wall[0];
-        sw2 *= wall[1];
-        sw3 *= wall[2];
-        fw11 *= wall[0];
-        fw21 *= wall[0];
-        fw31 *= wall[0];
-        fw12 *= wall[1];
-        fw22 *= wall[1];
-        fw32 *= wall[1];
-        fw13 *= wall[2];
-        fw23 *= wall[2];
-        fw33 *= wall[2];    
+        for (mw=0; mw<3; mw++) {
+            sw[mw] *= wall[mw];
+            fw[mw] *= wall[mw];
+            fw[mw + 1*mwaves] *= wall[mw];
+            fw[mw + 2*mwaves] *= wall[mw];
+        }
+        // sw1 *= wall[0];
+        // sw2 *= wall[1];
+        // sw3 *= wall[2];
+        // fw11 *= wall[0];
+        // fw21 *= wall[0];
+        // fw31 *= wall[0];
+        // fw12 *= wall[1];
+        // fw22 *= wall[1];
+        // fw32 *= wall[1];
+        // fw13 *= wall[2];
+        // fw23 *= wall[2];
+        // fw33 *= wall[2];    
         
         // update fwave and corresponding speeds
-        // for (mw=0; mw<mwaves; mw++) {
-        //     s[mw] = sw[mw];
-        //     fwave[mw] = fw[mw];
-        //     fwave[mw + mu*mwaves] = fw[mw + 1*mwaves];
-        //     fwave[mw + mv*mwaves] = fw[mw + 2*mwaves];
-        // }
-        s[0] = sw1;
-        s[1] = sw2;
-        s[2] = sw3;
-        fwave[0] = fw11;
-        fwave[1] = fw21;
-        fwave[2] = fw31;
-        fwave[3] = fw12;
-        fwave[4] = fw22;
-        fwave[5] = fw32;
-        fwave[6] = fw13;
-        fwave[7] = fw23;
-        fwave[8] = fw33;
+        for (mw=0; mw<mwaves; mw++) {
+            s[mw] = sw[mw];
+            fwave[mw] = fw[mw];
+            fwave[mw + mu*mwaves] = fw[mw + 1*mwaves];
+            fwave[mw + mv*mwaves] = fw[mw + 2*mwaves];
+        }
+        // s[0] = sw1;
+        // s[1] = sw2;
+        // s[2] = sw3;
+        // fwave[0] = fw11;
+        // fwave[1] = fw21;
+        // fwave[2] = fw31;
+        // fwave[3] = fw12;
+        // fwave[4] = fw22;
+        // fwave[5] = fw32;
+        // fwave[6] = fw13;
+        // fwave[7] = fw23;
+        // fwave[8] = fw33;
 
     // }
 
@@ -687,14 +687,14 @@ void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
          over variable topography due to loss of hyperbolicity. 
 */
 
-// __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
-//     double hR, double huL, double huR, double hvL, double hvR, 
-//     double bL, double bR, double uL, double uR, double vL, 
-//     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir)
 __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
-        double hR, double huL, double huR, double hvL, double hvR, 
-        double bL, double bR, double uL, double uR, double vL, 
-        double vR, double phiL, double phiR, double sE1, double sE2, double* sw1, double* sw2, double* sw3, double* fw11, double* fw12, double* fw13, double* fw21, double* fw22, double* fw23, double* fw31, double* fw32, double* fw33, int ix, int iy, int idir)
+    double hR, double huL, double huR, double hvL, double hvR, 
+    double bL, double bR, double uL, double uR, double vL, 
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir)
+// __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
+//         double hR, double huL, double huR, double hvL, double hvR, 
+//         double bL, double bR, double uL, double uR, double vL, 
+//         double vR, double phiL, double phiR, double sE1, double sE2, double* sw1, double* sw2, double* sw3, double* fw11, double* fw12, double* fw13, double* fw21, double* fw22, double* fw23, double* fw31, double* fw32, double* fw33, int ix, int iy, int idir)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -721,8 +721,17 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
     int mu = 1; // x-direction
     int mv = 2; // y-direction
+    // int mu = 1+idir;
+    // int mv = 2-idir;
 
-    bool debug = (idir == 0) ? 1 : 0;
+    bool debug;
+    if (idir == 0 && (ix-1) == 7 && (iy-1) == 0)
+    {
+      debug = 1;
+    }
+    else{
+      debug = 0;
+    }
 
     /* determine del vectors */
     delh = hR - hL;
@@ -735,7 +744,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2);
     // riemann_type(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2);
 
-    if (ix == 7 && iy == 15) {
+    // if (ix == 7 && iy == 0) {
         // if ((hL >= 0.3280909317849093) && (hR >= 0.3280909317849093)){
             if (debug){
                 printf("ix = %d, iy = %d\n " \ 
@@ -747,7 +756,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
                 "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,hR,uL,uR,hm,s1m,s2m,s_grav,drytol,rare1,rare2);
             }
         // }
-    }
+    // }
    
     /* For the solver to handle depth negativity, depth dh is included in the decompostion which gives as acess to using the depth positive semidefinite solver (HLLE). This makes the system to have 3 waves instead of 2. where the 1st and 3rd are the eigenpairs are related to the flux Jacobian matrix of the original SWE (since s1<s2<s3, and have been modified by Einfeldt to handle depth non-negativity) and the 2nd is refered to as the the entropy corrector wave since its introduced to correct entropy violating solutions with only 2 waves. */
     
@@ -1010,52 +1019,52 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
-    // for (mw=0; mw < mwaves; mw++)
-    // {
-    //     sw[mw] = lambda[mw];
-    //     // fw[mw] = beta[mw]*r[mw + mwaves]; 
-    //     // fw[mw + mwaves] = beta[mw]*r[mw + 2*mwaves]; 
-    //     // fw[mw + 2*mwaves] = beta[mw]*r[mw + mwaves]; 
-    //     fw[mw] = beta[mw]*r[1][mw];
-    //     fw[mw + mwaves] = beta[mw]*r[2][mw];
-    //     fw[mw + 2*mwaves] = beta[mw]*r[1][mw];
-    // }
-    *sw1 = lambda[0];
-    *sw2 = lambda[1];
-    *sw3 = lambda[2];
-    // mw = 0;
-    *fw11 = beta[0]*r[1][0];
-    *fw21 = beta[0]*r[2][0];
-    *fw31 = beta[0]*r[1][0];
-    // mw = 1;
-    *fw12 = beta[1]*r[1][1];
-    *fw22 = beta[1]*r[2][1];
-    *fw32 = beta[1]*r[1][1];
-    // mw = 2;
-    *fw13 = beta[2]*r[1][2];
-    *fw23 = beta[2]*r[2][2];
-    *fw33 = beta[2]*r[1][2];
+    for (mw=0; mw < mwaves; mw++)
+    {
+        sw[mw] = lambda[mw];
+        // fw[mw] = beta[mw]*r[mw + mwaves]; 
+        // fw[mw + mwaves] = beta[mw]*r[mw + 2*mwaves]; 
+        // fw[mw + 2*mwaves] = beta[mw]*r[mw + mwaves]; 
+        fw[mw] = beta[mw]*r[1][mw];
+        fw[mw + mwaves] = beta[mw]*r[2][mw];
+        fw[mw + 2*mwaves] = beta[mw]*r[1][mw];
+    }
+    // *sw1 = lambda[0];
+    // *sw2 = lambda[1];
+    // *sw3 = lambda[2];
+    // // mw = 0;
+    // *fw11 = beta[0]*r[1][0];
+    // *fw21 = beta[0]*r[2][0];
+    // *fw31 = beta[0]*r[1][0];
+    // // mw = 1;
+    // *fw12 = beta[1]*r[1][1];
+    // *fw22 = beta[1]*r[2][1];
+    // *fw32 = beta[1]*r[1][1];
+    // // mw = 2;
+    // *fw13 = beta[2]*r[1][2];
+    // *fw23 = beta[2]*r[2][2];
+    // *fw33 = beta[2]*r[1][2];
 
     // find transverse components (ie huv jumps)
-    // fw[mv] *= vL;
-    // fw[2*mwaves + mv] *= vR;
-    // fw[mwaves + mv] = 0.0;
-    *fw31 *= vL;
-    *fw33 *= vR;
-    *fw32 = 0.0;
+    fw[mv] *= vL;
+    fw[2*mwaves + mv] *= vR;
+    fw[mwaves + mv] = 0.0;
+    // *fw31 *= vL;
+    // *fw33 *= vR;
+    // *fw32 = 0.0;
 
     // hustar_interface = hL*uL + fw[0];
-    // if (hustar_interface <= 0.0) {
-    //     fw[mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
-    // } else {
-    //     fw[2*mwaves + mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
-    // }
-    hustar_interface = hL*uL + *fw11;
     if (hustar_interface <= 0.0) {
-        *fw31 += (hR * uR * vR - hL * uL * vL - *fw31 - *fw33);
+        fw[mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
     } else {
-        *fw33 += (hR * uR * vR - hL * uL * vL - *fw31 - *fw33);
+        fw[2*mwaves + mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
     }
+    // hustar_interface = hL*uL + *fw11;
+    // if (hustar_interface <= 0.0) {
+    //     *fw31 += (hR * uR * vR - hL * uL * vL - *fw31 - *fw33);
+    // } else {
+    //     *fw33 += (hR * uR * vR - hL * uL * vL - *fw31 - *fw33);
+    // }
 
 }
 
