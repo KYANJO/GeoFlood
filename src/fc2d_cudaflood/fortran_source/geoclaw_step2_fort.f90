@@ -69,7 +69,9 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
     double precision :: dtdx,dtdy,cfl1d,p,phi,cm,dtdxij,dtdyij
 
     ! Common block storage
+    double precision dtcom, dxcom,dycom,tcom
     integer :: icom,jcom
+    common/comxyt/dtcom,dxcom,dycom,tcom,icom,jcom
 
     ! Parameters
     ! Relimit fluxes to maintain positivity
