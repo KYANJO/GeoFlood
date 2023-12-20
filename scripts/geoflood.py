@@ -31,6 +31,7 @@ class GeoFlooddata(object):
         self.coordinate_system = 1
         self.mcapa = 0
         self.verbosity = 'essential'
+        self.report_timing_verbosity = 'all'
         self.refinement_criteria = 'value'
         self.smooth_refine = False
         self.advance_one_step = False
@@ -144,7 +145,8 @@ class GeoFlooddata(object):
         '   outstyle-uses-maxlevel' : self.outstyle_uses_maxlevel,
         '   ghost_patch_pack_aux' : self.ghost_patch_pack_aux,
         '   conservation-check' : self.conservation_check,
-        '   verbosity' : self.verbosity,"\n"
+        '   verbosity' : self.verbosity,
+        '   report-timing-verbosity' : self.report_timing_verbosity,"\n"
 
 
         '# Domain geometry' : None,"\n"
