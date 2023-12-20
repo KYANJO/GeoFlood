@@ -12,7 +12,7 @@ subroutine flood_speed_qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     double  precision :: x0 = 500, y0 = 1000
     !! local variables
     integer :: i,j
-    real(kind=8) :: x,y,h
+    double precision :: x,y,h
 ! stop
     do i=1-mbc,mx+mbc
     
