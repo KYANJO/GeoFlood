@@ -39,10 +39,10 @@ contains
     end function get_value_count
 
     ! Converts seconds to days truncating at the second decimal place
-    real(kind=8) pure function convert2days(seconds) result(days)
+    double precision pure function convert2days(seconds) result(days)
         
         implicit none
-        real(kind=8), intent(in) :: seconds
+        double precision, intent(in) :: seconds
 
         days = real(int(seconds * 1.d2 / 8.64d4) / 1.d2, kind=8)
 
@@ -63,11 +63,11 @@ contains
 
     character(len=*), intent(in) :: str
     integer, intent(out) :: n
-    real(kind=8), intent(out) :: values(10)
+    double precision, intent(out) :: values(10)
 
     integer :: pos2,nw,i,e
     character(len=80) :: word(10), str2
-    real(kind=8) :: x
+    double precision :: x
 
     ! First break into words / tokens based on white space.  
     ! Each might be character or numerical:

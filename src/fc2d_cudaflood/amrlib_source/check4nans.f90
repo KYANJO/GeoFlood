@@ -6,7 +6,7 @@ subroutine check4nans(meqn,mbc,mx,my,q,t,ichecknan)
     
     ! Input
     integer, intent(in) ::  meqn, mbc, mx, my, ichecknan
-    real(kind=8), intent(in) :: t, q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, intent(in) :: t, q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
 
     ! Locals
     integer :: i, j, m

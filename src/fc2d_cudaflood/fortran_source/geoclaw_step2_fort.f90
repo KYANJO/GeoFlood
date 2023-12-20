@@ -31,42 +31,42 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
 
     ! Arguments
     integer, intent(in) :: maxm,meqn,maux,mbc,mx,my
-    real(kind=8), intent(in) :: dx,dy,dt
-    real(kind=8), intent(inout) :: cflgrid
-    real(kind=8), intent(inout) :: qold(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8), intent(inout) :: fm(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8), intent(inout) :: fp(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8), intent(inout) :: gm(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8), intent(inout) :: gp(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision, intent(in) :: dx,dy,dt
+    double precision, intent(inout) :: cflgrid
+    double precision, intent(inout) :: qold(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision, intent(inout) :: fm(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision, intent(inout) :: fp(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision, intent(inout) :: gm(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision, intent(inout) :: gp(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
 
     ! Local storage for flux accumulation
-    real(kind=8) :: faddm(meqn,1-mbc:maxm+mbc)
-    real(kind=8) :: faddp(meqn,1-mbc:maxm+mbc)
-    real(kind=8) :: gaddm(meqn,1-mbc:maxm+mbc,2)
-    real(kind=8) :: gaddp(meqn,1-mbc:maxm+mbc,2)
+    double precision :: faddm(meqn,1-mbc:maxm+mbc)
+    double precision :: faddp(meqn,1-mbc:maxm+mbc)
+    double precision :: gaddm(meqn,1-mbc:maxm+mbc,2)
+    double precision :: gaddp(meqn,1-mbc:maxm+mbc,2)
 
     ! Scratch storage for Sweeps and Riemann problems
-    real(kind=8) ::  q1d(meqn,1-mbc:maxm+mbc)
-    real(kind=8) :: aux1(maux,1-mbc:maxm+mbc)
-    real(kind=8) :: aux2(maux,1-mbc:maxm+mbc)
-    real(kind=8) :: aux3(maux,1-mbc:maxm+mbc)
-    real(kind=8) :: dtdx1d(1-mbc:maxm+mbc)
-    real(kind=8) :: dtdy1d(1-mbc:maxm+mbc)
+    double precision ::  q1d(meqn,1-mbc:maxm+mbc)
+    double precision :: aux1(maux,1-mbc:maxm+mbc)
+    double precision :: aux2(maux,1-mbc:maxm+mbc)
+    double precision :: aux3(maux,1-mbc:maxm+mbc)
+    double precision :: dtdx1d(1-mbc:maxm+mbc)
+    double precision :: dtdy1d(1-mbc:maxm+mbc)
 
- !   real(kind=8) ::  wave(meqn, mwaves, 1-mbc:maxm+mbc)
- !   real(kind=8) ::     s(mwaves, 1-mbc:maxm + mbc)
- !   real(kind=8) ::  amdq(meqn,1-mbc:maxm + mbc)
- !   real(kind=8) ::  apdq(meqn,1-mbc:maxm + mbc)
-!     real(kind=8) ::  cqxx(meqn,1-mbc:maxm + mbc)
-!     real(kind=8) :: bmadq(meqn,1-mbc:maxm + mbc)
-!     real(kind=8) :: bpadq(meqn,1-mbc:maxm + mbc)
+ !   double precision ::  wave(meqn, mwaves, 1-mbc:maxm+mbc)
+ !   double precision ::     s(mwaves, 1-mbc:maxm + mbc)
+ !   double precision ::  amdq(meqn,1-mbc:maxm + mbc)
+ !   double precision ::  apdq(meqn,1-mbc:maxm + mbc)
+!     double precision ::  cqxx(meqn,1-mbc:maxm + mbc)
+!     double precision :: bmadq(meqn,1-mbc:maxm + mbc)
+!     double precision :: bpadq(meqn,1-mbc:maxm + mbc)
 
     INTEGER block_corner_count(0:3), ibc,jbc
 
     ! Looping scalar storage
     integer :: i,j,m,thread_num
-    real(kind=8) :: dtdx,dtdy,cfl1d,p,phi,cm,dtdxij,dtdyij
+    double precision :: dtdx,dtdy,cfl1d,p,phi,cm,dtdxij,dtdyij
 
     ! Common block storage
     integer :: icom,jcom

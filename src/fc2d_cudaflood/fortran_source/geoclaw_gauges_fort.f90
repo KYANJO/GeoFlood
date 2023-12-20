@@ -6,16 +6,16 @@ SUBROUTINE fc2d_geoclaw_update_gauge (mx,my,mbc,meqn,xlower,ylower, &
     implicit none
 
     integer :: mx, my, mbc, meqn, maux
-    real(kind=8) :: xlower, ylower, dx, dy, xc, yc
-    real(kind=8) :: q(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8) :: aux(maux, 1-mbc:mx+mbc, 1-mbc:my+mbc)
-    real(kind=8) :: qvar(meqn), avar(maux)
+    double precision :: xlower, ylower, dx, dy, xc, yc
+    double precision :: q(meqn, 1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision :: aux(maux, 1-mbc:mx+mbc, 1-mbc:my+mbc)
+    double precision :: qvar(meqn), avar(maux)
 
 
     !! local variables:
-    real(kind=8) :: xcent,ycent,xoff,yoff
+    double precision :: xcent,ycent,xoff,yoff
     integer :: ioff,joff,iindex,jindex,mq
-    real(kind=8) :: h(4),drytol2,topo
+    double precision :: h(4),drytol2,topo
 
     iindex =  int((xc-xlower)/dx) + 1
     jindex =  int((yc-ylower)/dy) + 1

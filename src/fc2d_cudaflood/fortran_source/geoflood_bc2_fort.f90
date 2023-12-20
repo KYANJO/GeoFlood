@@ -28,15 +28,15 @@ subroutine fc2d_geoclaw_bc2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt,m
       implicit none
 
       integer, intent(in) :: meqn, mbc, mx, my, maux, mthbc(4)
-      real(kind=8), intent(in) :: xlower, ylower, dx, dy, t, dt
+      double precision, intent(in) :: xlower, ylower, dx, dy, t, dt
 
-      real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-      real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+      double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       integer :: m, i, j, ibc, jbc
 
-      real(kind=8) ::  x,y
-      real(kind=8), dimension(4) :: q0,q1
+      double precision ::  x,y
+      double precision, dimension(4) :: q0,q1
 
       ! -------------------------------------------------------------------
       !  left boundary

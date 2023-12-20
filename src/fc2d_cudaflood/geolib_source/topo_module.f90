@@ -9,16 +9,16 @@ module topo_module
     logical, private :: module_setup = .false.
 
     ! Work array for topography for all t
-    real(kind=8), allocatable :: topowork(:)
+    double precision, allocatable :: topowork(:)
 
     ! Topography file data
     integer :: test_topography
     character(len=150), allocatable :: topofname(:)
     integer :: mtopofiles,mtoposize
-    real(kind=8), allocatable :: xlowtopo(:), ylowtopo(:), tlowtopo(:)
-    real(kind=8), allocatable :: xhitopo(:), yhitopo(:), thitopo(:)
-    real(kind=8), allocatable :: dxtopo(:), dytopo(:)
-    real(kind=8), allocatable :: topotime(:)
+    double precision, allocatable :: xlowtopo(:), ylowtopo(:), tlowtopo(:)
+    double precision, allocatable :: xhitopo(:), yhitopo(:), thitopo(:)
+    double precision, allocatable :: dxtopo(:), dytopo(:)
+    double precision, allocatable :: topotime(:)
     integer, allocatable ::  mxtopo(:), mytopo(:)
     ! integer, allocatable :: minleveltopo(:),maxleveltopo(:)
 
@@ -31,24 +31,24 @@ module topo_module
     integer :: imovetopo, aux_finalized
 
     ! Analytic topography
-    real(kind=8), private :: topo_left, topo_right, topo_location
-    real(kind=8), private :: topo_x0,topo_x1,topo_x2,topo_basin_depth
-    real(kind=8), private :: topo_shelf_depth,topo_shelf_slope,topo_beach_slope
+    double precision, private :: topo_left, topo_right, topo_location
+    double precision, private :: topo_x0,topo_x1,topo_x2,topo_basin_depth
+    double precision, private :: topo_shelf_depth,topo_shelf_slope,topo_beach_slope
 
     ! NetCDF4 support
     real(kind=4), parameter :: CONVENTION_REQUIREMENT = 1.0
 
     ! dtopo variables
     ! Work array
-    real(kind=8), allocatable :: dtopowork(:)
-    real(kind=8) :: dt_max_dtopo
+    double precision, allocatable :: dtopowork(:)
+    double precision :: dt_max_dtopo
 
     ! File data parameters
     character (len=150), allocatable :: dtopofname(:)
-    real(kind=8), allocatable :: xlowdtopo(:),ylowdtopo(:),xhidtopo(:)
-    real(kind=8), allocatable :: yhidtopo(:),t0dtopo(:),tfdtopo(:)
-    real(kind=8), allocatable :: dxdtopo(:),dydtopo(:),dtdtopo(:)
-    real(kind=8), allocatable :: tdtopo1(:),tdtopo2(:),taudtopo(:)
+    double precision, allocatable :: xlowdtopo(:),ylowdtopo(:),xhidtopo(:)
+    double precision, allocatable :: yhidtopo(:),t0dtopo(:),tfdtopo(:)
+    double precision, allocatable :: dxdtopo(:),dydtopo(:),dtdtopo(:)
+    double precision, allocatable :: tdtopo1(:),tdtopo2(:),taudtopo(:)
 
     integer, allocatable :: mxdtopo(:),mydtopo(:),mtdtopo(:),mdtopo(:)
     integer, allocatable :: dtopotype(:)
@@ -56,16 +56,16 @@ module topo_module
     integer, allocatable :: index0_dtopowork1(:),index0_dtopowork2(:)
 
     integer :: num_dtopo
-    real(kind=8) dz
+    double precision dz
     logical, allocatable :: topoaltered(:) !don't think this is needed anymore
 
     ! Initial topography
     ! Work array for initial topography (only arrays where topo evolves)
-    real(kind=8), allocatable :: topo0work(:)
+    double precision, allocatable :: topo0work(:)
     integer, allocatable :: i0topo0(:),topo0ID(:)
     integer :: mtopo0size,mtopo0files
 
-    real(kind=8) topo_missing
+    double precision topo_missing
 
     ! ====== define parameters for C interface ======
     ! type, bind(C) :: TopoParameters
@@ -170,8 +170,8 @@ contains
         ! Locals
         integer, parameter :: iunit = 7
         integer :: i,j,finer_than,rank
-        real(kind=8) :: area_i,area_j
-        real(kind=8) :: area, area_domain
+        double precision :: area_i,area_j
+        double precision :: area, area_domain
         if (.not.module_setup) then
 
             ! Open and begin parameter file output
@@ -412,13 +412,13 @@ contains
 
         !arguments
         integer, intent(in) :: mx,my
-        real(kind=8), intent(in) :: dx,dy,xlow,yhi
-        real(kind=8), intent(inout) :: newtopo(1:mx*my)
+        double precision, intent(in) :: dx,dy,xlow,yhi
+        double precision, intent(inout) :: newtopo(1:mx*my)
 
         !locals
         integer :: i,j,ij,id,irank,itopo1,itopo2,jtopo1,jtopo2
         integer :: ijll,ijlr,ijul,ijur
-        real(kind=8) :: x,y,xl,xr,yu,yl,zll,zlr,zul,zur,z,dxdy
+        double precision :: x,y,xl,xr,yu,yl,zll,zlr,zul,zur,z,dxdy
 
         do j=1,my
                y = yhi - (j-1)*dy
@@ -502,22 +502,22 @@ contains
         ! Arguments
         integer, intent(in) :: mx,my,topo_type
         character(len=150), intent(in) :: fname
-        real(kind=8), intent(inout) :: topo(1:mx*my)
-        real(kind=8), intent(in) :: xll,yll
+        double precision, intent(inout) :: topo(1:mx*my)
+        double precision, intent(in) :: xll,yll
 
         ! Locals
         integer, parameter :: iunit = 19, miss_unit = 17
         logical, parameter :: maketype2 = .false.
         integer :: i,j,missing,status,n
-        real(kind=8) :: no_data_value,x,y,topo_temp
-        real(kind=8) :: values(10)
+        double precision :: no_data_value,x,y,topo_temp
+        double precision :: values(10)
         character(len=80) :: str
 
         ! NetCDF Support
         character(len=10) :: direction, x_dim_name, x_var_name, y_dim_name, &
             y_var_name, z_var_name, var_name
         ! character(len=1) :: axis_string
-        real(kind=8), allocatable :: nc_buffer(:, :), xlocs(:), ylocs(:)
+        double precision, allocatable :: nc_buffer(:, :), xlocs(:), ylocs(:)
         integer(kind=4) :: x_var_id, y_var_id, z_var_id, x_dim_id, y_dim_id
         integer(kind=4) :: xstart(1), ystart(1), mx_tot, my_tot
         integer(kind=4) :: ios, nc_file, dim_ids(2), num_dims, &
@@ -796,14 +796,14 @@ contains
         character(len=150), intent(in) :: fname
         integer, intent(in) :: topo_type
         integer, intent(out) :: mx, my
-        real(kind=8), intent(out) :: xll, yll, xhi, yhi, dx, dy
+        double precision, intent(out) :: xll, yll, xhi, yhi, dx, dy
 
         ! Local
         integer, parameter :: iunit = 19
         integer :: topo_size, status, n
-        real(kind=8) :: x,y,z,nodata_value
+        double precision :: x,y,z,nodata_value
         logical :: found_file
-        real(kind=8) :: values(10)
+        double precision :: values(10)
         character(len=80) :: str
         logical :: verbose
         logical :: xll_registered, yll_registered
@@ -813,7 +813,7 @@ contains
         ! character(len=6) :: convention_string
         ! integer(kind=4) :: convention_version
         integer(kind=4) :: nc_file
-        real(kind=8), allocatable :: xlocs(:),ylocs(:)
+        double precision, allocatable :: xlocs(:),ylocs(:)
         logical, allocatable :: x_in_dom(:),y_in_dom(:)
         integer(kind=4) :: dim_ids(2), num_dims, var_type, num_vars, num_dims_tot
         integer(kind=4), allocatable :: var_ids(:)
@@ -1058,12 +1058,12 @@ contains
 
     end subroutine read_topo_header
 
-    real(kind=8) pure function test_topo(x) result(topography)
+    double precision pure function test_topo(x) result(topography)
 
         implicit none
 
         ! Arguments
-        real(kind=8), intent(in) :: x
+        double precision, intent(in) :: x
 
         if (test_topography == 1) then
             if (x < topo_location) then
@@ -1118,7 +1118,7 @@ contains
         ! Locals
         integer, parameter :: iunit = 79
         integer :: itopo,finer_than,rank
-        real(kind=8) :: area_i,area_j
+        double precision :: area_i,area_j
         integer :: i,j
 
         write(GEO_PARM_UNIT,*) ' '
@@ -1221,12 +1221,12 @@ contains
       ! Arguments
       integer, intent(in) :: mx,my,mt,dtopo_type
       character (len=150), intent(in) :: fname
-      real(kind=8), intent(inout) :: dtopo(1:mx*my*mt)
+      double precision, intent(inout) :: dtopo(1:mx*my*mt)
 
       ! Local
       integer, parameter :: iunit = 29
       integer :: i,j,k,status
-      real(kind=8) :: t,x,y
+      double precision :: t,x,y
 
       open(unit=iunit, file=fname, status = 'unknown',form='formatted')
 
@@ -1289,12 +1289,12 @@ contains
 
         ! Output Arguments
         integer, intent(out) :: mx,my,mt
-        real(kind=8), intent(out) :: xlow,ylow,t0,xhi,yhi,tf,dx,dy,dt
+        double precision, intent(out) :: xlow,ylow,t0,xhi,yhi,tf,dx,dy,dt
 
         ! Locals
         integer, parameter :: iunit = 7
         integer :: topo_size,status
-        real(kind=8) :: x,y,t,y_old
+        double precision :: x,y,t,y_old
         logical :: found_file
 
         ! Open file
@@ -1415,10 +1415,10 @@ recursive subroutine topoarea(x1,x2,y1,y2,m,area)
     real (kind=8), intent(out) :: area
 
     ! local
-    real(kind=8) :: xmlo,xmhi,ymlo,ymhi,x1m,x2m, &
+    double precision :: xmlo,xmhi,ymlo,ymhi,x1m,x2m, &
         y1m,y2m, area1,area2,area_m
     integer :: mfid, indicator, i0
-    real(kind=8), external :: topointegral  
+    double precision, external :: topointegral  
 
 
     mfid = mtopoorder(m)
@@ -1492,10 +1492,10 @@ recursive subroutine rectintegral(x1,x2,y1,y2,m,integral)
     real (kind=8), intent(out) :: integral
 
     ! local
-    real(kind=8) :: xmlo,xmhi,ymlo,ymhi,area,x1m,x2m, &
+    double precision :: xmlo,xmhi,ymlo,ymhi,area,x1m,x2m, &
         y1m,y2m, int1,int2,int3
     integer :: mfid, indicator, i0
-    real(kind=8), external :: topointegral  
+    double precision, external :: topointegral  
 
 
     mfid = mtopoorder(m)
@@ -1560,8 +1560,8 @@ subroutine intersection(indicator,area,xintlo,xinthi, &
 
       integer, intent(out) :: indicator
 
-      real(kind=8), intent(in) ::  x1lo,x1hi,y1lo,y1hi,x2lo,x2hi,y2lo,y2hi
-      real(kind=8), intent(out) :: area,xintlo,xinthi,yintlo,yinthi
+      double precision, intent(in) ::  x1lo,x1hi,y1lo,y1hi,x2lo,x2hi,y2lo,y2hi
+      double precision, intent(out) :: area,xintlo,xinthi,yintlo,yinthi
 
       xintlo=dmax1(x1lo,x2lo)
       xinthi=dmin1(x1hi,x2hi)

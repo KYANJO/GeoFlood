@@ -11,17 +11,17 @@ module qinit_module
     integer, public :: qinit_type
     
     ! Work array
-    real(kind=8), private, allocatable :: qinit(:)
+    double precision, private, allocatable :: qinit(:)
 
     ! Geometry
-    real(kind=8) :: x_low_qinit
-    real(kind=8) :: y_low_qinit
-    real(kind=8) :: t_low_qinit
-    real(kind=8) :: x_hi_qinit
-    real(kind=8) :: y_hi_qinit
-    real(kind=8) :: t_hi_qinit
-    real(kind=8) :: dx_qinit
-    real(kind=8) :: dy_qinit
+    double precision :: x_low_qinit
+    double precision :: y_low_qinit
+    double precision :: t_low_qinit
+    double precision :: x_hi_qinit
+    double precision :: y_hi_qinit
+    double precision :: t_hi_qinit
+    double precision :: dx_qinit
+    double precision :: dy_qinit
     
     integer, private :: mx_qinit
     integer, private :: my_qinit
@@ -29,17 +29,17 @@ module qinit_module
     ! for initializing using force_dry to indicate dry regions below sealevel:
 
     integer :: mx_fdry, my_fdry
-    real(kind=8) :: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry, dx_fdry, dy_fdry
+    double precision :: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry, dx_fdry, dy_fdry
     integer(kind=1), allocatable :: force_dry(:,:)
     logical :: use_force_dry
-    real(kind=8) :: tend_force_dry  ! always use mask up to this time
+    double precision :: tend_force_dry  ! always use mask up to this time
 
     logical :: variable_eta_init
 
     ! to initialize using different initial eta values in different regions:
     integer :: etain_mx, etain_my
-    real(kind=8) :: etain_dx, etain_dy
-    real(kind=8), allocatable :: etain_x(:), etain_y(:), etain_eta(:,:)
+    double precision :: etain_dx, etain_dy
+    double precision, allocatable :: etain_x(:), etain_y(:), etain_eta(:,:)
 
     integer :: mqinitfiles
     integer, allocatable :: minlevel_qinit(:), maxlevel_qinit(:)
@@ -124,16 +124,16 @@ contains
     
         ! Subroutine arguments
         integer, intent(in) :: meqn,mbc,mx,my,maux
-        real(kind=8), intent(in) :: xlow_patch,ylow_patch,dx,dy
-        real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-        real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+        double precision, intent(in) :: xlow_patch,ylow_patch,dx,dy
+        double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+        double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
         
         ! Local
         integer :: i,j
-        real(kind=8) :: ximc,xim,x,xip,xipc,yjmc,yjm,y,yjp,yjpc,dq
+        double precision :: ximc,xim,x,xip,xipc,yjmc,yjm,y,yjp,yjpc,dq
         
         ! Topography integral function
-        real(kind=8) :: topointegral
+        double precision :: topointegral
         
         if (qinit_type > 0) then
             do i=1-mbc,mx+mbc
@@ -268,7 +268,7 @@ contains
         use utility_module, only: parse_values
         character(len=*), intent(in) :: fname
         integer :: iunit,i,j,n
-        real(kind=8) :: values(10), nodata_value
+        double precision :: values(10), nodata_value
         character(len=80) :: str
 
         iunit = 8
@@ -320,7 +320,7 @@ contains
         ! local 
         integer, parameter :: iunit = 7
         integer :: i,j
-        real(kind=8) :: nodata_value, xllower, yllower
+        double precision :: nodata_value, xllower, yllower
 
         if (present(file_name)) then
             open(unit=iunit, file=file_name, status='unknown',&

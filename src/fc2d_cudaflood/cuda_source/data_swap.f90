@@ -12,10 +12,10 @@ subroutine cudaclaw_swap_data(mx,my,mbc,meqn,maux,qold_geoclaw,qold_cudaclaw,aux
   integer, intent(in) :: mx,my,mbc,meqn,maux,geoclaw2cudaclaw
 
    ! declare variables
-  real(kind=8) :: qold_geoclaw(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-  real(kind=8) :: qold_cudaclaw(1-mbc:mx+mbc,1-mbc:my+mbc,meqn)
-  real(kind=8) :: aux_geoclaw(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
-  real(kind=8) :: aux_cudaclaw(1-mbc:mx+mbc,1-mbc:my+mbc,maux)
+  double precision :: qold_geoclaw(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+  double precision :: qold_cudaclaw(1-mbc:mx+mbc,1-mbc:my+mbc,meqn)
+  double precision :: aux_geoclaw(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+  double precision :: aux_cudaclaw(1-mbc:mx+mbc,1-mbc:my+mbc,maux)
   
   integer :: i,j,m
 

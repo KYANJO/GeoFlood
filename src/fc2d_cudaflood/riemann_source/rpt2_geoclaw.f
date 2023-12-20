@@ -24,21 +24,21 @@
 
       integer, intent(in) :: ixy,maxm,meqn,maux,mwaves,mbc,mx,imp
 
-      real(kind=8), intent(in) ::  ql(meqn,1-mbc:maxm+mbc)
-      real(kind=8), intent(in) ::  qr(meqn,1-mbc:maxm+mbc)
-      real(kind=8), intent(in) ::  asdq(meqn,1-mbc:maxm+mbc)
-      real(kind=8), intent(in) ::  aux1(maux,1-mbc:maxm+mbc)
-      real(kind=8), intent(in) ::  aux2(maux,1-mbc:maxm+mbc)
-      real(kind=8), intent(in) ::  aux3(maux,1-mbc:maxm+mbc)
+      double precision, intent(in) ::  ql(meqn,1-mbc:maxm+mbc)
+      double precision, intent(in) ::  qr(meqn,1-mbc:maxm+mbc)
+      double precision, intent(in) ::  asdq(meqn,1-mbc:maxm+mbc)
+      double precision, intent(in) ::  aux1(maux,1-mbc:maxm+mbc)
+      double precision, intent(in) ::  aux2(maux,1-mbc:maxm+mbc)
+      double precision, intent(in) ::  aux3(maux,1-mbc:maxm+mbc)
 
-      real(kind=8), intent(out) ::  bmasdq(meqn,1-mbc:maxm+mbc)
-      real(kind=8), intent(out) ::  bpasdq(meqn,1-mbc:maxm+mbc)
+      double precision, intent(out) ::  bmasdq(meqn,1-mbc:maxm+mbc)
+      double precision, intent(out) ::  bpasdq(meqn,1-mbc:maxm+mbc)
 
       ! local:
-      real(kind=8) ::  s(mwaves), r(meqn,mwaves), beta(mwaves)
-      real(kind=8) ::  h,u,v
-      real(kind=8) ::  delf1,delf2,delf3
-      real(kind=8) ::  dxdcm,dxdcp,topo1,topo3,eta
+      double precision ::  s(mwaves), r(meqn,mwaves), beta(mwaves)
+      double precision ::  h,u,v
+      double precision ::  delf1,delf2,delf3
+      double precision ::  dxdcm,dxdcp,topo1,topo3,eta
 
       integer :: i,mw,mu,mv
       

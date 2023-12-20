@@ -8,9 +8,9 @@ SUBROUTINE fc2d_geoclaw_qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     ! Subroutine arguments
     integer, intent(in) :: meqn,mbc,mx,my,maux
-    real(kind=8), intent(in) :: xlower,ylower,dx,dy
-    real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-    real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, intent(in) :: xlower,ylower,dx,dy
+    double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
     ! Locals
     integer :: i,j,m

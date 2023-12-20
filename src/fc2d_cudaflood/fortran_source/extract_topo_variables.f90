@@ -19,14 +19,14 @@ subroutine get_b4step2_parameters(num_dtopo_val, aux_finalized_val, t0dtopo_val,
     ! =================== Declare output variables ===================
     integer, intent(out) :: num_dtopo_val, test_topography_val
     integer, intent(out) :: aux_finalized_val, mtopofiles_val, mtoposize_val
-    real(kind=8), intent(out) :: dt_max_dtopo_val
-    real(kind=8), intent(out), allocatable :: t0dtopo_val(:), tfdtopo_val(:)
-    real(kind=8), intent(out) :: NEEDS_TO_BE_SET_val
+    double precision, intent(out) :: dt_max_dtopo_val
+    double precision, intent(out), allocatable :: t0dtopo_val(:), tfdtopo_val(:)
+    double precision, intent(out) :: NEEDS_TO_BE_SET_val
     logical, intent(out) :: variable_friction_val
     integer, intent(out) :: friction_index_val
-    real(kind=8), intent(out) :: xupper_val, yupper_val, xlower_val, ylower_val
-    real(kind=8), intent(out), allocatable :: topowork_val(:), xlowtopo_val(:), ylowtopo_val(:) 
-     real(kind=8), intent(out), allocatable :: xhitopo_val(:), yhitopo_val(:), dxtopo_val(:), dytopo_val(:)
+    double precision, intent(out) :: xupper_val, yupper_val, xlower_val, ylower_val
+    double precision, intent(out), allocatable :: topowork_val(:), xlowtopo_val(:), ylowtopo_val(:) 
+     double precision, intent(out), allocatable :: xhitopo_val(:), yhitopo_val(:), dxtopo_val(:), dytopo_val(:)
     integer, intent(out), allocatable :: mxtopo_val(:), mytopo_val(:), mtopoorder_val(:), i0topo_val(:), mtopo_val(:)
 
     ! ==================== Assign scalar output variables ====================

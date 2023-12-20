@@ -30,13 +30,13 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
     !! Subroutine arguments
     INTEGER, INTENT(in) :: meqn
     INTEGER, INTENT(inout) :: mbc,mx,my,maux
-    REAL(kind=8), INTENT(inout) :: xlower, ylower, dx, dy, t, dt
-    REAL(kind=8), INTENT(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-    REAL(kind=8), INTENT(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, INTENT(inout) :: xlower, ylower, dx, dy, t, dt
+    double precision, INTENT(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, INTENT(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
     !! Local storage
     INTEGER :: index,i,j,k,dummy
-    REAL(kind=8) :: h,u,v
+    double precision :: h,u,v
 
     INTEGER :: is_ghost, mint, nghost
     LOGICAL :: fc2d_geoclaw_check_dtopotime, t_in_dtopo_interval
