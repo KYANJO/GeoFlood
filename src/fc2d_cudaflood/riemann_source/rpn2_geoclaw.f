@@ -275,7 +275,7 @@ c          write(*,*) 'sRoe1 = ', sRoe1, ' sRoe2 = ', sRoe2
 c          write(*,*) 'sE1 = ', sE1, ' sE2 = ', sE2
 c          write(6,*) ' '
 c       endif
-
+c         write(6,*) "i = ",icom, "j = ", jcom
          maxiter = 1
 
          call riemann_aug_JCP(maxiter,3,3,hL,hR,huL,

@@ -135,7 +135,8 @@ c     !determine the steady state wave -------------------
       criticaltol = max(drytol*g, 1d-6)
       criticaltol_2 = sqrt(criticaltol)
       deldelh = -delb
-      deldelphi = -0.5d0 * (hR + hL) * (g * delb + delp / rho)
+c      deldelphi = -0.5d0 * (hR + hL) * (g * delb + delp / rho)
+      deldelphi = -0.5d0 * (hR + hL) * (g * delb)
 
 c     !determine a few quanitites needed for steady state wave if iterated
       hLstar=hL
@@ -208,7 +209,7 @@ c        !find bounds in case of critical state resonance, or negative states
          endif
 
 c        ! adjust deldelh for well-balancing of atmospheric pressure difference 
-         deldelh = deldelh - delP/(rho*g)
+c         deldelh = deldelh - delP/(rho*g)
 
 c        !find jump in phi, deldelphi
          if (sonic) then
@@ -219,7 +220,7 @@ c        !find jump in phi, deldelphi
 c        !find bounds in case of critical state resonance, or negative states
          deldelphi=min(deldelphi,g*max(-hLstar*delb,-hRstar*delb))
          deldelphi=max(deldelphi,g*min(-hLstar*delb,-hRstar*delb))
-         deldelphi = deldelphi - hbar * delp / rho
+c         deldelphi = deldelphi - hbar * delp / rho
 
          del(1)=delh-deldelh
          del(2)=delhu
