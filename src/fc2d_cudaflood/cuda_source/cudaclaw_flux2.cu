@@ -341,22 +341,29 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int I = (iy + 1)*ys + (ix + 1);  /* Start one cell from left/bottom edge */
 
+        /* -- packing qr and auxr into shared memory --- */
+        // ---- start with store qr to occupy start memory 
         double *const qr     = start;                 /* meqn        */
+        // ---- pack qr = {hr, hur, hvr} from global memory (qold[I_q])
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;
             qr[mq] = qold[I_q];        /* Right */
         }
 
+        // ---- store auxr after qr to occupy meqn memory, so its start address is qr + meqn
         double *const auxr   = qr      + meqn;         /* maux        */
+        // ---- pack auxr = {br} from global memory (aux[I_aux])
         for(int m = 0; m < maux; m++)
         {
             int I_aux = I + m*zs;
             auxr[m] = aux[I_aux];
         }               
 
+        // --- restrict the scope of the following variables
         {
             /* ------------------------ Normal solve in X direction ------------------- */
+            // ---- store ql after auxr to occupy maux memory, so its start address is auxr + maux and so on
             double *const ql     = auxr   + maux;         /* meqn        */
             double *const auxl   = ql     + meqn;         /* maux        */
             double *const s      = auxl   + maux;         /* mwaves      */
@@ -364,21 +371,24 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             double *const amdq   = wave   + meqn*mwaves;  /* meqn        */
             double *const apdq   = amdq   + meqn;         /* meqn        */
 
+            // ---- pack ql = {hl, hul, hvl} from global memory (qold[I_q - 1])
             for(int mq = 0; mq < meqn; mq++)
             {
                 int I_q = I + mq*zs;
                 ql[mq] = qold[I_q - 1];    /* Left  */
             }
 
+            // ---- pack auxl = {bl} from global memory (aux[I_aux - 1])
             for(int m = 0; m < maux; m++)
             {
                 int I_aux = I + m*zs;
                 auxl[m] = aux[I_aux - 1];
             }               
 
+            // ---- call rpn2 to compute the fluctuations at the interface (I_q -1/2)
             rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, ix,iy); //<- added  thread_index
-            // rpn2(0, meqn, mwaves, maux, qr, ql, auxr, auxl, wave, s,  apdq, amdq, ix,iy);
-
+            
+            // --- save the fluctuations to global memory
             for (int mq = 0; mq < meqn; mq++) 
             {
                 int I_q = I + mq*zs;
@@ -391,11 +401,12 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 }
             }
         
-
+            // --- use the speeds to compute maxcfl
             for(int mw = 0; mw < mwaves; mw++)
             {
                 maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
-
+                
+                // --- save the speeds and waves to global memory
                 if (order[0] == 2)
                 {                    
                     int I_speeds = I + mw*zs;
@@ -410,6 +421,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
+        // --- Restrict the scope of the following variables ---
         {
             /* ------------------------ Normal solve in Y direction ------------------- */
             double *const qd     = auxr   + maux;         /* meqn        */
@@ -433,8 +445,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             
     
             rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq,ix,iy);
-            // rpn2(1, meqn, mwaves, maux, qr, qd, auxr, auxd, wave, s, bpdq, bmdq, ix,iy);
-
+            
             /* Set value at bottom interface of cell I */
             for (int mq = 0; mq < meqn; mq++) 
             {
