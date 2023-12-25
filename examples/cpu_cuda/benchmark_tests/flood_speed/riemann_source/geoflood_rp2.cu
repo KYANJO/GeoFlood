@@ -101,6 +101,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
       bool debug;
       if (idir == 0 && ix == 7 && iy == 15)
+    // if (idir == 0)
       {
         debug = 1;
       }
@@ -403,13 +404,14 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
     // }
 
-    // Debugging check for NaNs
-    // if (tid == 0) {
-    //     printf("s1 = %e, s2 = %e, s3 = %e\n", s[0], s[1], s[2]);
-    //     printf("fwave[0] = %e, fwave[1] = %e, fwave[2] = %e\n", fwave[0], fwave[1], fwave[2]);
-    //     printf("fwave[3] = %e, fwave[4] = %e, fwave[5] = %e\n", fwave[3], fwave[4], fwave[5]);
-    //     printf("fwave[6] = %e, fwave[7] = %e, fwave[8] = %e\n", fwave[6], fwave[7], fwave[8]);
-    // }
+    // Debugging
+    if (debug) {
+        printf("ix = %d, iy = %d\n " \
+        "s[0] = %.16f, s[1] = %.16f, s[2] = %.16f\n" \
+        "fwave[0] = %.16f, fwave[1] = %.16f, fwave[2] = %.16f\n" \
+        "fwave[3] = %.16f, fwave[4] = %.16f, fwave[5] = %.16f\n" \
+        "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
+    }
 
     label30: // (similar to 30 continue in Fortran)
 
@@ -431,24 +433,52 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     }
 
     /* --- compute fluctuations --- */
-    for (mw=0; mw<mwaves; mw++) {
-        if (s[mw] < 0.0) {
-            amdq[mw] += fwave[mw];
-            amdq[mw] += fwave[mw + 1*mwaves];
-            amdq[mw] += fwave[mw + 2*mwaves];
-        } else if (s[mw] > 0.0) {
-            apdq[mw] += fwave[mw];
-            apdq[mw] += fwave[mw + 1*mwaves];
-            apdq[mw] += fwave[mw + 2*mwaves];
+    // for (mw=0; mw<mwaves; mw++) {
+    //     if (s[mw] < 0.0) {
+    //         amdq[mw] += fwave[mw];
+    //         amdq[mw] += fwave[mw + 1*mwaves];
+    //         amdq[mw] += fwave[mw + 2*mwaves];
+    //     } else if (s[mw] > 0.0) {
+    //         apdq[mw] += fwave[mw];
+    //         apdq[mw] += fwave[mw + 1*mwaves];
+    //         apdq[mw] += fwave[mw + 2*mwaves];
+    //     } else {
+    //         amdq[mw] += 0.5*fwave[mw];
+    //         amdq[mw] += 0.5*fwave[mw + 1*mwaves];
+    //         amdq[mw] += 0.5*fwave[mw + 2*mwaves];
+    //         apdq[mw] += 0.5*fwave[mw];
+    //         apdq[mw] += 0.5*fwave[mw + 1*mwaves];
+    //         apdq[mw] += 0.5*fwave[mw + 2*mwaves];
+    //     }
+    // }
+
+    int idx; /* mw = idx/3 */
+    for (idx = 0; idx < mwaves*3; idx++) {
+        if (s[idx/3] < 0.0) { 
+            amdq[idx%3] += fwave[idx];  
+        } else if (s[idx/3] > 0.0) {
+            apdq[idx%3] += fwave[idx]; 
         } else {
-            amdq[mw] += 0.5*fwave[mw];
-            amdq[mw] += 0.5*fwave[mw + 1*mwaves];
-            amdq[mw] += 0.5*fwave[mw + 2*mwaves];
-            apdq[mw] += 0.5*fwave[mw];
-            apdq[mw] += 0.5*fwave[mw + 1*mwaves];
-            apdq[mw] += 0.5*fwave[mw + 2*mwaves];
+            amdq[idx%3] += 0.5 * fwave[idx];  
+            apdq[idx%3] += 0.5 * fwave[idx]; 
         }
     }
+
+    // int i;
+    // for (mw=0; mw<mwaves; mw++) {
+    //     for (i=0; i<3; i++) {
+    //         if (s[mw] < 0.0) {
+    //             amdq[i] += fwave[mw*3 + i];  
+    //         } else if (s[mw] > 0.0) {
+    //             apdq[i] += fwave[mw*3 + i];  
+    //         } else {
+    //             amdq[i] += 0.5 * fwave[mw*3 + i];  
+    //             apdq[i] += 0.5 * fwave[mw*3 + i];  
+    //         }
+    //     }
+    // }
+
+
     // Debugging check for NaNs
     // if (tid == 0) {
     //     printf("amdq[0] = %e, amdq[1] = %e, amdq[2] = %e\n", amdq[0], amdq[1], amdq[2]);
@@ -693,14 +723,15 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     bool rare1, rare2, rarecorrector, rarecorrectortest, sonic;
     int mw, k, iter;
 
-    int mu = 1; // x-direction
-    int mv = 2; // y-direction
-    // int mu = 1+idir;
-    // int mv = 2-idir;
+    // int mu = 1; // x-direction
+    // int mv = 2; // y-direction
+    int mu = 1+idir;
+    int mv = 2-idir;
 
     bool debug;
     // if (idir == 0 && (ix-1) == 7 && (iy-1) == 15)
     if (idir == 0 && ix == 7 && iy == 15)
+    // if (idir == 0)
     {
       debug = 1;
     }
