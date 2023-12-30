@@ -400,7 +400,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
                          double dt,
                          void* user)
 {
-    // FC2D_GEOCLAW_TOPO_UPDATE(&t);
+    FC2D_GEOCLAW_TOPO_UPDATE(&t);
 
     // PROFILE_CUDA_GROUP("cudaclaw_update",3);
     fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
