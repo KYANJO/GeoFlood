@@ -61,7 +61,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                                 int maux, double ql[], double qr[],
                                 double auxl[], double auxr[],
                                 double fwave[], double s[], 
-                                double amd_q[], double apd_q[], int ix, int iy)
+                                double amdq[], double apdq[], int ix, int iy)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -87,8 +87,8 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     // double *ql = q_r;
     // double *auxr = aux_l;
     // double *auxl = aux_r;
-    double *amdq = apd_q;
-    double *apdq = amd_q;
+    // double *amdq = apd_q;
+    // double *apdq = amd_q;
 
        //   print at only one thread
     //    int mx = 16, my = 16, mbc = 2;
