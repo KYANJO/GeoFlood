@@ -285,53 +285,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
 
     double maxcfl = 0;
-
-#if 0
-    if (b4step2 != NULL)
-    {
-        for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
-        {
-            int ix = thread_index % ifaces_x;
-            int iy = thread_index/ifaces_x;
-
-            int I = (iy + 1)*ys + (ix + 1);  /* Start at one cell from left/bottom */
-            double *const qr    = start;          /* meqn   */
-            for(int mq = 0; mq < meqn; mq++)
-            {
-                int I_q = I + mq*zs;
-                qr[mq] = qold[I_q];  
-            }
-            double *const auxr   = qr      + meqn;         /* maux        */
-            for(int m = 0; m < maux; m++)
-            {
-                /* In case aux is already set */
-                int I_aux = I + m*zs;
-                auxr[m] = aux[I_aux];
-            }          
-
-            /* Compute (i,j) for patch index (i,j) in (1-mbc:mx+mbc,1-mbc:my+mbc)
     
-                i + (mbc-2) == ix   Check : i  = 1 --> ix = mbc-1
-                j + (mbc-2) == iy   Check : ix = 0 --> i  = 2-mbc
-            */
-            int i = ix-(mbc-2);  
-            int j = iy-(mbc-2);
-            b4step2(mbc,mx,my,meqn,qr,xlower,ylower,dx,dy, 
-                    t,dt,maux,auxr,i,j);
-            // b4step2(&mbc,&mx,&my,&meqn,qr,&xlower,&ylower,&dx,&dy, 
-            //         &t,&dt,&maux,auxr);
-    
-            for(int m = 0; m < maux; m++)
-            {
-                /* In case aux is set by b4step2 */
-                int I_aux = I + m*zs;
-                aux[I_aux] = auxr[m];
-            }
-        }      
-        __syncthreads(); /* Needed to be sure all aux variables are available below */ 
-    } 
-#endif    
-
     /* -------------------------- Compute fluctuations -------------------------------- */
 
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)

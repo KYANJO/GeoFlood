@@ -45,18 +45,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double bL, double bR, double uL, double uR, double vL, 
     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir);
 
-__device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
-        double hR, double huL, double huR, double hvL, double hvR, 
-        double bL, double bR, double uL, double uR, double vL, 
-        double vR, double phiL, double phiR, double sE1, double sE2, double* sw1, double* sw2, double* sw3, double* fw11, double* fw12, double* fw13, double* fw21, double* fw22, double* fw23, double* fw31, double* fw32, double* fw33, int ix, int iy, int idir);
-
-
 /* Normal Riemann solver for the 2d shallow water equations with topography */
-// __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
-//                                 int maux, double ql[], double qr[],
-//                                 double auxl[], double auxr[],
-//                                 double fwave[], double s[], 
-//                                 double amdq[], double apdq[], int ix, int iy)
 __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
                                 int maux, double ql[], double qr[],
                                 double auxl[], double auxr[],
@@ -77,27 +66,6 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     double s1m, s2m;
     bool rare1, rare2;
     int mw, mu, mv;
-
-    /* vectorized version */
-    double fw11, fw12, fw13, fw21, fw22, fw23, fw31, fw32, fw33;
-    double sw1, sw2, sw3;
-
-    /* Swapping left to right  (cudaclaw_flux2.cu)*/
-    // double *qr = q_l;
-    // double *ql = q_r;
-    // double *auxr = aux_l;
-    // double *auxl = aux_r;
-    // double *amdq = apd_q;
-    // double *apdq = amd_q;
-
-       //   print at only one thread
-    //    int mx = 16, my = 16, mbc = 2;
-    // //    int thread_index = threadIdx.x;
-    //    int ifaces_x, ifaces_y;
-    //   ifaces_x = mx + 2*mbc-1;
-    //   ifaces_y = my + 2*mbc-1;
-    //   int ix = thread_index % ifaces_x;
-    //   int iy = thread_index/ifaces_x;  
 
       bool debug;
       if (idir == 0 && ix == 7 && iy == 15)
@@ -314,28 +282,8 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
 
         /* === solve Riemann problem === */
         riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
-        // riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,&sw1,&sw2,&sw3,&fw11,&fw12,&fw13,&fw21,&fw22,&fw23,&fw31,&fw32,&fw33,ix,iy,idir);
-        
-        // Debugging check for NaNs 
-        // if (tid == 0) {
-        //     printf("hL = %e, hR = %e\n", hL, hR);
-        //     printf("huL = %e, huR = %e\n", huL, huR);
-        //     printf("hvL = %e, hvR = %e\n", hvL, hvR);
-        //     printf("uL = %e, uR = %e\n", uL, uR);
-        //     printf("vL = %e, vR = %e\n", vL, vR);
-        //     printf("phiL = %e, phiR = %e\n", phiL, phiR);
-        //     printf("bL = %e, bR = %e\n", bL, bR);
-        // }
 
-
-        // eliminate ghost fluxes for wall
-        // for (mw=0; mw<3; mw++) {
-        //     sw[mw] *= wall[mw];
-        //     fw[mw] *= wall[mw];
-        //     fw[mw + mu*mwaves] *= wall[mw];
-        //     fw[mw + mv*mwaves] *= wall[mw];
-        // }
-        
+        // eliminate ghost fluxes for wall    
         fw[0] *= wall[0];
         fw[mu] *= wall[0];
         fw[mv] *= wall[0];
@@ -351,27 +299,7 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         fw[2*mwaves + mv] *= wall[2];
         sw[mv] *= wall[2];
 
-        // sw1 *= wall[0];
-        // sw2 *= wall[1];
-        // sw3 *= wall[2];
-        // fw11 *= wall[0];
-        // fw21 *= wall[0];
-        // fw31 *= wall[0];
-        // fw12 *= wall[1];
-        // fw22 *= wall[1];
-        // fw32 *= wall[1];
-        // fw13 *= wall[2];
-        // fw23 *= wall[2];
-        // fw33 *= wall[2];    
-        
-        // update fwave and corresponding speeds
-        // for (mw=0; mw<mwaves; mw++) {
-        //     s[mw] = sw[mw];
-        //     fwave[mw] = fw[mw];
-        //     fwave[mw + mu*mwaves] = fw[mw + mu*mwaves];
-        //     fwave[mw + mv*mwaves] = fw[mw + mv*mwaves];
-        // }
-
+        /* update fwave and corresponding speeds */
         fwave[0] = fw[0];
         fwave[mu] = fw[mu];
         fwave[mv] = fw[mv];
@@ -387,21 +315,6 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         fwave[2*mwaves + mv] = fw[2*mwaves + mv];
         s[mv] = sw[mv];
        
-        // fwave[0] = fw11;
-        // fwave[1] = fw21;
-        // fwave[2] = fw31;
-        // s[0] = sw1;
-
-        // fwave[3] = fw12;
-        // fwave[4] = fw22;
-        // fwave[5] = fw32;
-        // s[1] = sw2;
-
-        // fwave[6] = fw13;
-        // fwave[7] = fw23;
-        // fwave[8] = fw33;
-        // s[2] = sw3;
-
     // }
 
     // Debugging
@@ -433,24 +346,6 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     }
 
     /* --- compute fluctuations --- */
-    // for (mw=0; mw<mwaves; mw++) {
-    //     if (s[mw] < 0.0) {
-    //         amdq[mw] += fwave[mw];
-    //         amdq[mw] += fwave[mw + 1*mwaves];
-    //         amdq[mw] += fwave[mw + 2*mwaves];
-    //     } else if (s[mw] > 0.0) {
-    //         apdq[mw] += fwave[mw];
-    //         apdq[mw] += fwave[mw + 1*mwaves];
-    //         apdq[mw] += fwave[mw + 2*mwaves];
-    //     } else {
-    //         amdq[mw] += 0.5*fwave[mw];
-    //         amdq[mw] += 0.5*fwave[mw + 1*mwaves];
-    //         amdq[mw] += 0.5*fwave[mw + 2*mwaves];
-    //         apdq[mw] += 0.5*fwave[mw];
-    //         apdq[mw] += 0.5*fwave[mw + 1*mwaves];
-    //         apdq[mw] += 0.5*fwave[mw + 2*mwaves];
-    //     }
-    // }
     amdq[0] = 0.0;
     amdq[1] = 0.0;
     amdq[2] = 0.0;
@@ -468,27 +363,6 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
             apdq[idx%3] += 0.5 * fwave[idx]; 
         }
     }
-
-    // int i;
-    // for (mw=0; mw<mwaves; mw++) {
-    //     for (i=0; i<3; i++) {
-    //         if (s[mw] < 0.0) {
-    //             amdq[i] += fwave[mw*3 + i];  
-    //         } else if (s[mw] > 0.0) {
-    //             apdq[i] += fwave[mw*3 + i];  
-    //         } else {
-    //             amdq[i] += 0.5 * fwave[mw*3 + i];  
-    //             apdq[i] += 0.5 * fwave[mw*3 + i];  
-    //         }
-    //     }
-    // }
-
-
-    // Debugging check for NaNs
-    // if (tid == 0) {
-    //     printf("amdq[0] = %e, amdq[1] = %e, amdq[2] = %e\n", amdq[0], amdq[1], amdq[2]);
-    //     printf("apdq[0] = %e, apdq[1] = %e, apdq[2] = %e\n", apdq[0], apdq[1], apdq[2]);
-    // }
 }
 
 
@@ -703,10 +577,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir)
-// __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
-//         double hR, double huL, double huR, double hvL, double hvR, 
-//         double bL, double bR, double uL, double uR, double vL, 
-//         double vR, double phiL, double phiR, double sE1, double sE2, double* sw1, double* sw2, double* sw3, double* fw11, double* fw12, double* fw13, double* fw21, double* fw22, double* fw23, double* fw31, double* fw32, double* fw33, int ix, int iy, int idir)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -728,8 +598,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     bool rare1, rare2, rarecorrector, rarecorrectortest, sonic;
     int mw, k, iter;
 
-    // int mu = 1; // x-direction
-    // int mv = 2; // y-direction
     int mu = 1+idir;
     int mv = 2-idir;
 
@@ -934,9 +802,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
         /* Determine coefficients beta(k) using crammer's rule
           first determine the determinant of the eigenvector matrix */
-        // det1 = r[0]*(r[mwaves + mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mwaves + mv]);
-        // det2 = r[mwaves]*(r[mu]*r[2*mwaves + mv] - r[2*mwaves + mu]*r[mv]);
-        // det3 = r[2*mwaves]*(r[mu]*r[mwaves + mv] - r[mwaves + mu]*r[mv]);
         det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
         det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
         det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
@@ -947,19 +812,10 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         {   
             for(mw=0; mw < 3; mw++)
             {
-                // A[mw] = r[mw]; 
-                // A[mw + mwaves] = r[mw + mwaves];
-                // A[mw + 2*mwaves] = r[mw + 2*mwaves];
                 A[0][mw] = r[0][mw];
                 A[1][mw] = r[1][mw];
                 A[2][mw] = r[2][mw];
             }
-            // A[k] = del[0];
-            // A[mwaves + k] = del[1];
-            // A[2*mwaves + k] = del[2];
-            // det1 = A[0]*(A[mwaves + mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mwaves + mv]);
-            // det2 = A[mwaves]*(A[mu]*A[2*mwaves + mv] - A[2*mwaves + mu]*A[mv]);
-            // det3 = A[2*mwaves]*(A[mu]*A[mwaves + mv] - A[mwaves + mu]*A[mv]);
             A[0][k] = del[0];
             A[1][k] = del[1];
             A[2][k] = del[2];
@@ -987,8 +843,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         {
             if (lambda[mw] < 0.0)
             {
-                // hLstar = hLstar + beta[mw]*r[mw]; 
-                // huLstar = huLstar + beta[mw]*r[mw + mwaves]; 
                hLstar = hLstar + beta[mw]*r[0][mw];
                huLstar = huLstar + beta[mw]*r[1][mw];
             }
@@ -998,9 +852,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         for (mw = mwaves-1; mw >= 0; mw--)
         {
             if (lambda[mw] > 0.0)
-            {
-                // hRstar = hRstar - beta[mw]*r[mw]; 
-                // huRstar = huRstar - beta[mw]*r[mw + mwaves]; 
+            { 
                 hRstar = hRstar - beta[mw]*r[0][mw];
                 huRstar = huRstar - beta[mw]*r[1][mw];
             }
@@ -1030,17 +882,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
-    // for (mw=0; mw < mwaves; mw++)
-    // {
-    //     sw[mw] = lambda[mw];
-    //     // fw[mw] = beta[mw]*r[mw + mwaves]; 
-    //     // fw[mw + mwaves] = beta[mw]*r[mw + 2*mwaves]; 
-    //     // fw[mw + 2*mwaves] = beta[mw]*r[mw + mwaves]; 
-    //     fw[mw] = beta[mw]*r[1][mw];
-    //     fw[mw + mwaves] = beta[mw]*r[2][mw];
-    //     fw[mw + 2*mwaves] = beta[mw]*r[1][mw];
-    // }
-
     fw[0] = beta[0]*r[1][0];
     fw[mu] = beta[0]*r[2][0];
     fw[mv] = beta[0]*r[1][0];
@@ -1056,29 +897,10 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     fw[2*mwaves + mv] = beta[2]*r[1][2];
     sw[2] = lambda[2];
 
-    // *sw1 = lambda[0];
-    // *sw2 = lambda[1];
-    // *sw3 = lambda[2];
-    // // mw = 0;
-    // *fw11 = beta[0]*r[1][0];
-    // *fw21 = beta[0]*r[2][0];
-    // *fw31 = beta[0]*r[1][0];
-    // // mw = 1;
-    // *fw12 = beta[1]*r[1][1];
-    // *fw22 = beta[1]*r[2][1];
-    // *fw32 = beta[1]*r[1][1];
-    // // mw = 2;
-    // *fw13 = beta[2]*r[1][2];
-    // *fw23 = beta[2]*r[2][2];
-    // *fw33 = beta[2]*r[1][2];
-
     // find transverse components (ie huv jumps)
     fw[mv] *= vL;
     fw[2*mwaves + mv] *= vR;
     fw[mwaves + mv] = 0.0;
-    // *fw31 *= vL;
-    // *fw33 *= vR;
-    // *fw32 = 0.0;
 
     hustar_interface = hL*uL + fw[0];
     if (hustar_interface <= 0.0) {
@@ -1086,13 +908,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } else {
         fw[2*mwaves + mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
     }
-    // hustar_interface = hL*uL + *fw11;
-    // if (hustar_interface <= 0.0) {
-    //     *fw31 += (hR * uR * vR - hL * uL * vL - *fw31 - *fw33);
-    // } else {
-    //     *fw33 += (hR * uR * vR - hL * uL * vL - *fw31 - *fw33);
-    // }
-
 }
 
 /* === Begin fuction Riemann type ============
