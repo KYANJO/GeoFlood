@@ -451,7 +451,12 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     //         apdq[mw] += 0.5*fwave[mw + 2*mwaves];
     //     }
     // }
-
+    amdq[0] = 0.0;
+    amdq[1] = 0.0;
+    amdq[2] = 0.0;
+    apdq[0] = 0.0;
+    apdq[1] = 0.0;
+    apdq[2] = 0.0;
     int idx; /* mw = idx/3 */
     for (idx = 0; idx < mwaves*3; idx++) {
         if (s[idx/3] < 0.0) { 
