@@ -383,9 +383,9 @@ void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
 */
 
 __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
-                double q_l[], double q_r[], double aux1[], 
+                double ql[], double qr[], double aux1[], 
                 double aux2[], double aux3[], int imp, 
-                double asdq[], double bmasd_q[], double bpasd_q[], int ix, int iy) 
+                double asdq[], double bmasdq[], double bpasdq[], int ix, int iy) 
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
@@ -401,32 +401,40 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     double dxdcm, dxdcp, topo1, topo3, eta;
 
     /* Swapping left to right  (cudaclaw_flux2.cu)*/
-    double *qr = q_l;
-    double *ql = q_r;
-    double *bmasdq = bpasd_q;
-    double *bpasdq = bmasd_q;
+    // double *qr = q_l;
+    // double *ql = q_r;
+    // double *bmasdq = bpasd_q;
+    // double *bpasdq = bmasd_q;
 
     mu = 1+idir;
     mv = 2-idir;
 
-    h = (imp == 0) ? qr[0] : ql[0];
+    /* intialize  all components to 0*/
+    bmasdq[0] = 0.0;
+    bmasdq[mu] = 0.0;
+    bmasdq[mv] = 0.0;
+    bpasdq[0] = 0.0;
+    bpasdq[mu] = 0.0;
+    bpasdq[mv] = 0.0;
+
+    h = (imp == 0) ? ql[0] : qr[0];
 
     bool debug = (idir == 0) ? 1 : 0;
   
-    // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
-    if (h > drytol) {
+    if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
+    // if (h > drytol) {  
         /* Compute velocities in relevant cell, and other quantities */
         if (imp == 0) {
             // fluctuations being split is left-going
-            u = qr[mu] / h;
-            v = qr[mv] / h;
+            u = ql[mu] / h;
+            v = ql[mv] / h;
             eta = h + aux2[0];
             topo1 = aux1[0];
             topo3 = aux3[0];
         } else {
             // fluctuations being split is right-going
-            u = ql[mu] / h;
-            v = ql[mv] / h;
+            u = qr[mu] / h;
+            v = qr[mv] / h;
             eta = h + aux2[0];
             topo1 = aux1[0];
             topo3 = aux3[0];
@@ -438,8 +446,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
         // }
 
         /* Check if cell that transverse wave go into are both too high: */
-        // if (eta < fmin(topo1, topo3)) return; 
-        if (eta >= fmin(topo1, topo3)) {
+        if (eta < fmin(topo1, topo3)) return; 
+        // if (eta >= fmin(topo1, topo3)) {
 
             /* Check if cell that transverse waves go into are both to high, if so,
             do the splitting (no dry cells), and compute necessary quantities */
@@ -547,8 +555,8 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             //     printf("bmasdq[0] = %e, bmasdq[1] = %e, bmasdq[2] = %e\n", bmasdq[0], bmasdq[1], bmasdq[2]);
             //     printf("bpasdq[0] = %e, bpasdq[1] = %e, bpasdq[2] = %e\n", bpasdq[0], bpasdq[1], bpasdq[2]);
             // }
-        }
-    }
+        // }
+    // }
 }
 
 
