@@ -56,11 +56,11 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 16 # Number of x grids per block
-my = 16 # Number of y grids per block
+mx = 100 # Number of x grids per block
+my = 100 # Number of y grids per block
 
-mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 0 
 maxlevel = 1 #resolution based on levels
@@ -68,7 +68,6 @@ maxlevel = 1 #resolution based on levels
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
-# manning_coefficient = 0
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
@@ -360,6 +359,7 @@ def setrun(claw_pkg='geoclaw'):
     
     hydrographdata.hydrograph_filename = 'scratch/bc.txt'
 
+
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
 
@@ -398,6 +398,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
+    geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
     geoflooddata.output = True
@@ -416,9 +417,6 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
 
-    # -----------------------------------------------
-    # Setprob specific parameters:
-    # -----------------------------------------------
     geoflooddata.cuda = use_cuda
     geoflooddata.gravity = gravity
     geoflooddata.dry_tolerance = dry_tolerance
@@ -426,8 +424,6 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.coordinate_system = coordinate_system
     geoflooddata.mcapa = mcapa
     geoflooddata.buffer_len = buffer_length
-
-    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
@@ -445,6 +441,11 @@ def setrun(claw_pkg='geoclaw'):
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
     geoflooddata.report_timing_verbosity = 'wall'
+
+    # -----------------------------------------------
+    # setrob parameters:
+    # -----------------------------------------------
+    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # -----------------------------------------------
     # AMR parameters:
@@ -481,7 +482,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,1000,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
 
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
@@ -492,6 +493,7 @@ def setrun(claw_pkg='geoclaw'):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
 
+    
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -598,4 +600,5 @@ if __name__ == '__main__':
     rundata,geoflooddata, hydrographdata, setprobdata = setrun(*sys.argv[1:])
     rundata.write()
     geoflood.write_data_outputs(rundata,geoflooddata, hydrographdata, setprobdata)
+
     

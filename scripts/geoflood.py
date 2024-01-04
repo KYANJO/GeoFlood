@@ -43,6 +43,7 @@ class GeoFlooddata(object):
         self.tikz_plot_prefix = 'plot'
         self.tikz_plot_suffix = 'png'
         self.buffer_len = 1024
+        self.speed_tolerance_entries_c = 6
 
         self.mi = 1
         self.mj = 1
@@ -335,6 +336,7 @@ class GeoFlooddata(object):
 
                 '   dry_tolerance_c': geo_data.dry_tolerance,
                 '   wave_tolerance_c': refinement_data.wave_tolerance, 
+                '   speed_tolerance_entries_c':self.speed_tolerance_entries_c,
                 '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
 
                 '   buffer-len': self.buffer_len,
