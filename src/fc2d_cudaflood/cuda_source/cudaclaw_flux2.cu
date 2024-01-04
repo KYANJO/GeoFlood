@@ -285,7 +285,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
 
     double maxcfl = 0;
-    
+
     /* -------------------------- Compute fluctuations -------------------------------- */
 
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
@@ -350,6 +350,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 fp[I_q] = -apdq[mq]; 
                 if (order[1] > 0)
                 {
+                    /* store fluctuations into global memory for use in transverse solvers */
                     amdq_trans[I_q] = amdq[mq];                                        
                     apdq_trans[I_q] = apdq[mq];  
                 }
@@ -408,6 +409,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 gp[I_q] = -bpdq[mq]; 
                 if (order[1] > 0)
                 {
+                    /* store fluctuations into global memory for use in transverse solvers */
                     bmdq_trans[I_q] = bmdq[mq];                                                   
                     bpdq_trans[I_q] = bpdq[mq];
                 }
@@ -433,7 +435,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
 
-    //__syncthreads();  /* Does block reduce take care of this sync? */
+    // __syncthreads();  /* Does block reduce take care of this sync? */
 
 
     /* ---------------------- Second order corrections and limiters --------------------*/  
@@ -1199,8 +1201,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;
-            qold[I_q] = qold[I_q] - dtdx * (fm[I_q + 1] - fp[I_q]) 
-                                  - dtdy * (gm[I_q +ys] - gp[I_q]);
+            qold[I_q] = qold[I_q] - dtdx * (fm[I_q + 1] - fp[I_q])
+                                   - dtdy * (gm[I_q +ys] - gp[I_q]);
         }        
     }
 }

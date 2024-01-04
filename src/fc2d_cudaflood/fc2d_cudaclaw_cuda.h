@@ -47,6 +47,7 @@ struct fclaw2d_global;
 struct fclaw2d_patch;
 struct cudaclaw_fluxes;
 
+#include "riemann_source/variables.h" /* Needed for riemann solver */
 
 /* ------------------------------ Typdefs for CUDA device functions --------------------*/
 
@@ -103,6 +104,13 @@ double *cudaclaw_get_gpu_membuffer();
 
 struct cudaclaw_fluxes* cudaclaw_get_flux_buffer();
 
+/* Riemann solver assign functions */
+void cudaflood_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
+void cudaflood_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
+
+/* Needed to fetch variables for the Riemann solvers*/
+void setprob_cuda(); 
+
 /* --------------------------- Function headers (used outside) -------------------------*/
 
 void fc2d_cudaclaw_allocate_buffers(struct fclaw2d_global *glob);  /* Done once */
@@ -110,7 +118,6 @@ void fc2d_cudaclaw_allocate_buffers(struct fclaw2d_global *glob);  /* Done once 
 void fc2d_cudaclaw_deallocate_buffers(struct fclaw2d_global *glob);
 
 void fc2d_cudaclaw_initialize_GPUs(struct fclaw2d_global *glob);
-
 
 void  cudaclaw_get_method_parameters(int** order, int** mthlim);
 

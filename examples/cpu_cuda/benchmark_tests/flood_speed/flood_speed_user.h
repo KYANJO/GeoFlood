@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
 
-#include "riemann_source/variables.h"
+// #include "riemann_source/variables.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -59,19 +59,10 @@ typedef struct user_options
 
 
 // --- will call the riemann solvers here ----
-void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
-void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
-void flood_speed_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
-void flood_speed_assign_b4step2(cudaclaw_cuda_b4step2_t *b4step2);
+// void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
+// void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
 
-#define GET_B4STEP2_PARAMETERS FCLAW_F77_FUNC(get_b4step2_parameters,GET_B4STEP2_PARAMETERS)
-void GET_B4STEP2_PARAMETERS(const int* num_dtopo, const int* aux_finalized, double t0dtopo[], 
-                            double tfdtopo[], const double* dt_max_dtopo, const double* NEEDS_TO_BE_DEFINED, 
-                            const bool* variable_friction, const int* friction_index, const double* xupper, 
-                            const double* yupper, const double* xlower, const double* ylower,
-                            const int* test_topograpghy, const int* mtopofiles, double topowork[], double xlowtopo[], double ylowtopo[], double xhitopo[], double yhitopo[], double dxtopo[], double dytopo[], int mxtopo[], int mytopo[], int mtopoorder[], int i0topo[], int mtopo[], const int* mtoposize);
-
-void setprob_cuda();
+// void setprob_cuda();
 
 // --------------------------------------------
 void flood_speed_link_solvers(fclaw2d_global_t *glob);

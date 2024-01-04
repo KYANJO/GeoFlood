@@ -1143,8 +1143,8 @@ void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
     geoclaw_vt->bc2              = FC2D_GEOCLAW_BC2;
     geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
-    geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
-    geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
+    // geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
+    // geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
 
     gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;
     gauges_vt->create_gauge_files = geoclaw_create_gauge_files_default; 

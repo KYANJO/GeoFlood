@@ -20,9 +20,9 @@ $<TARGET_OBJECTS:flood_speed_cpu_f>
 	flood_speed_user.cpp
 	flood_speed_options.c
 	flood_speed.cpp
-  riemann_source/variables.cu
-  riemann_source/b4step2.cu
-  riemann_source/geoflood_rp2.cu
+  # riemann_source/variables.cu
+  # riemann_source/b4step2.cu
+  # riemann_source/geoflood_rp2.cu
   # riemann_source/geoflood_riemann_utils.cu
   # riemann_source/rpn2_geoflood.cu
   # riemann_source/rpt2_geoflood.cu

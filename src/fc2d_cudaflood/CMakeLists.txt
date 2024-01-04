@@ -79,6 +79,8 @@ target_sources(cudaflood_c PRIVATE
     cuda_source/cudaclaw_flux2.cu
     fc2d_cuda_profiler.cu
     cuda_source/cudaclaw_store_patches.cu
+    riemann_source/variables.cu
+    riemann_source/geoflood_rp2.cu
 )
 
 target_link_libraries(cudaflood_c PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)

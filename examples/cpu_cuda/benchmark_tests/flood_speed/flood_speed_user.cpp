@@ -65,21 +65,12 @@ void flood_speed_link_solvers(fclaw2d_global_t *glob)
         // cuclaw_vt->fort_bc2 = &CUDACLAW_BC2;
         // cuclaw_vt->bc2 = &FLOOD_SPEED_BC2;
         cuclaw_vt->qinit = &FLOOD_SPEED_QINIT;
-        // cudaclaw_vt->fort_rpn2  = &FC2D_GEOCLAW_RPN2;
-        // cudaclaw_vt->fort_rpt2  = &FC2D_GEOCLAW_RPT2;
 
-        flood_speed_assign_rpn2(&cuclaw_vt->cuda_rpn2);
+        cudaflood_assign_rpn2(&cuclaw_vt->cuda_rpn2);
         FCLAW_ASSERT(cuclaw_vt->cuda_rpn2 != NULL);
 
-        // flood_speed_assign_b4step2(&cuclaw_vt->cuda_b4step2);
-	    // FCLAW_ASSERT(cuclaw_vt->cuda_b4step2 != NULL);
-
-        flood_speed_assign_rpt2(&cuclaw_vt->cuda_rpt2);
+        cudaflood_assign_rpt2(&cuclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(cuclaw_vt->cuda_rpt2 != NULL);
-
-
-        // flood_speed_assign_speeds(&cuclaw_vt->cuda_speeds);
-        // FCLAW_ASSERT(cuclaw_vt->cuda_speeds != NULL);
     }
     
 }
