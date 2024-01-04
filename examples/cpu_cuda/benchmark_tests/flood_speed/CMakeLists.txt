@@ -1,9 +1,7 @@
 # Add boundary conditions as a library
 add_library(flood_speed_cpu_f OBJECT
-  riemann_source/setprob.f90
-  # rpn2cons_update.f
-  fortran/fc2d_geoflood_bc2.f90
-  # fortran/flood_speed_bc.f90
+  # fortran/fc2d_geoflood_bc2.f90
+  fortran/flood_speed_bc.f90
   ../../../../src/fc2d_cudaflood/hydrograph/hydrograh_module.f90
   ../../../../src/fc2d_cudaflood/geolib_source/geoclaw_module.f90 
   ../../../../src/fc2d_cudaflood/geolib_source/refinement_module.f90
@@ -20,13 +18,6 @@ $<TARGET_OBJECTS:flood_speed_cpu_f>
 	flood_speed_user.cpp
 	flood_speed_options.c
 	flood_speed.cpp
-  # riemann_source/variables.cu
-  # riemann_source/b4step2.cu
-  # riemann_source/geoflood_rp2.cu
-  # riemann_source/geoflood_riemann_utils.cu
-  # riemann_source/rpn2_geoflood.cu
-  # riemann_source/rpt2_geoflood.cu
-  # riemann_source/variables.cu
 )
 
 target_include_directories(flood_speed_cpucuda PRIVATE 

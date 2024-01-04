@@ -31,11 +31,11 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 2  # Initial time step
+initial_dt = 1 # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 3
+output_style = 1
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
@@ -48,9 +48,8 @@ if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
-    step_interval = 1   # Create output file every 10 steps
-    total_steps = 1   # ... for a total of 500 steps (so 50 output files total)
-    n_hours = 5.0              # Total number of hours in simulation
+    step_interval = 1800   # Create output file every 10 steps
+    total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
 # grid_resolution = 5  # meters ~ 80000 nodes
@@ -60,15 +59,16 @@ if output_style == 3:
 mx = 16 # Number of x grids per block
 my = 16 # Number of y grids per block
 
-mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 2  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 0
-maxlevel = 0 #resolution based on levels
+minlevel = 0 
+maxlevel = 1 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
+# manning_coefficient = 0
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
@@ -277,8 +277,8 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.45
-    clawdata.cfl_max = 0.5
+    clawdata.cfl_desired = 0.75
+    clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -288,7 +288,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -297,7 +297,7 @@ def setrun(claw_pkg='geoclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 0
+    clawdata.transverse_waves = 2
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 3
@@ -334,7 +334,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'wall'
+    clawdata.bc_lower[0] = 'user'
     clawdata.bc_upper[0] = 'wall'
 
     clawdata.bc_lower[1] = 'wall'
@@ -359,7 +359,6 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
     
     hydrographdata.hydrograph_filename = 'scratch/bc.txt'
-
 
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
@@ -400,9 +399,9 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
 
-    geoflooddata.subcycle = False
-    geoflooddata.output = False
-    geoflooddata.output_gauges = False
+    geoflooddata.subcycle = True
+    geoflooddata.output = True
+    geoflooddata.output_gauges = True
 
 
     # Block dimensions for non-square domains
@@ -412,11 +411,14 @@ def setrun(claw_pkg='geoclaw'):
      # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = False
+    geoflooddata.tikz_out = True
     geoflooddata.tikz_figsize = "4 8"
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
 
+    # -----------------------------------------------
+    # Setprob specific parameters:
+    # -----------------------------------------------
     geoflooddata.cuda = use_cuda
     geoflooddata.gravity = gravity
     geoflooddata.dry_tolerance = dry_tolerance
@@ -424,6 +426,8 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.coordinate_system = coordinate_system
     geoflooddata.mcapa = mcapa
     geoflooddata.buffer_len = buffer_length
+
+    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
@@ -441,11 +445,6 @@ def setrun(claw_pkg='geoclaw'):
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
     geoflooddata.report_timing_verbosity = 'wall'
-
-    # -----------------------------------------------
-    # setrob parameters:
-    # -----------------------------------------------
-    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # -----------------------------------------------
     # AMR parameters:
@@ -482,7 +481,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0,0,990,1010]) # 1000-20 = 980, 1000+20 = 1020
+    regions.append([maxlevel,maxlevel,0, 1e10, 0,1000,990,1010]) # 1000-20 = 980, 1000+20 = 1020
 
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
@@ -493,7 +492,6 @@ def setrun(claw_pkg='geoclaw'):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
 
-    
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -600,5 +598,4 @@ if __name__ == '__main__':
     rundata,geoflooddata, hydrographdata, setprobdata = setrun(*sys.argv[1:])
     rundata.write()
     geoflood.write_data_outputs(rundata,geoflooddata, hydrographdata, setprobdata)
-
     

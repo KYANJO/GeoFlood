@@ -88,7 +88,6 @@ void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
 
 // //  BC (Fortran to c)
 #define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
-
 void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
                     const int* mx, const int* my,
                     const double* xlower, const double* ylower,
