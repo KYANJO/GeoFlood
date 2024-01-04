@@ -40,6 +40,8 @@ struct fclaw2d_global;
 
 typedef struct fc2d_geoclaw_options
 {
+    int cuda;
+    
     int mwaves;
 
     const char *order_string;

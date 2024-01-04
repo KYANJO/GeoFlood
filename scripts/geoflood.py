@@ -243,6 +243,7 @@ class GeoFlooddata(object):
         #print(ascii_out)
         if self.cuda == None:
             geoflood['geoclaw'] = {
+                '   cuda' : None,
                 '   # normal and transverse order': None,
                 '   # Order of accuracy:': None,
                 '   #   1 => Godunov,': None,  
@@ -292,6 +293,7 @@ class GeoFlooddata(object):
                 }
         elif self.cuda == True or self.cuda == False:    
             geoflood['cudaflood'] = {
+                '   cuda' : self.cuda,
                 '   # normal and transverse order': None,
                 '   # Order of accuracy:': None,
                 '   #   1 => Godunov,': None,  

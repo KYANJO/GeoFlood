@@ -165,7 +165,7 @@ c        Set-up eigenvectors
          r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,3) = s(3)
 
-c         write (*,*) ' beta=',beta(1:3)
+c        write (*,*) ' beta=',beta(1:3)
 
          ! compute fluctuations
 

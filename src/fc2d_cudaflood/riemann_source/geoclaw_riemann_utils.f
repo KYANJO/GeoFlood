@@ -64,17 +64,17 @@ c-----------------------------------------------------------------------
       call riemanntype(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2,
      &                                          1,drytol,g)
 
-      if ( (i == 7) .and. (j == 15)) then
-         if (debug) then
-            write(6,*) 'i = ', i, ' j = ' , j
-            write(6,*) 'hL = ', hL, ' hR = ', hR
-            write(6,*) 'uL = ', uL, ' uR = ', uR
-            write(6,*) 'hm = ', hm
-            write(6,*) 's1m = ', s1m, ' s2m = ', s2m
-            write(6,*) 'rare1 = ', rare1, ' rare2 = ', rare2
-            write(6,*) ' '
-         endif
-      endif
+c      if ( (i == 7) .and. (j == 15)) then
+c         if (debug) then
+c            write(6,*) 'i = ', i, ' j = ' , j
+c            write(6,*) 'hL = ', hL, ' hR = ', hR
+c            write(6,*) 'uL = ', uL, ' uR = ', uR
+c            write(6,*) 'hm = ', hm
+c            write(6,*) 's1m = ', s1m, ' s2m = ', s2m
+c            write(6,*) 'rare1 = ', rare1, ' rare2 = ', rare2
+c            write(6,*) ' '
+c         endif
+c      endif
 
       lambda(1)= min(sE1,s2m) !Modified Einfeldt speed
       lambda(3)= max(sE2,s1m) !Modified Eindfeldt speed

@@ -416,10 +416,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     if (geoclaw_vt->b4step2 != NULL)
     {
         fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
-        // cudaclaw_vt->fort_b4step2(glob,
-        //                    this_patch,
-        //                    this_block_idx,
-        //                    this_patch_idx,t,dt);
         geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
         fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
     }
@@ -504,11 +500,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
             // iterate over patches in buffer and call src2 to update them
             for (int i = 0; i < (iter+1); i++)
             {
-                // cudaclaw_vt->fort_src2(glob,
-                //                   patch_data->patch_array[i],
-                //                   patch_data->blockno_array[i],
-                //                   patch_data->patchno_array[i],
-                //                   t,dt);
                 geoclaw_src2(glob,patch_data->patch_array[i],
                               patch_data->blockno_array[i],
                               patch_data->patchno_array[i],t,dt);
@@ -1004,97 +995,13 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 
     fc2d_geoclaw_vtable_t*  geoclaw_vt = fc2d_geoclaw_vt_new();
 
-    /* ForestClaw virtual tables */
-    fclaw_vt->problem_setup               = geoclaw_setprob;  
-    // fclaw_vt->after_regrid                = geoclaw_after_regrid;  /* Handle gauges */
-
-    /* Set basic patch operations */
-    patch_vt->setup                       = geoclaw_patch_setup;
-    patch_vt->initialize                  = geoclaw_qinit;
-    patch_vt->physical_bc                 = geoclaw_bc2;
-    patch_vt->single_step_update          = geoclaw_update;  /* Includes b4step2 and src2 */
-         
-    fclaw_vt->output_frame                = geoclaw_output;
-
-    /* Regridding */
-    patch_vt->tag4refinement              = geoclaw_patch_tag4refinement;
-    patch_vt->tag4coarsening              = geoclaw_patch_tag4coarsening;
-    patch_vt->interpolate2fine            = geoclaw_interpolate2fine;
-    patch_vt->average2coarse              = geoclaw_average2coarse;
-
-    /* Ghost filling */
-    clawpatch_vt->fort_copy_face          = FC2D_GEOCLAW_FORT_COPY_FACE;
-    clawpatch_vt->fort_copy_corner        = FC2D_GEOCLAW_FORT_COPY_CORNER;
-
-    /* Geoclaw needs specialized averaging and interpolation routines */
-    patch_vt->average_face                = geoclaw_average_face;
-    patch_vt->interpolate_face            = geoclaw_interpolate_face;      
-    patch_vt->average_corner              = geoclaw_average_corner;
-    patch_vt->interpolate_corner          = geoclaw_interpolate_corner;
-
-    patch_vt->remote_ghost_setup          = geoclaw_remote_ghost_setup;
-    clawpatch_vt->fort_local_ghost_pack   = FC2D_GEOCLAW_LOCAL_GHOST_PACK;
-    clawpatch_vt->local_ghost_pack_aux    = geoclaw_local_ghost_pack_aux;
-  
-    /* Diagnostic functions partially implemented in clawpatch */
-    clawpatch_vt->fort_compute_error_norm = FC2D_GEOCLAW_FORT_COMPUTE_ERROR_NORM;
-    clawpatch_vt->fort_compute_patch_area = FC2D_GEOCLAW_FORT_COMPUTE_PATCH_AREA;
-    clawpatch_vt->fort_conservation_check = FC2D_GEOCLAW_FORT_CONSERVATION_CHECK;
-    clawpatch_vt->fort_timeinterp         = FC2D_GEOCLAW_FORT_TIMEINTERP;
-
-    geoclaw_vt->setprob          = NULL;                   
-    geoclaw_vt->setaux           = FC2D_GEOCLAW_SETAUX;
-    geoclaw_vt->qinit            = FC2D_GEOCLAW_QINIT;
-    geoclaw_vt->bc2              = FC2D_GEOCLAW_BC2;
-    geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
-    geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
-    geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
-    geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
-
-    gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;
-    gauges_vt->create_gauge_files = geoclaw_create_gauge_files_default; 
-    gauges_vt->normalize_coordinates = geoclaw_gauge_normalize_coordinates;
-
-    gauges_vt->update_gauge       = geoclaw_gauge_update_default;
-    gauges_vt->print_gauge_buffer = geoclaw_print_gauges_default;
-
-    geoclaw_vt->is_set = 1;
-
-	FCLAW_ASSERT(fclaw_pointer_map_get(glob->vtables,"fc2d_geoclaw") == NULL);
-	fclaw_pointer_map_insert(glob->vtables, "fc2d_geoclaw", geoclaw_vt, fc2d_geoclaw_vt_destroy);
-}
-
-void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
-{
-	fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
-	fclaw2d_clawpatch_options_t* clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
-	fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
-
-    geo_opt->method[6] = clawpatch_opt->maux;
-
-    /* We have to do this so that we know how to size the ghost patches */
-    if (clawpatch_opt->ghost_patch_pack_aux)
-    {
-        fclaw_opt->ghost_patch_pack_extra = 1;  /* Pack the bathymetry */
-        fclaw_opt->ghost_patch_pack_numextrafields = clawpatch_opt->maux;
+    if (geo_opt->cuda == 1){
+        #if defined(_OPENMP)
+            fclaw_global_essentialf("Current implementation does not allow OPENMP + CUDA\n");
+            exit(0);
+        #endif
     }
 
-    int claw_version = 5;
-    fclaw2d_clawpatch_vtable_initialize(glob, claw_version);
-    
-    fclaw_gauges_vtable_t*           gauges_vt = fclaw_gauges_vt(glob);
-
-    fclaw2d_vtable_t*                fclaw_vt = fclaw2d_vt(glob);
-    fclaw2d_patch_vtable_t*          patch_vt = fclaw2d_patch_vt(glob);
-    fclaw2d_clawpatch_vtable_t*  clawpatch_vt = fclaw2d_clawpatch_vt(glob);
-
-    fc2d_geoclaw_vtable_t*  geoclaw_vt = fc2d_geoclaw_vt_new();
-
-#if defined(_OPENMP)
-    fclaw_global_essentialf("Current implementation does not allow OPENMP + CUDA\n");
-    exit(0);
-#endif 
-
     /* ForestClaw virtual tables */
     fclaw_vt->problem_setup               = geoclaw_setprob;  
     // fclaw_vt->after_regrid                = geoclaw_after_regrid;  /* Handle gauges */
@@ -1103,13 +1010,17 @@ void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
     patch_vt->setup                       = geoclaw_patch_setup;
     patch_vt->initialize                  = geoclaw_qinit;
     patch_vt->physical_bc                 = geoclaw_bc2;
-    patch_vt->single_step_update          = cudaclaw_update;  /* Includes b4step2 and src2 */
+
+    if (geo_opt->cuda == 0){
+        patch_vt->single_step_update          = geoclaw_update;  /* Includes b4step2 and src2 */
+    } else {
+        patch_vt->single_step_update          = cudaclaw_update;  /* Includes b4step2 and src2 */
+            /* Set user data*/
+        patch_vt->create_user_data            = cudaclaw_allocate_fluxes;
+        patch_vt->destroy_user_data           = cudaclaw_deallocate_fluxes;
+    }
          
     fclaw_vt->output_frame                = geoclaw_output;
-
-    /* Set user data*/
-    patch_vt->create_user_data            = cudaclaw_allocate_fluxes;
-    patch_vt->destroy_user_data           = cudaclaw_deallocate_fluxes;
 
     /* Regridding */
     patch_vt->tag4refinement              = geoclaw_patch_tag4refinement;
@@ -1143,9 +1054,18 @@ void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
     geoclaw_vt->bc2              = FC2D_GEOCLAW_BC2;
     geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
-    // geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
-    // geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
 
+    if (geo_opt->cuda == 0){
+        geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
+        geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
+    }else{
+        cudaflood_assign_rpn2(&geoclaw_vt->cuda_rpn2);
+        FCLAW_ASSERT(geoclaw_vt->cuda_rpn2 != NULL);
+
+        cudaflood_assign_rpt2(&geoclaw_vt->cuda_rpt2);
+        FCLAW_ASSERT(geoclaw_vt->cuda_rpt2 != NULL);
+    }
+ 
     gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;
     gauges_vt->create_gauge_files = geoclaw_create_gauge_files_default; 
     gauges_vt->normalize_coordinates = geoclaw_gauge_normalize_coordinates;
@@ -1158,4 +1078,3 @@ void fc2d_cudaclaw_solver_initialize(fclaw2d_global_t* glob)
 	FCLAW_ASSERT(fclaw_pointer_map_get(glob->vtables,"fc2d_geoclaw") == NULL);
 	fclaw_pointer_map_insert(glob->vtables, "fc2d_geoclaw", geoclaw_vt, fc2d_geoclaw_vt_destroy);
 }
-

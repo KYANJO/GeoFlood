@@ -57,13 +57,6 @@ typedef struct user_options
     int is_registered;
 } user_options_t;
 
-
-// --- will call the riemann solvers here ----
-// void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
-// void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
-
-// void setprob_cuda();
-
 // --------------------------------------------
 void flood_speed_link_solvers(fclaw2d_global_t *glob);
 user_options_t* flood_speed_options_register (fclaw_app_t * app,
@@ -88,6 +81,7 @@ void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
 
 // //  BC (Fortran to c)
 #define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
+
 void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
                     const int* mx, const int* my,
                     const double* xlower, const double* ylower,
