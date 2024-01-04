@@ -118,12 +118,12 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     //     "qr[2] = %.16f, ql[2] = %.16f\n\n", ix,iy,qr[0],ql[0],qr[1],ql[1],qr[2],ql[2]);
     // }
 
-    // // Skip problem if in a completely dry area
-    if (qr[0] <= drytol && ql[0] <= drytol) {
-        goto label30;
-    }
+    // Skip problem if in a completely dry area
+    // if (qr[0] <= drytol && ql[0] <= drytol) {
+    //     goto label30;
+    // }
 
-    // if (ql[0] > drytol || qr[0] > drytol) {
+    if (ql[0] > drytol || qr[0] > drytol) {
         /* Riemann problem variables */
         // hL  = qr[0];
         // hR  = ql[0];
@@ -315,18 +315,18 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
         fwave[2*mwaves + mv] = fw[2*mwaves + mv];
         s[mv] = sw[mv];
        
-    // }
-
-    // Debugging
-    if (debug) {
-        printf("ix = %d, iy = %d\n " \
-        "s[0] = %.16f, s[1] = %.16f, s[2] = %.16f\n" \
-        "fwave[0] = %.16f, fwave[1] = %.16f, fwave[2] = %.16f\n" \
-        "fwave[3] = %.16f, fwave[4] = %.16f, fwave[5] = %.16f\n" \
-        "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
     }
 
-    label30: // (similar to 30 continue in Fortran)
+    // Debugging
+    // if (debug) {
+    //     printf("ix = %d, iy = %d\n " \
+    //     "s[0] = %.16f, s[1] = %.16f, s[2] = %.16f\n" \
+    //     "fwave[0] = %.16f, fwave[1] = %.16f, fwave[2] = %.16f\n" \
+    //     "fwave[3] = %.16f, fwave[4] = %.16f, fwave[5] = %.16f\n" \
+    //     "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
+    // }
+
+    // label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
@@ -352,15 +352,28 @@ __device__ void cudaflood_rpn2(int idir, int meqn, int mwaves,
     apdq[0] = 0.0;
     apdq[1] = 0.0;
     apdq[2] = 0.0;
-    int idx; /* mw = idx/3 */
-    for (idx = 0; idx < mwaves*3; idx++) {
-        if (s[idx/3] < 0.0) { 
-            amdq[idx%3] += fwave[idx];  
-        } else if (s[idx/3] > 0.0) {
-            apdq[idx%3] += fwave[idx]; 
-        } else {
-            amdq[idx%3] += 0.5 * fwave[idx];  
-            apdq[idx%3] += 0.5 * fwave[idx]; 
+    // int idx; /* mw = idx/3 */
+    // for (idx = 0; idx < mwaves*3; idx++) {
+    //     if (s[idx/3] < 0.0) { 
+    //         amdq[idx%3] += fwave[idx];  
+    //     } else if (s[idx/3] > 0.0) {
+    //         apdq[idx%3] += fwave[idx]; 
+    //     } else {
+    //         amdq[idx%3] += 0.5 * fwave[idx];  
+    //         apdq[idx%3] += 0.5 * fwave[idx]; 
+    //     }
+    // }
+    int i;
+    for(mw = 0; mw<mwaves; mw++){
+        for (i = 0; i<3; i++){
+            if (s[mw] < 0.0) { 
+                amdq[i] += fwave[mw*3 + i];  
+            } else if (s[mw] > 0.0) {
+                apdq[i] += fwave[mw*3 + i]; 
+            } else {
+                amdq[i] += 0.5 * fwave[mw*3 + i];  
+                apdq[i] += 0.5 * fwave[mw*3 + i]; 
+            }
         }
     }
 }
@@ -424,6 +437,7 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
     if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
     // if (h > drytol) {  
         /* Compute velocities in relevant cell, and other quantities */
+        // int kv = 1 - idir;
         if (imp == 0) {
             // fluctuations being split is left-going
             u = ql[mu] / h;
@@ -431,6 +445,9 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             eta = h + aux2[0];
             topo1 = aux1[0];
             topo3 = aux3[0];
+            // eta = h + aux2[imp*maux + kv];
+            // topo1 = aux1[imp*maux + kv];
+            // topo3 = aux3[imp*maux + kv];
         } else {
             // fluctuations being split is right-going
             u = qr[mu] / h;
@@ -438,12 +455,10 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             eta = h + aux2[0];
             topo1 = aux1[0];
             topo3 = aux3[0];
+            // eta = h + aux2[imp*maux + kv];
+            // topo1 = aux1[imp*maux + kv];
+            // topo3 = aux3[imp*maux + kv];
         }
-
-        // Debugging check for NaNs
-        // if (tid == 0) {
-        //     printf("h = %e, u = %e, v = %e, eta = %e, topo1 = %e, topo3 = %e\n", h, u, v, eta, topo1, topo3);
-        // }
 
         /* Check if cell that transverse wave go into are both too high: */
         if (eta < fmin(topo1, topo3)) return; 
@@ -460,9 +475,13 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
                     if (imp == 0) {
                         dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
                         dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                        // dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
+                        // dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
                     } else {
                         dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
                         dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                        // dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
+                        // dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
                     }
                 }
             } else {
@@ -481,80 +500,40 @@ __device__ void cudaflood_rpt2(int idir, int meqn, int mwaves, int maux,
             s[1] = v;
             s[2] = v + sqrt(s_grav * h);
 
-            // Debugging check for NaNs
-            // if (ix == 7 && iy == 15) {
-            //     // if ((hL >= 0.3280909317849093) && (hR >= 0.3280909317849093)){
-            //     if (debug){
-            //         printf("ix = %d, iy = %d\n " \
-            //         "s[0] = %e, s[1] = %e, s[2] = %e\n", ix,iy, s[0], s[1], s[2]);
-            //     }
-            // }
-
             /* Determine asdq decomposition (beta) */
             delf1 = asdq[0];
             delf2 = asdq[mu];
             delf3 = asdq[mv];
 
-            // Debugging check for NaNs
-            // if (debug) {
-            //     printf("delf1 = %e, delf2 = %e, delf3 = %e\n", delf1, delf2, delf3);
-            // }
-
-            beta[0] = (s[2]*delf1 - delf3) / (s[2] - s[0]);
-            beta[1] = -u*delf1 + delf2;
-            beta[2] = (delf3 - s[0]*delf1) / (s[2] - s[0]);
+            beta[0] = ((s[2]*delf1) - delf3) / (s[2] - s[0]);
+            beta[1] = (-u*delf1) + delf2;
+            beta[2] = (delf3 - (s[0]*delf1)) / (s[2] - s[0]);
 
             /* set-up eigenvectors */
-            // r[0] = 1.0;
-            // r[mu] = u;
-            // r[mv] = s[0];
             r[0][0] = 1.0;
             r[1][0] = u;
             r[2][0] = s[0];
 
-            // r[0 + mwaves] = 0.0;
-            // r[mu + mwaves] = 1.0;
-            // r[mv + mwaves] = 0.0;
             r[0][1] = 0.0;
             r[1][1] = 1.0;
             r[2][1] = 0.0;
 
-            // r[0 + 2*mwaves] = 1.0;
-            // r[mu + 2*mwaves] = u;
-            // r[mv + 2*mwaves] = s[2];
             r[0][2] = 1.0;
             r[1][2] = u;
             r[2][2] = s[2];
 
-            // Debugging check for NaNs
-            // if (tid == 0) {
-
-            //     printf("beta[0] = %e, beta[1] = %e, beta[2] = %e\n", beta[0], beta[1], beta[2]);
-            // }
-
             /* Compute transverse fluctuations */
             for (mw = 0; mw < 3; mw++) {
                 if ((s[mw] < 0.0) && (eta >= topo1)) {
-                    // bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
-                    // bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[mw + mwaves];
-                    // bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[mw + 2*mwaves];
                     bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[0][mw];
                     bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[1][mw];
                     bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[2][mw];
                 } else if ((s[mw] > 0.0) && (eta >= topo3)) {
-                    // bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
-                    // bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[mw + mwaves];
-                    // bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[mw + 2*mwaves];
                     bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[0][mw];
                     bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[1][mw];
                     bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[2][mw];
                 }
             }
-            // Debugging check for NaNs
-            // if (tid == 0) {
-            //     printf("bmasdq[0] = %e, bmasdq[1] = %e, bmasdq[2] = %e\n", bmasdq[0], bmasdq[1], bmasdq[2]);
-            //     printf("bpasdq[0] = %e, bpasdq[1] = %e, bpasdq[2] = %e\n", bpasdq[0], bpasdq[1], bpasdq[2]);
-            // }
         // }
     // }
 }
@@ -633,15 +612,15 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
     // if (ix == 7 && iy == 0) {
         // if ((hL >= 0.3280909317849093) && (hR >= 0.3280909317849093)){
-            if (debug){
-                printf("ix = %d, iy = %d\n " \ 
-                "hL = %.16f, hR = %.16f\n" \
-                "uL = %.16f, uR = %.16f\n" \
-                "hm = %.16f\n" \
-                "s1m = %.16f, s2m = %.16f\n" \
-                "g = %.16f, drytol = %.16f\n" \
-                "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,hR,uL,uR,hm,s1m,s2m,s_grav,drytol,rare1,rare2);
-            }
+            // if (debug){
+            //     printf("ix = %d, iy = %d\n " \ 
+            //     "hL = %.16f, hR = %.16f\n" \
+            //     "uL = %.16f, uR = %.16f\n" \
+            //     "hm = %.16f\n" \
+            //     "s1m = %.16f, s2m = %.16f\n" \
+            //     "g = %.16f, drytol = %.16f\n" \
+            //     "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,hR,uL,uR,hm,s1m,s2m,s_grav,drytol,rare1,rare2);
+            // }
         // }
     // }
    
@@ -816,22 +795,62 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         determinant = det1 - det2 + det3;
 
         /* solve for beta(k) */
-        for(k=0; k < 3; k++)
-        {   
-            for(mw=0; mw < 3; mw++)
-            {
-                A[0][mw] = r[0][mw];
-                A[1][mw] = r[1][mw];
-                A[2][mw] = r[2][mw];
-            }
+        // for(k=0; k < 3; k++)
+        // {   
+        //     for(mw=0; mw < 3; mw++)
+        //     {
+        //         A[0][mw] = r[0][mw];
+        //         A[1][mw] = r[1][mw];
+        //         A[2][mw] = r[2][mw];
+        //     }
+        //     A[0][k] = del[0];
+        //     A[1][k] = del[1];
+        //     A[2][k] = del[2];
+        //     det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
+        //     det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
+        //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+        //     beta[k] = (det1 - det2 + det3)/determinant;
+        // }
+        // for(k=0; k < 3; k++) {
+        //     // Copying entire matrix r to A for each k, with kth column replaced by del vector
+        //     for(mw=0; mw < 3; mw++) { // Notice this loop is now for the entire matrix, not nested
+        //         A[0][mw] = (mw == k) ? del[0] : r[0][mw];
+        //         A[1][mw] = (mw == k) ? del[1] : r[1][mw];
+        //         A[2][mw] = (mw == k) ? del[2] : r[2][mw];
+        //     }
+        
+        //     // Determinant calculations and beta update remains same
+        //     det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
+        //     det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
+        //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+        //     beta[k] = (det1 - det2 + det3)/determinant;
+        // }        
+        for (int k = 0; k < 3; k++) {
+            // Copy the entire matrix r into A for each iteration
+            A[0][0] = r[0][0];
+            A[0][1] = r[0][1];
+            A[0][2] = r[0][2];
+            A[1][0] = r[1][0];
+            A[1][1] = r[1][1];
+            A[1][2] = r[1][2];
+            A[2][0] = r[2][0];
+            A[2][1] = r[2][1];
+            A[2][2] = r[2][2];
+        
+            // Modify the k-th column of A
             A[0][k] = del[0];
             A[1][k] = del[1];
             A[2][k] = del[2];
-            det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
-            det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
-            det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
-            beta[k] = (det1 - det2 + det3)/determinant;
+        
+            // Calculate the determinant components
+            double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
+            double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
+            double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+        
+            // Compute the final value for this iteration
+            beta[k] = (det1 - det2 + det3) / determinant;
         }
+        
 
         /* exit if things aren't changing */
         if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) break;
