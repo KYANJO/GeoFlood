@@ -78,7 +78,7 @@ geoclaw_register (fc2d_geoclaw_options_t *geo_opt, sc_options_t * opt)
     sc_options_add_double (opt, 0, "dry_tolerance_c", &geo_opt->dry_tolerance_c, 1.0,
                            "[geoclaw] Coarsen criteria: Dry tolerance [1.0]");
 
-    sc_options_add_double (opt, 0, "wave_tolerance_c", &geo_opt->wave_tolerance_c, 1.0,
+    sc_options_add_double (opt, 0, "wave_tolerance_c", &geo_opt->wave_tolerance_c, 6.0,
                            "[geoclaw] Coarsen criteria: Wave tolerance [1.0]");
 
     sc_options_add_int (opt, 0, "speed_tolerance_entries_c",
