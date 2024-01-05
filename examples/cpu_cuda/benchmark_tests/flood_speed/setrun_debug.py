@@ -31,16 +31,16 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1 # Initial time step
+initial_dt = 2  # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 1
+output_style = 3
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 0.5             # Total number of hours in simulation     
+    n_hours = 5.0              # Total number of hours in simulation     
     
     frames_per_minute = 1/30   # (1 frame every 30 mins)
 
@@ -48,22 +48,23 @@ if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
-    step_interval = 1800   # Create output file every 10 steps
-    total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
+    step_interval = 1   # Create output file every 10 steps
+    total_steps = 1   # ... for a total of 500 steps (so 50 output files total)
+    n_hours = 5.0              # Total number of hours in simulation
 
 #-------------------  Computational coarse grid ---------------------------------------
 # grid_resolution = 5  # meters ~ 80000 nodes
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 25 # Number of x grids per block
-my = 25 # Number of y grids per block
+mx = 16 # Number of x grids per block
+my = 16 # Number of y grids per block
 
-mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 2  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 1 
-maxlevel = 2 #resolution based on levels
+minlevel = 0
+maxlevel = 0 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -76,7 +77,7 @@ num_dim = 2
 use_cuda = True
 gravity = 9.81
 dry_tolerance = 1e-4
-earth_radius = 6371220.0
+earth_radius = 6367.5e3
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
 buffer_length = 1024
@@ -276,8 +277,8 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.75
-    clawdata.cfl_max = 1.0
+    clawdata.cfl_desired = 0.45
+    clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -333,7 +334,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'user'
+    clawdata.bc_lower[0] = 'wall'
     clawdata.bc_upper[0] = 'wall'
 
     clawdata.bc_lower[1] = 'wall'
@@ -398,9 +399,8 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
-    geoflooddata. speed_tolerance_entries_c = 6
 
-    geoflooddata.subcycle = True
+    geoflooddata.subcycle = False
     geoflooddata.output = False
     geoflooddata.output_gauges = False
 
@@ -412,7 +412,7 @@ def setrun(claw_pkg='geoclaw'):
      # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = True
+    geoflooddata.tikz_out = False
     geoflooddata.tikz_figsize = "4 8"
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
@@ -440,7 +440,7 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
-    geoflooddata.report_timing_verbosity = 'all'
+    geoflooddata.report_timing_verbosity = 'wall'
 
     # -----------------------------------------------
     # setrob parameters:
