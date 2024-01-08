@@ -27,13 +27,6 @@ flood_speed_register (user_options_t* user, sc_options_t * opt)
 static fclaw_exit_type_t
 flood_speed_check (user_options_t *user)
 {
-    if(user->cuda != 0)
-    {
-        if (user->example != 0) {
-            fclaw_global_essentialf ("Option --user:example must be 0\n");
-            return FCLAW_EXIT_QUIET;
-        }
-    }
     return FCLAW_NOEXIT;
 }
 
@@ -114,19 +107,6 @@ user_options_t* flood_speed_options_register (fclaw_app_t * app,
     fclaw_app_set_attribute(app,"user",user);
     return user;
 }
-
-// void flood_speed_options_store (fclaw2d_global_t* glob, user_options_t* user)
-// {
-//     FCLAW_ASSERT(s_user_options_package_id == -1);
-//     int id = fclaw_package_container_add_pkg(glob,user);
-//     s_user_options_package_id = id;
-// }
-
-// user_options_t* flood_speed_get_options(fclaw2d_global_t* glob)
-// {
-//     int id = s_user_options_package_id;
-//     return (user_options_t*) fclaw_package_get_options(glob, id);    
-// }
 
 user_options_t* flood_speed_get_options(fclaw2d_global_t *glob)
 {

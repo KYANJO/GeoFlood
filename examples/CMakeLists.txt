@@ -12,10 +12,24 @@ if(TARGET GEOFLOOD::GEOCLAW)
 
 endif()
 
-if(TARGET GEOFLOOD::CUDACLAW)
+
+if(TARGET GEOFLOOD::CUDA_FLOOD)
     enable_language(CUDA)
-    include(cudaflood/cudaflood.cmake)
+    # include(cudaflood/cudaflood.cmake)
+    include(cpu_cuda/cpu_cuda.cmake)
 endif()
+
+# if(GEOFLOOD_CUDAFLOOD_DEFINED)
+#     enable_language(CUDA)
+    # include(cudaflood/cudaflood.cmake)
+    # include(cpu_cuda/cpu_cuda.cmake)
+# endif()
+
+
+# if(TARGET GEOFLOOD::CUDACLAW)
+#     enable_language(CUDA)
+#     include(cudaflood/cudaflood.cmake)
+# endif()
 
 if(TARGET GEOFLOOD::CPU_CUDA)
     enable_language(CUDA)

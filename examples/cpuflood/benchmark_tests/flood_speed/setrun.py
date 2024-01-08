@@ -31,11 +31,11 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 0.5  # Initial time step
-fixed_dt = True  # Take constant time step
+initial_dt = 1 # Initial time step
+fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
-output_style = 3
+output_style = 1
 
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
@@ -56,23 +56,30 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 128 # Number of x grids per block
-my = 128 # Number of y grids per block
+mx = 100 # Number of x grids per block
+my = 100 # Number of y grids per block
 
-mi = 1 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 1  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
-maxlevel = 4 #resolution based on levels
+maxlevel = 2 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.05
-# manning_coefficient = 0
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
 
+# ------------------  user options ---------------------------------------------------
+use_cuda = False
+gravity = 9.81
+dry_tolerance = 1e-4
+earth_radius = 6371220.0
+coordinate_system = 1
+mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
+buffer_length = 1024
 
 # --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -186,7 +193,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_aux = 1
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 0 #flag set to 0 if coordinate system = 1 otherwise 2
+    clawdata.capa_index = mcapa #flag set to 0 if coordinate system = 1 otherwise 2
 
     # -------------
     # Initial time:
@@ -232,7 +239,8 @@ def setrun(claw_pkg='geoclaw'):
         clawdata.output_step_interval = step_interval
         clawdata.total_steps = total_steps
         clawdata.output_t0 = True
-        clawdata.tfinal = total_steps*fixed_dt
+        clawdata.tfinal = 60*60*n_hours
+        clawdata.num_output_times = int(total_steps/step_interval) + 1
 
     clawdata.output_format = 'ascii'      # 'ascii' or 'netcdf'
 
@@ -279,7 +287,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -331,6 +339,27 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.bc_lower[1] = 'wall'
     clawdata.bc_upper[1] = 'wall'
 
+    # -----------------------------------------------
+    # Hydrograph data: (for this to work the choice of BCs must be 'user' and use_hydrograph must be True)
+    # -----------------------------------------------
+    hydrographdata = geoflood.Hydrographdata()
+    hydrographdata.use_hydrograph = True  # True if using hydrograph data, False if not
+    hydrographdata.read_data = False      # False if reading from file, True if using reading from set values
+    hydrographdata.initial_velocity = 0.0
+    hydrographdata.initial_discharge = 0.0
+    hydrographdata.initial_elevation = 0.0
+    hydrographdata.initial_depth = 0.0
+    hydrographdata.channel_width = 20
+    hydrographdata.channel_position = [0,1000]
+    hydrographdata.channel_boundary_location = ['Left',None,None,None] # 'left', 'right', 'top', 'bottom'
+    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
+    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
+    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
+    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
+    
+    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
+
+
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
 
@@ -369,6 +398,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
+    geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
     geoflooddata.output = True
@@ -387,8 +417,13 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_prefix = "flood"
     geoflooddata.tikz_plot_suffix = "png"
 
-
-    geoflooddata.user = {'example'     : 1}
+    geoflooddata.cuda = use_cuda
+    geoflooddata.gravity = gravity
+    geoflooddata.dry_tolerance = dry_tolerance
+    geoflooddata.earth_radius = earth_radius
+    geoflooddata.coordinate_system = coordinate_system
+    geoflooddata.mcapa = mcapa
+    geoflooddata.buffer_len = buffer_length
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
@@ -405,25 +440,12 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
+    geoflooddata.report_timing_verbosity = 'wall'
 
     # -----------------------------------------------
-    # Hydrograph data:
+    # setrob parameters:
     # -----------------------------------------------
-    hydrographdata = geoflood.Hydrographdata()
-    hydrographdata.read_data = False             # False if reading from file, True if using reading from set values
-    hydrographdata.initial_velocity = 0.0
-    hydrographdata.initial_discharge = 0.0
-    hydrographdata.initial_elevation = 0.0
-    hydrographdata.initial_depth = 0.0
-    hydrographdata.channel_width = 20.0
-    hydrographdata.channel_position = [0,1000]
-    hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
-    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
-    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
-    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
-    
-    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
-
+    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # -----------------------------------------------
     # AMR parameters:
@@ -471,21 +493,7 @@ def setrun(claw_pkg='geoclaw'):
         print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
         rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
 
-    # -----------------------------------------------
-    # == setflowgrades data values ==
-    flowgrades_data = geoflood.Flowgradesdata()
-    # this can be used to specify refinement criteria, for Overland flow problems.
-    # for using flowgrades for refinement append lines of the form
-    # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
-    # where:
-    #flowgradevalue: floating point relevant flowgrade value for following measure:
-    #flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
-    #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
-    #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
-    # flowgrades_data.flowgrades.append([1.e-6, 1, 1, maxlevel])
-    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, minlevel])
-
-    #
+    
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -502,7 +510,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, hydrographdata, flowgrades_data
+    return rundata, geoflooddata, hydrographdata, setprobdata
     # end of function setrun
     # ----------------------
 
@@ -521,16 +529,16 @@ def setgeo(rundata):
         raise AttributeError("Missing geo_data attribute")
 
     # == Physics ==
-    geo_data.gravity = 9.81
-    geo_data.coordinate_system = 1   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
-    geo_data.earth_radius = 6367.5e3
+    geo_data.gravity = gravity
+    geo_data.coordinate_system = coordinate_system   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
+    geo_data.earth_radius = earth_radius
 
     # == Forcing Options
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
-    geo_data.dry_tolerance = 1.e-4
+    geo_data.dry_tolerance = dry_tolerance
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
@@ -589,10 +597,8 @@ def generate_topo_file():
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     # generate_topo_file()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata, setprobdata = setrun(*sys.argv[1:])
     rundata.write()
+    geoflood.write_data_outputs(rundata,geoflooddata, hydrographdata, setprobdata)
 
-    geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-    hydrographdata.write()       # writes a geoflood hydrograph file
-    flowgrades_data.write()  # writes a geoflood flowgrades file
     

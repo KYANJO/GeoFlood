@@ -88,7 +88,8 @@ install(FILES
 )
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/include/geoclaw_module.mod
-  # ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/refinement_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
   DESTINATION include
 )
 

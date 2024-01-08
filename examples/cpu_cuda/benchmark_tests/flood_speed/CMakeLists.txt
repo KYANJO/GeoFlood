@@ -1,8 +1,8 @@
 # Add boundary conditions as a library
 add_library(flood_speed_cpu_f OBJECT
-  # qinit.f90
+  qinit.f90
   # fortran/fc2d_geoflood_bc2.f90
-  # fortran/flood_speed_bc.f90
+  fortran/flood_speed_bc.f90
   ../../../../src/fc2d_geoclaw/hydrograph/hydrograh_module.f90
   ../../../../src/fc2d_geoclaw/geolib_source/geoclaw_module.f90 
   ../../../../src/fc2d_geoclaw/geolib_source/utility_module.f90
@@ -10,9 +10,10 @@ add_library(flood_speed_cpu_f OBJECT
   ../../../../src/fc2d_geoclaw/fortran_source/extract_dt.f90
 )
 
-add_executable(flood_speed_cpucuda 
+add_executable(flood_speed_cpucuda
 	flood_speed_user.cpp
-	flood_speed_options.c
+	flood_speed_user.h
+  flood_speed_options.c
 	flood_speed.cpp
 	$<TARGET_OBJECTS:flood_speed_cpu_f>
 )
@@ -22,8 +23,7 @@ target_include_directories(flood_speed_cpucuda PRIVATE
 )
 
 target_link_libraries(flood_speed_cpucuda PRIVATE 
-  GEOFLOOD::GEOCLAW
-  GEOFLOOD::CPU_CUDA
+  GEOFLOOD::CUDA_FLOOD
 )
 
 # -- set environment string used for regression tests

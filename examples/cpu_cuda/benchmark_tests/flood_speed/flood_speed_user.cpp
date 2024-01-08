@@ -30,13 +30,38 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_clawpatch.h>
 #include <fc2d_geoclaw.h>
 
-void flood_speed_link_solvers(fclaw2d_global_t *glob)
+static
+void flood_speed_problem_setup(fclaw2d_global_t* glob)
 {
+    const user_options_t* user = flood_speed_get_options(glob);
+    fclaw2d_domain_barrier (glob->domain);
+    if (user->cuda != 0)
+    {
+        setprob_cuda();
+    }
+}
+
+
+void flood_speed_link_solvers(fclaw2d_global_t *glob)
+{   
+    fclaw2d_vtable_t *vt = fclaw2d_vt(glob);
+    vt->problem_setup = &flood_speed_problem_setup;  /* Version-independent */
 
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
-    fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
-
-    // geoclaw_vt->qinit = &FLOOD_SPEED_QINIT; /* initial conditions */
-    // geoclaw_vt->bc2 = &FLOOD_SPEED_BC2; /* special BC at the left boundary */
+    // user_options_t* user_opt = flood_speed_get_options(glob);
+    // if (user_opt->cuda == 0)
+    // {
+    //     fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+    //     // geoclaw_vt->qinit = &FLOOD_SPEED_QINIT; /* initial conditions */
+    //     // geoclaw_vt->bc2 = &FLOOD_SPEED_BC2; /* special BC at the left boundary */
+    // }
+    // else 
+    // {
+    //     fc2d_geoclaw_vtable_t *cuclaw_vt = fc2d_geoclaw_vt(glob);
+    //     // cuclaw_vt->fort_bc2 = &CUDACLAW_BC2;
+    //     // cuclaw_vt->bc2 = &FLOOD_SPEED_BC2;
+    //     // cuclaw_vt->qinit = &FLOOD_SPEED_QINIT;
+    // }
+    
 }

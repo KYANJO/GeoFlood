@@ -79,7 +79,7 @@ void run_program(fclaw2d_global_t* glob)
     if(user_opt->cuda != 0)
     {
         /* Initialize virtual tables for solvers */
-        fc2d_cudaclaw_options_t *clawopt = fc2d_cudaclaw_get_options(glob);
+        fc2d_geoclaw_options_t *clawopt = fc2d_geoclaw_get_options(glob);
 
         fc2d_cudaclaw_initialize_GPUs(glob);
 
@@ -88,16 +88,14 @@ void run_program(fclaw2d_global_t* glob)
                                     clawopt->mthlim, 
                                     clawopt->mwaves,
                                     clawopt->use_fwaves);
-        fc2d_cudaclaw_solver_initialize(glob);
     }
-    else
-    {
-        fc2d_geoclaw_solver_initialize(glob);
-    }
-    
+
+     /* Calls either the CPU or GPU solvers depending on user_opt->cuda */
+    fc2d_geoclaw_solver_initialize(glob);
+
     flood_speed_link_solvers(glob);
 
-    if(user_opt -> cuda == 0) fc2d_geoclaw_module_setup(glob);
+    fc2d_geoclaw_module_setup(glob);
 
     /* ---------------------------------------------------------------
        Initialize, run and finalize
@@ -111,7 +109,7 @@ void run_program(fclaw2d_global_t* glob)
     fclaw2d_initialize(glob);
     fclaw2d_run(glob);
 
-    if(user_opt->cuda != 0)
+     if(user_opt->cuda != 0)
     {
         PROFILE_CUDA_GROUP("De-allocate GPU and GPU buffers",1);
         fc2d_cudaclaw_deallocate_buffers(glob);
@@ -132,7 +130,6 @@ main (int argc, char **argv)
     user_options_t              *user_opt;
     fclaw_options_t             *fclaw_opt;
     fclaw2d_clawpatch_options_t *clawpatch_opt;
-    fc2d_cudaclaw_options_t     *cuclaw_opt;
     fc2d_geoclaw_options_t      *geoclaw_opt;
 
     fclaw2d_global_t            *glob;
@@ -144,11 +141,8 @@ main (int argc, char **argv)
     /* Initialize application */
     app = fclaw_app_new (&argc, &argv, NULL);
 
-     /* Create new options packages */
     fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
     clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
-    cuclaw_opt =          fc2d_cudaclaw_options_register(app,"cudaclaw","fclaw_options.ini");
-    
     geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
     user_opt =                flood_speed_options_register(app,"fclaw_options.ini"); 
 
@@ -170,10 +164,9 @@ main (int argc, char **argv)
         /* Store option packages in glob */
         fclaw2d_options_store           (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
-        fc2d_cudaclaw_options_store     (glob, cuclaw_opt);
         fc2d_geoclaw_options_store      (glob, geoclaw_opt);
         flood_speed_options_store       (glob, user_opt);
-
+        
         run_program(glob);
         
         fclaw2d_global_destroy(glob);

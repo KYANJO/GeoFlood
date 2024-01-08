@@ -24,13 +24,14 @@ class GeoFlooddata(object):
         self.subcycle = False
         self.output = True
         self.output_gauges = True
-        self.cuda = False
+        self.cuda = None
         self.gravity = 9.81
         self.dry_tolerance = 1e-3
         self.earth_radius = 6371220.0
         self.coordinate_system = 1
         self.mcapa = 0
         self.verbosity = 'essential'
+        self.report_timing_verbosity = 'all'
         self.refinement_criteria = 'value'
         self.smooth_refine = False
         self.advance_one_step = False
@@ -41,6 +42,8 @@ class GeoFlooddata(object):
         self.tikz_figsize = "4 4"
         self.tikz_plot_prefix = 'plot'
         self.tikz_plot_suffix = 'png'
+        self.buffer_len = 1024
+        self.speed_tolerance_entries_c = 6
 
         self.mi = 1
         self.mj = 1
@@ -56,19 +59,15 @@ class GeoFlooddata(object):
         refinement_data = rundata.refinement_data
         amrdata = rundata.amrdata
 
-        user = {
+        geoflood['user'] = {"\n"
         '   # User defined parameters' : None, 
         '   cuda' : self.cuda,
-        '   gravity' : self.gravity,
-        '   dry_tolerance' : self.dry_tolerance,
-        '   earth_radius' : self.earth_radius,
-        '   coordinate_system' : self.coordinate_system,
+        '   gravity' : self.gravity, "\n"
+        '   dry_tolerance' : self.dry_tolerance, "\n"
+        '   earth_radius' : self.earth_radius, "\n"
+        '   coordinate_system' : self.coordinate_system, "\n"
         '   mcapa' : self.mcapa
         }
-        for k in self.user.keys():
-            user[f'   {k:}'] = self.user[k]
-
-        geoflood['user'] = user
 
         geoflood['clawpatch'] = {"\n"
         '   # Grid dimensions' : None,
@@ -147,7 +146,8 @@ class GeoFlooddata(object):
         '   outstyle-uses-maxlevel' : self.outstyle_uses_maxlevel,
         '   ghost_patch_pack_aux' : self.ghost_patch_pack_aux,
         '   conservation-check' : self.conservation_check,
-        '   verbosity' : self.verbosity,"\n"
+        '   verbosity' : self.verbosity,
+        '   report-timing-verbosity' : self.report_timing_verbosity,"\n"
 
 
         '# Domain geometry' : None,"\n"
@@ -242,56 +242,108 @@ class GeoFlooddata(object):
 
         #print(clawdata.output_format)
         #print(ascii_out)
+        if self.cuda == None:
+            geoflood['geoclaw'] = {
+                '   cuda' : None,
+                '   # normal and transverse order': None,
+                '   # Order of accuracy:': None,
+                '   #   1 => Godunov,': None,  
+                '   #   2 => Lax-Wendroff plus limiters': None,
 
-        geoflood['geoclaw'] = {
-            '   # normal and transverse order': None,
-            '   # Order of accuracy:': None,
-            '   #   1 => Godunov,': None,  
-            '   #   2 => Lax-Wendroff plus limiters': None,
+                '   order': ord_str,"\n"
 
-            '   order': ord_str,"\n"
+                '   # Location of capacity function in auxiliary array' : None,
+                '   mcapa': clawdata.capa_index,"\n"
 
-            '   # Location of capacity function in auxiliary array' : None,
-            '   mcapa': clawdata.capa_index,"\n"
+                '   # Source term splitting' : None,
+                '   src_term': src_split,"\n"
 
-            '   # Source term splitting' : None,
-            '   src_term': src_split,"\n"
+                '   # Use an f-waves update (default : True)': None,
+                '   use_fwaves' : clawdata.use_fwaves,"\n"
 
-            '   # Use an f-waves update (default : True)': None,
-            '   use_fwaves' : clawdata.use_fwaves,"\n"
-
-            '   # Number of waves': None,
-            '   mwaves': clawdata.num_waves,"\n"
-
-
-            "   # mthlim (is a vector in general, with 'mwaves' entries": None,
-            '   # List of limiters to use for each wave family:': None,
-            '   # Required:  len(limiter) == num_waves': None,
-            '   # Some options:': None,
-            "   #   0 or 'none'     ==> no limiter (Lax-Wendroff)": None,
-            "   #   1 or 'minmod'   ==> minmod": None,
-            "   #   2 or 'superbee' ==> superbee": None,
-            "   #   3 or 'mc'       ==> MC limiter": None,
-            "   #   4 or 'vanleer'  ==> van Leer": None,
-            '   mthlim' : lim_str,"\n"
-
-            '   # mthbc (=left,right,bottom,top)' : None,
-            '   # Choice of BCs at xlower and xupper:':None,
-            '   # 0 => user specified (must modify bcN.f to use this option)':None,
-            '   # 1 => extrapolation (non-reflecting outflow)':None,
-            '   # 2 => periodic (must specify this at both boundaries)':None,
-            '   # 3 => solid wall for systems where q(2) is normal velocity':None,
-            '   mthbc' : mthbc_str,"\n"
-
-            '   dry_tolerance_c': geo_data.dry_tolerance,
-            '   wave_tolerance_c': refinement_data.wave_tolerance, 
-            '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
+                '   # Number of waves': None,
+                '   mwaves': clawdata.num_waves,"\n"
 
 
-            '   # Output' : None,
-            '   ascii-out': ascii_out
-            }
-            
+                "   # mthlim (is a vector in general, with 'mwaves' entries": None,
+                '   # List of limiters to use for each wave family:': None,
+                '   # Required:  len(limiter) == num_waves': None,
+                '   # Some options:': None,
+                "   #   0 or 'none'     ==> no limiter (Lax-Wendroff)": None,
+                "   #   1 or 'minmod'   ==> minmod": None,
+                "   #   2 or 'superbee' ==> superbee": None,
+                "   #   3 or 'mc'       ==> MC limiter": None,
+                "   #   4 or 'vanleer'  ==> van Leer": None,
+                '   mthlim' : lim_str,"\n"
+
+                '   # mthbc (=left,right,bottom,top)' : None,
+                '   # Choice of BCs at xlower and xupper:':None,
+                '   # 0 => user specified (must modify bcN.f to use this option)':None,
+                '   # 1 => extrapolation (non-reflecting outflow)':None,
+                '   # 2 => periodic (must specify this at both boundaries)':None,
+                '   # 3 => solid wall for systems where q(2) is normal velocity':None,
+                '   mthbc' : mthbc_str,"\n"
+
+                '   dry_tolerance_c': geo_data.dry_tolerance,
+                '   wave_tolerance_c': refinement_data.wave_tolerance, 
+                '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
+
+
+                '   # Output' : None,
+                '   ascii-out': ascii_out
+                }
+        elif self.cuda == True or self.cuda == False:    
+            geoflood['cudaflood'] = {
+                '   cuda' : self.cuda,
+                '   # normal and transverse order': None,
+                '   # Order of accuracy:': None,
+                '   #   1 => Godunov,': None,  
+                '   #   2 => Lax-Wendroff plus limiters': None,
+
+                '   order': ord_str,"\n"
+
+                '   # Location of capacity function in auxiliary array' : None,
+                '   mcapa': clawdata.capa_index,"\n"
+
+                '   # Source term splitting' : None,
+                '   src_term': src_split,"\n"
+
+                '   # Use an f-waves update (default : True)': None,
+                '   use_fwaves' : clawdata.use_fwaves,"\n"
+
+                '   # Number of waves': None,
+                '   mwaves': clawdata.num_waves,"\n"
+
+
+                "   # mthlim (is a vector in general, with 'mwaves' entries": None,
+                '   # List of limiters to use for each wave family:': None,
+                '   # Required:  len(limiter) == num_waves': None,
+                '   # Some options:': None,
+                "   #   0 or 'none'     ==> no limiter (Lax-Wendroff)": None,
+                "   #   1 or 'minmod'   ==> minmod": None,
+                "   #   2 or 'superbee' ==> superbee": None,
+                "   #   3 or 'mc'       ==> MC limiter": None,
+                "   #   4 or 'vanleer'  ==> van Leer": None,
+                '   mthlim' : lim_str,"\n"
+
+                '   # mthbc (=left,right,bottom,top)' : None,
+                '   # Choice of BCs at xlower and xupper:':None,
+                '   # 0 => user specified (must modify bcN.f to use this option)':None,
+                '   # 1 => extrapolation (non-reflecting outflow)':None,
+                '   # 2 => periodic (must specify this at both boundaries)':None,
+                '   # 3 => solid wall for systems where q(2) is normal velocity':None,
+                '   mthbc' : mthbc_str,"\n"
+
+                '   dry_tolerance_c': geo_data.dry_tolerance,
+                '   wave_tolerance_c': refinement_data.wave_tolerance, 
+                '   speed_tolerance_entries_c':self.speed_tolerance_entries_c,
+                '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
+
+                '   buffer-len': self.buffer_len,
+
+                '   # Output' : None,
+                '   ascii-out': ascii_out
+                }
         with open('geoflood.ini','w') as geofloodfile:
             geoflood.write(geofloodfile)
 
@@ -416,5 +468,29 @@ class Flowgradesdata(object):
             flow_grades.write(4*"%g " % tuple(i) + "\t =: flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel\n")
         flow_grades.close()
 
+# write out setprob data 
+# using inheritance to access the attributes of the GeoFlooddata class to avoid redundancy
+class Setprobdata(GeoFlooddata):
 
-        
+    def __init__(self,gravity,dry_tolerance,earth_radius,coordinate_system,mcapa):
+        self.gravity = gravity
+        self.dry_tolerance = dry_tolerance
+        self.earth_radius = earth_radius
+        self.coordinate_system = coordinate_system
+        self.mcapa = mcapa
+
+    def write(self):
+        # write setprob data to file with comments of there meaning
+        set_prob = open('setprob.data','w')
+        set_prob.write('%f \t\t =: gravity\n' % self.gravity)
+        set_prob.write('%f \t\t =: dry_tolerance\n' % self.dry_tolerance)
+        set_prob.write('%f \t\t =: earth_radius\n' % self.earth_radius)
+        set_prob.write('%d \t\t\t =: coordinate_system\n' % self.coordinate_system)
+        set_prob.write('%d \t\t\t =: mcapa\n' % self.mcapa)
+        set_prob.close()
+
+# write out setrun data      
+def write_data_outputs(rundata, *data_objects):
+    data_objects[0].write(rundata)  # for the geoflood data
+    for data_object in data_objects[1:]:
+        data_object.write()
