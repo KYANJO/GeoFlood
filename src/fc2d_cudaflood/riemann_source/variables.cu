@@ -5,9 +5,9 @@
 
 /* Declare constant memory variables */
 __constant__ GeofloodVars d_geofloodVars;
-__constant__ TopoVars d_topoVars;
-__constant__ FrictionVars d_frictionVars;
-__constant__ AmrVars d_amrVars;
+// __constant__ TopoVars d_topoVars;
+// __constant__ FrictionVars d_frictionVars;
+// __constant__ AmrVars d_amrVars;
 
 void setprob_cuda(){
     int i = 0;

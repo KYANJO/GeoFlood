@@ -25,27 +25,27 @@ struct GeofloodVars{
     double earth_radius;
 };
 
-struct TopoVars{
-    int num_dtopo,test_topography;
-    int aux_finalized, mtopofiles, mtoposize;
-    double *t0dtopo, *tfdtopo;
-    double dt_max_dtopo;
-    double *topowork, *xlowtopo, *ylowtopo, *xhitopo, *yhitopo, *dxtopo, *dytopo;
-    int *mxtopo, *mytopo, *mtopoorder, *i0topo, *mtopo;
-};
+// struct TopoVars{
+//     int num_dtopo,test_topography;
+//     int aux_finalized, mtopofiles, mtoposize;
+//     double *t0dtopo, *tfdtopo;
+//     double dt_max_dtopo;
+//     double *topowork, *xlowtopo, *ylowtopo, *xhitopo, *yhitopo, *dxtopo, *dytopo;
+//     int *mxtopo, *mytopo, *mtopoorder, *i0topo, *mtopo;
+// };
 
-struct FrictionVars{
-    bool variable_friction;
-    int friction_index;
-};
+// struct FrictionVars{
+//     bool variable_friction;
+//     int friction_index;
+// };
 
-struct AmrVars{
-    double xupper;
-    double yupper;
-    double xlower;
-    double ylower;
-    double NEEDS_TO_BE_DEFINED;
-};
+// struct AmrVars{
+//     double xupper;
+//     double yupper;
+//     double xlower;
+//     double ylower;
+//     double NEEDS_TO_BE_DEFINED;
+// };
 
 #ifdef __cplusplus
 #if 0
