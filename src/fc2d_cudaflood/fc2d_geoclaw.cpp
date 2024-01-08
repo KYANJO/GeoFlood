@@ -369,6 +369,8 @@ double geoclaw_update(fclaw2d_global_t *glob,
 {
     FC2D_GEOCLAW_TOPO_UPDATE(&t);
 
+    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
+
     geoclaw_b4step2(glob,
                     patch,
                     blockno,
@@ -378,6 +380,8 @@ double geoclaw_update(fclaw2d_global_t *glob,
                                   patch,
                                   blockno,
                                   patchno,t,dt);
+
+    fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
 
     const fc2d_geoclaw_options_t* geoclaw_opt = fc2d_geoclaw_get_options(glob);
     if (geoclaw_opt->src_term > 0)
@@ -411,19 +415,16 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     size_t size, bytes;
     double maxcfl;
 
+    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
     /* ------------------------------- Call b4step2 ----------------------------------- */
-#if 1
     if (geoclaw_vt->b4step2 != NULL)
     {
         fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
         geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
         fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
     }
-#endif
 
     /* -------------------------------- Main update ----------------------------------- */
-    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
-
     cuclaw_opt = fc2d_geoclaw_get_options(glob);
     maxcfl = 0.0;
 
@@ -489,6 +490,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         // exit(0);
     }  
 
+    fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
     
     /* -------------------------------- Source term ----------------------------------- */
     // Check if we have stored all the patches in the buffer
@@ -515,9 +517,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         // FCLAW_FREE(patch_data->patch_array);
         FCLAW_FREE(patch_data->flux_array);   
         FCLAW_FREE(buffer_data->user);                                   
-    }
-
-    fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);    
+    }   
 
     return maxcfl;
 }
