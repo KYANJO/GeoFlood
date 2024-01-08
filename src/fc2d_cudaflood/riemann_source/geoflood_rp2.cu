@@ -83,6 +83,14 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
     }
 
+    /* initialize Riemann problem for grid interface */
+    for (mw = 0; mw < mwaves; mw++){
+        s[mw] = 0.0;
+        fwave[mw] = 0.0;
+        fwave[mw + mwaves] = 0.0;
+        fwave[mw + 2*mwaves] = 0.0;
+    }
+
     /* set normal direction */
     mu = 1+idir;
     mv = 2-idir;
@@ -110,11 +118,11 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     // }
 
     // Skip problem if in a completely dry area
-    // if (qr[0] <= drytol && ql[0] <= drytol) {
-    //     goto label30;
-    // }
+    if (qr[0] <= drytol && ql[0] <= drytol) {
+        goto label30;
+    }
 
-    if (ql[0] > drytol || qr[0] > drytol) {
+    // if (ql[0] > drytol || qr[0] > drytol) {
         /* Riemann problem variables */
         hL = ql[0];
         hR = qr[0];
@@ -298,7 +306,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         fwave[2*mwaves + mv] = fw[2*mwaves + mv];
         s[mv] = sw[mv];
        
-    }
+    // }
 
     // Debugging
     // if (debug) {
@@ -309,7 +317,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     //     "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
     // }
 
-    // label30: // (similar to 30 continue in Fortran)
+    label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
