@@ -50,6 +50,7 @@ typedef struct user_options
 
 // --------------------------------------------
 void debug_link_solvers(fclaw2d_global_t *glob);
+
 user_options_t* debug_options_register (fclaw_app_t * app,
                                           const char *configfile);
 void debug_options_store (fclaw2d_global_t* glob, user_options_t* user);
