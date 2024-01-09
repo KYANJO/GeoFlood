@@ -67,6 +67,8 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     bool rare1, rare2;
     int mw, mu, mv;
 
+    int N = 4; 
+
       bool debug;
       if (idir == 0 && ix == 7 && iy == 15)
     // if (idir == 0)
@@ -403,6 +405,8 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     double h, u, v;
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
+
+    int N = 4;
 
     /* Swapping left to right  (cudaclaw_flux2.cu)*/
     // double *qr = q_l;

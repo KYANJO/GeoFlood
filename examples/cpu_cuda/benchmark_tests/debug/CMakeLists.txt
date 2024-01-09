@@ -23,7 +23,7 @@ target_include_directories(debug PRIVATE
 )
 
 target_link_libraries(debug PRIVATE 
-  GEOFLOOD::CUDA_FLOOD
+  GEOFLOOD::CPU_CUDA
 )
 
 # -- set environment string used for regression tests

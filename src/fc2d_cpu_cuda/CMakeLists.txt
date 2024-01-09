@@ -1,5 +1,5 @@
 # -- fortran library
-add_library(cudaflood_f OBJECT
+add_library(cpu_cuda_f OBJECT
     amrlib_source/amr_module.f90 
     geolib_source/utility_module.f90 
     geolib_source/geoclaw_module.f90 
@@ -52,21 +52,21 @@ add_library(cudaflood_f OBJECT
     cuda_source/data_swap.f90
 )
 
-target_link_Libraries(cudaflood_f PRIVATE 
+target_link_Libraries(cpu_cuda_f PRIVATE 
     FORESTCLAW::CLAWPATCH
 )
 
-set_target_properties(cudaflood_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
+set_target_properties(cpu_cuda_f PROPERTIES Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include)
 
 # -- add library
-add_library(cudaflood_c)
-set_target_properties(cudaflood_c PROPERTIES EXPORT_NAME CUDA_FLOOD)
+add_library(cpu_cuda_c)
+set_target_properties(cpu_cuda_c PROPERTIES EXPORT_NAME CPU_CUDA)
 
 # needed because we have device code in a library
-set_target_properties(cudaflood_c PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(cpu_cuda_c PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
-target_sources(cudaflood_c PRIVATE
-    $<TARGET_OBJECTS:cudaflood_f>
+target_sources(cpu_cuda_c PRIVATE
+    $<TARGET_OBJECTS:cpu_cuda_f>
     fc2d_geoclaw.cpp 
     fc2d_geoclaw_options.c 
     fc2d_geoclaw_gauges_default.c 
@@ -83,15 +83,15 @@ target_sources(cudaflood_c PRIVATE
     riemann_source/geoflood_rp2.cu
 )
 
-target_link_libraries(cudaflood_c PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
+target_link_libraries(cpu_cuda_c PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)
 
-target_include_directories(cudaflood_c PUBLIC 
+target_include_directories(cpu_cuda_c PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
 )
 
 if(CUDAToolkit_VERSION_MAJOR LESS 11)
-	target_include_directories(cudaflood_c PRIVATE ${PROJECT_SOURCE_DIR}/cub)
+	target_include_directories(cpu_cuda_c PRIVATE ${PROJECT_SOURCE_DIR}/cub)
 endif()
 
 # -- install
@@ -115,22 +115,22 @@ install(FILES
   DESTINATION include
 )
 
-install(TARGETS cudaflood_c
+install(TARGETS cpu_cuda_c
   EXPORT ${PROJECT_NAME}Targets
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
 # imported target, for use from FetchContent
-add_library(GEOFLOOD::CUDA_FLOOD INTERFACE IMPORTED GLOBAL)
-target_link_libraries(GEOFLOOD::CUDA_FLOOD INTERFACE cudaflood_c)
-# add_library(GEOFLOOD::CUDAFOOD ALIAS cudaflood_c)
+add_library(GEOFLOOD::CPU_CUDA INTERFACE IMPORTED GLOBAL)
+target_link_libraries(GEOFLOOD::CPU_CUDA INTERFACE cpu_cuda_c)
+# add_library(GEOFLOOD::CUDAFOOD ALIAS cpu_cuda_c)
 
-if(TARGET GEOFLOOD::CUDA_FLOOD)
+if(TARGET GEOFLOOD::CPU_CUDA)
     # If the target exists, print a message
-    message(STATUS "Target GEOFLOOD::CUDA_FLOOD exists.")
+    message(STATUS "Target GEOFLOOD::CPU_CUDA exists.")
 else()
     # If the target does not exist, print a different message
-    message(WARNING "Target GEOFLOOD::CUDA_FLOOD does not exist.")
+    message(WARNING "Target GEOFLOOD::CPU_CUDA does not exist.")
 endif()
 

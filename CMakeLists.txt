@@ -53,12 +53,6 @@ else()
     ForestClawExternalProject(TAG develop COMPONENTS clawpack mpi)
 endif()
  
-if(cudaclaw)
-  enable_language(CUDA)
-  set(CMAKE_CUDA_STANDARD 14)
-  find_package(CUDAToolkit REQUIRED)
-endif()
-
 # --- configure files
 include(cmake/config.cmake)
 
@@ -67,21 +61,17 @@ if (cpuflood)
   add_subdirectory(src/fc2d_geoclaw)
 endif(cpuflood)
 
-# --- cudaflood and cpu_cuda
-if(cudaflood OR cpu_cuda)
+# --- cuda_cpu
+if(cpu_cuda)
   enable_language(CUDA)
   set(CMAKE_CUDA_STANDARD 14)
   find_package(CUDAToolkit REQUIRED)
 endif()
  
 
-  if(cudaflood)
-     add_subdirectory(src/fc2d_cudaflood)
-  endif(cudaflood)
-
-  if(cpu_cuda)
-    add_subdirectory(src/cpu_cudaflood)
-  endif(cpu_cuda)
+if(cpu_cuda)
+    add_subdirectory(src/fc2d_cpu_cuda)
+endif(cpu_cuda)
 
 # --- examples
 add_subdirectory(examples)
