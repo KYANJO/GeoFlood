@@ -28,8 +28,8 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include <math.h>
 #include <fc2d_geoclaw.h>
 #include <fc2d_cudaclaw_check.h>
-#include <fc2d_cudaclaw_options.h>
-#include <cudaclaw_user_fort.h>
+// #include <fc2d_cudaclaw_options.h>
+// #include <cudaclaw_user_fort.h>
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
 #include <fclaw2d_include_all.h>
@@ -67,17 +67,17 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     bool rare1, rare2;
     int mw, mu, mv;
 
-    int N = 4; 
+    // int N = 4; 
 
-      bool debug;
-      if (idir == 0 && ix == 7 && iy == 15)
-    // if (idir == 0)
-      {
-        debug = 1;
-      }
-      else{
-        debug = 0;
-      }
+    //   bool debug;
+    //   if (idir == 0 && ix == 7 && iy == 15)
+    // // if (idir == 0)
+    //   {
+    //     debug = 1;
+    //   }
+    //   else{
+    //     debug = 0;
+    //   }
 
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
@@ -120,11 +120,11 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     // }
 
     // Skip problem if in a completely dry area
-    if (qr[0] <= drytol && ql[0] <= drytol) {
-        goto label30;
-    }
+    // if (qr[0] <= drytol && ql[0] <= drytol) {
+    //     goto label30;
+    // }
 
-    // if (ql[0] > drytol || qr[0] > drytol) {
+    if (ql[0] > drytol || qr[0] > drytol) {
         /* Riemann problem variables */
         hL = ql[0];
         hR = qr[0];
@@ -308,7 +308,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         fwave[2*mwaves + mv] = fw[2*mwaves + mv];
         s[mv] = sw[mv];
        
-    // }
+    }
 
     // Debugging
     // if (debug) {
@@ -319,7 +319,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     //     "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
     // }
 
-    label30: // (similar to 30 continue in Fortran)
+    // label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
@@ -345,30 +345,30 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     apdq[0] = 0.0;
     apdq[1] = 0.0;
     apdq[2] = 0.0;
-    // int idx; /* mw = idx/3 */
-    // for (idx = 0; idx < mwaves*3; idx++) {
-    //     if (s[idx/3] < 0.0) { 
-    //         amdq[idx%3] += fwave[idx];  
-    //     } else if (s[idx/3] > 0.0) {
-    //         apdq[idx%3] += fwave[idx]; 
-    //     } else {
-    //         amdq[idx%3] += 0.5 * fwave[idx];  
-    //         apdq[idx%3] += 0.5 * fwave[idx]; 
-    //     }
-    // }
-    int i;
-    for(mw = 0; mw<mwaves; mw++){
-        for (i = 0; i<3; i++){
-            if (s[mw] < 0.0) { 
-                amdq[i] += fwave[mw*3 + i];  
-            } else if (s[mw] > 0.0) {
-                apdq[i] += fwave[mw*3 + i]; 
-            } else {
-                amdq[i] += 0.5 * fwave[mw*3 + i];  
-                apdq[i] += 0.5 * fwave[mw*3 + i]; 
-            }
+    int idx; /* mw = idx/3 */
+    for (idx = 0; idx < mwaves*3; idx++) {
+        if (s[idx/3] < 0.0) { 
+            amdq[idx%3] += fwave[idx];  
+        } else if (s[idx/3] > 0.0) {
+            apdq[idx%3] += fwave[idx]; 
+        } else {
+            amdq[idx%3] += 0.5 * fwave[idx];  
+            apdq[idx%3] += 0.5 * fwave[idx]; 
         }
     }
+    // int i;
+    // for(mw = 0; mw<mwaves; mw++){
+    //     for (i = 0; i<3; i++){
+    //         if (s[mw] < 0.0) { 
+    //             amdq[i] += fwave[mw*3 + i];  
+    //         } else if (s[mw] > 0.0) {
+    //             apdq[i] += fwave[mw*3 + i]; 
+    //         } else {
+    //             amdq[i] += 0.5 * fwave[mw*3 + i];  
+    //             apdq[i] += 0.5 * fwave[mw*3 + i]; 
+    //         }
+    //     }
+    // }
 }
 
 
@@ -790,22 +790,22 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         determinant = det1 - det2 + det3;
 
         /* solve for beta(k) */
-        // for(k=0; k < 3; k++)
-        // {   
-        //     for(mw=0; mw < 3; mw++)
-        //     {
-        //         A[0][mw] = r[0][mw];
-        //         A[1][mw] = r[1][mw];
-        //         A[2][mw] = r[2][mw];
-        //     }
-        //     A[0][k] = del[0];
-        //     A[1][k] = del[1];
-        //     A[2][k] = del[2];
-        //     det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
-        //     det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
-        //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
-        //     beta[k] = (det1 - det2 + det3)/determinant;
-        // }
+        for(k=0; k < 3; k++)
+        {   
+            for(mw=0; mw < 3; mw++)
+            {
+                A[0][mw] = r[0][mw];
+                A[1][mw] = r[1][mw];
+                A[2][mw] = r[2][mw];
+            }
+            A[0][k] = del[0];
+            A[1][k] = del[1];
+            A[2][k] = del[2];
+            det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
+            det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
+            det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+            beta[k] = (det1 - det2 + det3)/determinant;
+        }
         // for(k=0; k < 3; k++) {
         //     // Copying entire matrix r to A for each k, with kth column replaced by del vector
         //     for(mw=0; mw < 3; mw++) { // Notice this loop is now for the entire matrix, not nested
@@ -820,31 +820,31 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
         //     beta[k] = (det1 - det2 + det3)/determinant;
         // }        
-        for (int k = 0; k < 3; k++) {
-            // Copy the entire matrix r into A for each iteration
-            A[0][0] = r[0][0];
-            A[0][1] = r[0][1];
-            A[0][2] = r[0][2];
-            A[1][0] = r[1][0];
-            A[1][1] = r[1][1];
-            A[1][2] = r[1][2];
-            A[2][0] = r[2][0];
-            A[2][1] = r[2][1];
-            A[2][2] = r[2][2];
+        // for (int k = 0; k < 3; k++) {
+        //     // Copy the entire matrix r into A for each iteration
+        //     A[0][0] = r[0][0];
+        //     A[0][1] = r[0][1];
+        //     A[0][2] = r[0][2];
+        //     A[1][0] = r[1][0];
+        //     A[1][1] = r[1][1];
+        //     A[1][2] = r[1][2];
+        //     A[2][0] = r[2][0];
+        //     A[2][1] = r[2][1];
+        //     A[2][2] = r[2][2];
         
-            // Modify the k-th column of A
-            A[0][k] = del[0];
-            A[1][k] = del[1];
-            A[2][k] = del[2];
+        //     // Modify the k-th column of A
+        //     A[0][k] = del[0];
+        //     A[1][k] = del[1];
+        //     A[2][k] = del[2];
         
-            // Calculate the determinant components
-            double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
-            double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
-            double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+        //     // Calculate the determinant components
+        //     double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
+        //     double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
+        //     double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
         
-            // Compute the final value for this iteration
-            beta[k] = (det1 - det2 + det3) / determinant;
-        }
+        //     // Compute the final value for this iteration
+        //     beta[k] = (det1 - det2 + det3) / determinant;
+        // }
         
 
         /* exit if things aren't changing */

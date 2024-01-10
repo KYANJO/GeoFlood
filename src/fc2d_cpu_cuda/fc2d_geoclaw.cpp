@@ -24,7 +24,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "fc2d_geoclaw.h"
-#include "fc2d_geoclaw_options.h"
+// #include "fc2d_geoclaw_options.h"
 #include "fc2d_geoclaw_fort.h"
 #include "fc2d_geoclaw_output_ascii.h"
 
@@ -369,12 +369,18 @@ double geoclaw_update(fclaw2d_global_t *glob,
 {
     FC2D_GEOCLAW_TOPO_UPDATE(&t);
 
-    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
+    fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
+    
+    if (geoclaw_vt->b4step2 != NULL){
+        fclaw2d_timer_start(&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);
+        geoclaw_b4step2(glob,
+                        patch,
+                        blockno,
+                        patchno,t,dt);
+        fclaw2d_timer_stop(&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);  
+    }
 
-    geoclaw_b4step2(glob,
-                    patch,
-                    blockno,
-                    patchno,t,dt);
+    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
 
     double maxcfl = geoclaw_step2(glob,
                                   patch,
@@ -415,7 +421,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     size_t size, bytes;
     double maxcfl;
 
-    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
     /* ------------------------------- Call b4step2 ----------------------------------- */
     if (geoclaw_vt->b4step2 != NULL)
     {
@@ -425,6 +430,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     }
 
     /* -------------------------------- Main update ----------------------------------- */
+    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
+
     cuclaw_opt = fc2d_geoclaw_get_options(glob);
     maxcfl = 0.0;
 
@@ -440,9 +447,11 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     fclaw2d_clawpatch_save_current_step(glob, this_patch);
 
     cudaclaw_patch_data_t* patch_data = (cudaclaw_patch_data_t*) buffer_data->user;
+
     maxcfl = 0;
     if (iter == 0)
     {
+
         /* Create array to store pointers to patch data */
         patch_data = (cudaclaw_patch_data_t*) FCLAW_ALLOC(cudaclaw_patch_data_t,1);
         size = (total < patch_buffer_len) ? total : patch_buffer_len;
@@ -450,17 +459,16 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         
         if (cuclaw_opt->src_term > 0)
         {
-            patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,bytes);
-            patch_data->patchno_array = FCLAW_ALLOC(int,bytes);
-            patch_data->blockno_array = FCLAW_ALLOC(int,bytes);
+            patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
+            patch_data->patchno_array = FCLAW_ALLOC(int,size);
+            patch_data->blockno_array = FCLAW_ALLOC(int,size);
         }
-
-        
-        patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes); // Is it bytes or size?
+ 
+        patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,size); // Is it bytes or size?
         // buffer_data->user = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes);
         buffer_data->user = patch_data;
     } 
-
+ 
     /* Buffer pointer to fluxes */
     cudaclaw_store_buffer(glob,this_patch,this_patch_idx,this_block_idx,total,iter,
                             patch_data->flux_array,
@@ -511,14 +519,15 @@ double cudaclaw_update(fclaw2d_global_t *glob,
             FCLAW_FREE(patch_data->blockno_array);
         }
     }   
-
+ 
+    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
     if (iter == total-1)
     {
         // FCLAW_FREE(patch_data->patch_array);
         FCLAW_FREE(patch_data->flux_array);   
         FCLAW_FREE(buffer_data->user);                                   
     }   
-
+     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);
     return maxcfl;
 }
 

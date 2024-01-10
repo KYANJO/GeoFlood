@@ -29,6 +29,7 @@
 #include <fclaw_base.h>   /* Needed for FCLAW_F77_FUNC */
 #include <fc2d_cudaclaw_cuda.h>  /* Needed for cuda_rpn2, cuda_rpt2 and other cuda functions */
 #include <fc2d_geoclaw_fort.h>  /* Needed for virtual functions */
+#include "fc2d_geoclaw_options.h"
 
 #ifdef __cplusplus
 extern "C"
