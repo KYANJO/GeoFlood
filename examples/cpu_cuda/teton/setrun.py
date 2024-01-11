@@ -30,7 +30,7 @@ scratch_dir = os.path.join('scratch')
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
 initial_dt = 1  # Initial time step
-fixed_dt = False  # Take constant time step
+fixed_dt = False   # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
 output_style = 1
@@ -38,31 +38,31 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 1.0              # Total number of hours in simulation     
+    n_hours = 15              # Total number of hours in simulation, changed 10.14.2020  should be 5      
     
 
-    frames_per_minute = 60/50   # (1 frame every 25 mins)
+    frames_per_minute = 1/30   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
     step_interval = 10   # Create output file every 10 steps
-    total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
+    total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 16
-my = 16
+mx = 32
+my = 32
 
-mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
-mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
+mi = 1  # Number of x grids per block  <-- mx = mi*mx 
+mj = 1  # Number of y grids per block   <-- my = mj*my 
 
-minlevel = 1 
-maxlevel = 3 #resolution based on levels
+minlevel = 2 
+maxlevel = 5 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
-manning_coefficient = 0.03333
+manning_coefficient = 0.06
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
@@ -70,18 +70,15 @@ num_dim = 2
 # ------------------  user options ---------------------------------------------------
 use_cuda = True
 gravity = 9.81
-dry_tolerance = 1e-4
+dry_tolerance = 1e-3
 earth_radius = 6371220.0
-coordinate_system = 1
-mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
+coordinate_system = 2
+mcapa = 2 # flag set to 0 if coordinate system = 1 otherwise 2
 buffer_length = 1024
 
 # --------------------- Topography file -----------------------------------------------
-topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
-topofile_int = 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'
-
-# --------------------- Police, transformer and guage data -----------------------------------------------
-malpasset_loc = "./malpasset_locs.txt"
+# topofile = 'topos/TetonLarge.topo'
+topofile = 'topos/TetonDamLatLong.topo'
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -138,10 +135,6 @@ def setrun(claw_pkg='geoclaw'):
 
         ll_topo = np.array([xllcorner, yllcorner])
         ur_topo = np.array([xurcorner, yurcorner])
-
-        # ll_topo = np.array([957738.41,  1844520.8])
-        # ur_topo = np.array([957987.1, 1844566.5])
-
        
         print("")
         print("Topo domain for %s:" % topofile)
@@ -202,7 +195,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_eqn = 3
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 1
+    clawdata.num_aux = 3
 
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = mcapa #flag set to 0 if coordinate system = 1 otherwise 2
@@ -455,7 +448,7 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center']
+    amrdata.aux_type = ['center','capacity','yleft','center']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -467,6 +460,16 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
 
+    # -----------------------------------------------
+    # INL Regions
+    #   Regions to be refined :
+    #    (1) Refine initial reservoir to level 4
+    #        (otherwise, we won't resolve valley, and
+    #        won't fill the reservoir properly)
+    #    (2) Refine around nuclear power plant (indicated by gauge
+    #        100, 101, ..., 115, below)
+    #    (3) Computational domain, with maxlevel=4
+    #
     # To specify regions of refinement append lines of the form
     #    regions.append([minlevel,maxlevel,t1,t2,x1,x2,y1,y2])
 
@@ -474,61 +477,127 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile_int)
-    regions.append([maxlevel,maxlevel,0, 1e10, clawdata.lower[0],clawdata.upper[0],clawdata.lower[1],clawdata.upper[1]])
-    print("")
-    print("Initial reservoir domain")
-    print("%-12s (%14.8f, %12.8f)" % ("Lower left",clawdata.lower[0],clawdata.lower[1]))
-    print("%-12s (%14.8f, %12.8f)" % ("Upper right",clawdata.upper[0],clawdata.upper[1]))
-    print("")
-    
-    # Computational domain. 
-    dims_topo, clawdata.lower, clawdata.upper = get_topo(topofile) # get topo domain limits (Note this line is needed)
-    
-    # Region containing the Lake
-    xll = [9.57e5,  clawdata.lower[1]]
-    xur = [clawdata.upper[0], 1.834e6] 
+    regions.append([maxlevel,maxlevel, 0, 1.e10,-111.543,-111.24,43.88, 43.965])
 
+    # Box containing gauge location locations
+    xll = [-111.64, 43.913661]  # From email
+    xur = [-111.60, 43.92]  # from email
     region_lower, region_upper,_ = tools.region_coords(xll,xur,
                                                     clawdata.num_cells,
                                                     clawdata.lower,
                                                     clawdata.upper)
-    print('Lake domain')
-    print('%-12s (%14.8f, %12.8f)' % ('x',region_lower[0],region_upper[0]))
-    print('%-12s (%14.8f, %12.8f)' % ('y',region_lower[1],region_upper[1]))
-    # regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
 
-    xll = [9.57e5,  clawdata.lower[1]]
-    xur = [9.585e5, 1.832e6] 
-    # region_lower, region_upper,_ = tools.region_coords(xll,xur,
-                                                    # clawdata.num_cells,
-                                                    # clawdata.lower,
-                                                    # clawdata.upper)
+    regions.append([maxlevel-1,maxlevel-1,0, 1e10, region_lower[0],region_upper[0],
+                    region_lower[1],region_upper[1]])
 
-    # regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
+    # Computational domain.  With exception of region above, don't go beyond level 4
+    regions.append([minlevel-1,minlevel+1,0, 1e10, clawdata.lower[0],clawdata.upper[0],
+                    clawdata.lower[1],clawdata.upper[1]])
 
-
-   # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
-    police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
-
-    print('\nLocation of Gauges:')
-    for i in range(len(all_guages[0])):
-        # print('\tGauge %s at (%s, %s)' % (all_guages[0][i], all_guages[1][i],all_guages[2][i]))
-        rundata.gaugedata.gauges.append([all_guages[0][i], all_guages[1][i],all_guages[2][i], 0., 1e10])
-
-    # rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])
-    # for i in range(len(gauges[0])):
-    #     print('\tGauge %s at (%s, %s)' % (gauges[0][i], gauges[1][i],gauges[2][i]))
-    #     rundata.gaugedata.gauges.append([gauges[0][i], gauges[1][i],gauges[2][i], 0., 1e10])
-    # -----------------------------------------------
-    # == setflowgrades data values ==
-    flowgrades_data = geoflood.Flowgradesdata()
-    # -----------------------------------------------
-    # Hydrograph data:
-    # -----------------------------------------------
-    hydrographdata = geoflood.Hydrographdata()
-
+    # -------------------------------------------------------
+    # INL Gauges
+    #     -- Set gauges at Teton City and Wilford
+    #     -- Remaining gauges build border around power plant
     #
+    # For gauges append lines of the form  [gaugeno, x, y, t1, t2]
+    # -------------------------------------------------------
+    rundata.gaugedata.gtype = {}
+   
+    #Stationary Gauges
+
+    #Teton_Canyon_
+    xc,yc = [-111.593965, 43.934059] 
+    rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Mid Teton Canyon 
+    rundata.gaugedata.gtype[1] = 'stationary'
+
+    #Teton_Canyon_Mouth_
+    xc,yc = [-111.66637, 43.933847] 
+    rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton Canyon Mouth 
+    rundata.gaugedata.gtype[2] = 'stationary'
+
+    #Wilford_Gauge_
+    xc,yc = [-111.672, 43.9144]
+    rundata.gaugedata.gauges.append([3,xc,yc,0.,clawdata.tfinal])  # Wilford Gauge 
+    rundata.gaugedata.gtype[3] = 'stationary'
+
+    #Sugar_City_Gauge_
+    xc,yc = [-111.743358, 43.873840]
+    rundata.gaugedata.gauges.append([4,xc,yc,0.,clawdata.tfinal])  # Sugar City Gauge 2 
+    rundata.gaugedata.gtype[4] = 'stationary'
+
+    #Roberts Gauge 
+    xc,yc = [-112.126403, 43.7202] 
+    rundata.gaugedata.gauges.append([5,xc,yc,0.,clawdata.tfinal])  # Roberts Gauge    
+    rundata.gaugedata.gtype[5] = 'stationary'
+
+    #Rexburg_Gauge_
+    xc,yc = [-111.792295, 43.823048] 
+    rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])  # Rexburg Gauge 
+    rundata.gaugedata.gtype[6] = 'stationary'
+
+    # or to have some of each type, use a dictionary:
+    rundata.gaugedata.gtype = {}
+    
+    # lagrangian gauges Northeastern
+    for iyg in range(0,3): #ten is the grid
+        for ixg in range(0,3):
+            gaugeno = 10*iyg + ixg + 100
+            yg = 43.91335 + 0.01*iyg #testing
+            xg = -111.6211080 + 0.012*ixg #test
+            rundata.gaugedata.gauges.append([gaugeno, xg, yg, 0., 1e10])
+            rundata.gaugedata.gtype[gaugeno] = 'lagrangian'
+    
+    # lagrangian gauges Southwestern - Menan Butte
+    for iyg in range(0,3): #ten is the grid
+        for ixg in range(0,3):
+            gaugeno = 10*iyg + ixg + 200
+            yg = 43.800575 + 0.01*iyg #testing
+            xg = -111.9419740 + 0.012*ixg #test
+            rundata.gaugedata.gauges.append([gaugeno, xg, yg, 0., 1e10])
+            rundata.gaugedata.gtype[gaugeno] = 'lagrangian'
+    # # Wilford
+    # xc,yc = [-111.672222,43.914444]
+    # rundata.gaugedata.gauges.append([1,xc,yc,0.,clawdata.tfinal])  # Wilford
+
+    # # Teton City
+    # xc,yc = [-111.669167,43.887778]
+    # rundata.gaugedata.gauges.append([2,xc,yc,0.,clawdata.tfinal])  # Teton City
+
+    # Power plant, with border constructed of 4*m gauges
+    # Start at SW corner; build gauges in counter-clockwise order in a
+    # square around the region [xll,xur].
+    #-------------------------------------------------------
+    # m = 2  # Gauge spacing along one edge (m=4 --> edge divided into four sections)
+    # gauge_counter = 100
+
+    # # South West corner of power plant
+    # xll = [-111.623926, 43.913661]  # From email
+
+    # # North East corner of power plant
+    # xur = [-111.620150, 43.916382]  # from email
+
+    # s = np.linspace(0,1.,m+1)
+    # for i in range(0,m):
+    #     x = xll[0] + (xur[0] - xll[0])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,x,xll[1],0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
+
+    # for i in range(0,m):
+    #     y = xll[1] + (xur[1] - xll[1])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,xur[0],y,0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
+
+    # for i in range(0,m):
+    #     x = xur[0] + (xll[0] - xur[0])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,x,xur[1],0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
+
+    # for i in range(0,m):
+    #     y = xur[1] + (xll[1] - xur[1])*s[i]
+    #     rundata.gaugedata.gauges.append([gauge_counter,xll[0],y,0.,clawdata.tfinal])
+    #     gauge_counter = gauge_counter + 1
+
+
     # -------------------------------------------------------
     # For developers
     #    -- Toggle debugging print statements:
@@ -569,14 +638,14 @@ def setgeo(rundata):
     geo_data.earth_radius = earth_radius
 
     # == Forcing Options
-    geo_data.coriolis_forcing = False #Not used in TELEmac
+    geo_data.coriolis_forcing = True
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = dry_tolerance
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
-    geo_data.friction_depth = 500
+    geo_data.friction_depth = 1.e6
 
     # Refinement data
     refinement_data = rundata.refinement_data
@@ -590,25 +659,27 @@ def setgeo(rundata):
     topo_data = rundata.topo_data
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
-    # topo_data.topofiles.append([1, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_topo.xyz'])
 
-    topo_data.topofiles.append([2, minlevel, minlevel, 0, 1e10, 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel+1, minlevel+1, 0, 1e10, 'scratch/Malpasset/malpasset_resevoir_5m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid4_2m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid3_2m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_grid2_1m_nolc.topotype2'])
-    topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'])
+    topo_data.topofiles.append([2, 1, 10, 0, 1e10, topofile])
+
+
+    # == setdtopo.data values ==
+    topo_data = rundata.topo_data
+    # for moving topography, append lines of the form :   (<= 1 allowed for now!)
+    #   [topotype, minlevel,maxlevel,fname]
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4
+    rundata.qinit_data.qinit_type = 0
     rundata.qinit_data.qinitfiles = []
-    rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
-    
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
-    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_h_5m_cadam.xyz'])
 
+    # == setfixedgrids.data values ==
+    # fixedgrids = rundata.fixed_grid_data
+    # fixedgrids = rundata.fixed_grid_data.fixedgrids
+    # for fixed grids append lines of the form
+    # [t1,t2,noutput,x1,x2,y1,y2,xpoints,ypoints,\
+    #  ioutarrivaltimes,ioutsurfacemax]
 
     return rundata
     # end of function setgeo
