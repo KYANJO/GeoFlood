@@ -54,13 +54,14 @@ if output_style == 3:
 mx = 32
 my = 32
 
-mi = 1  # Number of x grids per block  <-- mx = mi*mx 
-mj = 1  # Number of y grids per block   <-- my = mj*my 
+mi = 5  # Number of x grids per block  <-- mx = mi*mx 
+mj = 2  # Number of y grids per block   <-- my = mj*my 
 
-minlevel = 2 
-maxlevel = 5 #resolution based on levels
+minlevel = 1 
+maxlevel = 3 #resolution based on levels
 
- 
+regrid_interval = 16
+
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.06
 
@@ -376,10 +377,10 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.minlevel = minlevel
     geoflooddata.maxlevel = maxlevel
 
-    geoflooddata.refine_threshold = 0.5
-    geoflooddata.coarsen_threshold = 0.05
+    geoflooddata.refine_threshold = 0.01
+    geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = False
-    geoflooddata.regrid_interval = 3
+    geoflooddata.regrid_interval = regrid_interval
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
@@ -397,8 +398,8 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = True
-    geoflooddata.tikz_figsize = "2 4"
+    geoflooddata.tikz_out = False
+    geoflooddata.tikz_figsize = "4 4"
     geoflooddata.tikz_plot_prefix = "mlp"
     geoflooddata.tikz_plot_suffix = "png"
 
@@ -454,8 +455,8 @@ def setrun(claw_pkg='geoclaw'):
     # Flag using refinement routine flag2refine rather than richardson error
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
-    amrdata.flag2refine_tol = 0.5
-    amrdata.regrid_interval = 3
+    amrdata.flag2refine_tol = 0.01
+    amrdata.regrid_interval = regrid_interval
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
@@ -653,7 +654,7 @@ def setgeo(rundata):
     refinement_data.speed_tolerance = [1.e-1]*6
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
-    refinement_data.variable_dt_refinement_ratios = True
+    refinement_data.variable_dt_refinement_ratios = False
 
     # == settopo.data values ==
     topo_data = rundata.topo_data
