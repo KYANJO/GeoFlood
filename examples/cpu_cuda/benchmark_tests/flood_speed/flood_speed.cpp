@@ -74,19 +74,17 @@ void run_program(fclaw2d_global_t* glob)
 
     /* Initialize virtual table for ForestClaw */
     fclaw2d_vtables_initialize(glob);
-
+    
     if(geo_opt->cuda != 0)
     {
         /* Initialize virtual tables for solvers */
-        fc2d_geoclaw_options_t *clawopt = fc2d_geoclaw_get_options(glob);
-
         fc2d_cudaclaw_initialize_GPUs(glob);
 
         /* this has to be done after GPUs have been initialized */
-        cudaclaw_set_method_parameters(clawopt->order, 
-                                    clawopt->mthlim, 
-                                    clawopt->mwaves,
-                                    clawopt->use_fwaves);
+        cudaclaw_set_method_parameters(geo_opt->order, 
+                                    geo_opt->mthlim, 
+                                    geo_opt->mwaves,
+                                    geo_opt->use_fwaves);
     }
 
      /* Calls either the CPU or GPU solvers depending on user_opt->cuda */
@@ -104,16 +102,17 @@ void run_program(fclaw2d_global_t* glob)
         PROFILE_CUDA_GROUP("Allocate GPU and GPU buffers",1);
         fc2d_cudaclaw_allocate_buffers(glob);
     }
-
+    
     fclaw2d_initialize(glob);
-    fclaw2d_run(glob);
-
+    // fclaw2d_run(glob);
+    fc2d_geoclaw_run(glob);
+    
      if(geo_opt->cuda != 0)
     {
         PROFILE_CUDA_GROUP("De-allocate GPU and GPU buffers",1);
         fc2d_cudaclaw_deallocate_buffers(glob);
     }
-
+    
     fclaw2d_finalize(glob);
 }
 
@@ -135,7 +134,7 @@ main (int argc, char **argv)
     sc_MPI_Comm mpicomm;
 
     int retval;
-
+    // printf("cuda = %d\n",geo_opt->cuda);
     /* Initialize application */
     app = fclaw_app_new (&argc, &argv, NULL);
 
