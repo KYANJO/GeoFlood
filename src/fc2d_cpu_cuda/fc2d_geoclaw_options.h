@@ -40,7 +40,7 @@ struct fclaw2d_global;
 
 typedef struct fc2d_geoclaw_options
 {
-    int cuda;
+    // int cuda;
     
     int mwaves;
 
@@ -72,7 +72,6 @@ typedef struct fc2d_geoclaw_options
     int is_registered;
     
 } fc2d_geoclaw_options_t;
-
 
 /**
  * @brief Register options in SC

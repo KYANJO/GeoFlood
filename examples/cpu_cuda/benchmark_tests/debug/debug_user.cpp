@@ -33,10 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static
 void debug_problem_setup(fclaw2d_global_t* glob)
 {
-    // const user_options_t* user = debug_get_options(glob);
-    fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    const user_options_t* user_opt = geoflood_get_options(glob);
+    // fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
     fclaw2d_domain_barrier (glob->domain);
-    if (geo_opt->cuda != 0)
+    if (user_opt->cuda != 0)
     {
         setprob_cuda();
     }
@@ -50,9 +50,9 @@ void debug_link_solvers(fclaw2d_global_t *glob)
 
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
-    // user_options_t* user_opt = debug_get_options(glob);
-    fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
-    if (geo_opt->cuda == 0)
+    const user_options_t* user_opt = geoflood_get_options(glob);
+    // fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    if (user_opt->cuda == 0)
     {
         fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
          geoclaw_vt->qinit = &FLOOD_SPEED_QINIT; /* initial conditions */

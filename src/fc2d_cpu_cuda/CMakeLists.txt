@@ -69,6 +69,7 @@ target_sources(cpu_cuda_c PRIVATE
     $<TARGET_OBJECTS:cpu_cuda_f>
     fc2d_geoclaw.cpp 
     fc2d_geoclaw_options.c 
+    geoflood_options_user.c
     fc2d_geoclaw_gauges_default.c 
     fc2d_geoclaw_run.c 
     fc2d_geoclaw_output_ascii.c
@@ -99,6 +100,7 @@ install(FILES
   fc2d_geoclaw.h
   types.h
   fc2d_geoclaw_options.h
+  geoflood_options_user.h
   fc2d_geoclaw_fort.h
   fc2d_geoclaw_gauges_default.h
   fc2d_cudaclaw_cuda.h

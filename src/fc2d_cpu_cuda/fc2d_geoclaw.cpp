@@ -56,6 +56,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 /* Needed for debugging */
+#include "geoflood_options_user.h"
 #include "types.h"
 
 #include "cuda_source/cudaclaw_allocate.h"   /* Needed for def. of cudaclaw_fluxes_t */
@@ -519,15 +520,14 @@ double cudaclaw_update(fclaw2d_global_t *glob,
             FCLAW_FREE(patch_data->blockno_array);
         }
     }   
- 
-    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
+   
     if (iter == total-1)
     {
         // FCLAW_FREE(patch_data->patch_array);
         FCLAW_FREE(patch_data->flux_array);   
         FCLAW_FREE(buffer_data->user);                                   
     }   
-     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);
+
     return maxcfl;
 }
 
@@ -983,6 +983,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 	fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
 	fclaw2d_clawpatch_options_t* clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
 	fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    const user_options_t* user_opt = geoflood_get_options(glob);
 
     geo_opt->method[6] = clawpatch_opt->maux;
 
@@ -1004,7 +1005,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 
     fc2d_geoclaw_vtable_t*  geoclaw_vt = fc2d_geoclaw_vt_new();
 
-    if (geo_opt->cuda == 1){
+    if (user_opt->cuda == 1){
         #if defined(_OPENMP)
             fclaw_global_essentialf("Current implementation does not allow OPENMP + CUDA\n");
             exit(0);
@@ -1020,7 +1021,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     patch_vt->initialize                  = geoclaw_qinit;
     patch_vt->physical_bc                 = geoclaw_bc2;
 
-    if (geo_opt->cuda == 0){
+    if (user_opt->cuda == 0){
         patch_vt->single_step_update          = geoclaw_update;  /* Includes b4step2 and src2 */
     } else {
         patch_vt->single_step_update          = cudaclaw_update;  /* Includes b4step2 and src2 */
@@ -1064,7 +1065,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
 
-    if (geo_opt->cuda == 0){
+    if (user_opt->cuda == 0){
         geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
         geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
     }else{
@@ -1087,3 +1088,4 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 	FCLAW_ASSERT(fclaw_pointer_map_get(glob->vtables,"fc2d_geoclaw") == NULL);
 	fclaw_pointer_map_insert(glob->vtables, "fc2d_geoclaw", geoclaw_vt, fc2d_geoclaw_vt_destroy);
 }
+

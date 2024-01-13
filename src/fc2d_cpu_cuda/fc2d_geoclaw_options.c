@@ -48,8 +48,8 @@ geoclaw_register (fc2d_geoclaw_options_t *geo_opt, sc_options_t * opt)
     sc_options_add_int (opt, 0, "mcapa", &geo_opt->mcapa, -1,
                         "[geoclaw] Location of capacity function in aux array [-1]");
 
-    sc_options_add_bool (opt, 0, "cuda", &geo_opt->cuda, 0,
-                        "[user] cudaFlood [F]");
+    // sc_options_add_bool (opt, 0, "cuda", &geo_opt->cuda, 0,
+    //                     "[user] cudaFlood [F]");
 
     sc_options_add_bool (opt, 0, "src_term", &geo_opt->src_term, 0,
                          "[geoclaw] Source term option [F]");
