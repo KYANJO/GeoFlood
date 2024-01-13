@@ -44,6 +44,7 @@ class GeoFlooddata(object):
         self.tikz_plot_suffix = 'png'
         self.buffer_len = 1024
         self.speed_tolerance_entries_c = 6
+        self.claw_version = 5
 
         self.mi = 1
         self.mj = 1
@@ -59,15 +60,11 @@ class GeoFlooddata(object):
         refinement_data = rundata.refinement_data
         amrdata = rundata.amrdata
 
-        # geoflood['user'] = {"\n"
-        # '   # User defined parameters' : None, 
-        # '   cuda' : self.cuda,
-        # '   gravity' : self.gravity, "\n"
-        # '   dry_tolerance' : self.dry_tolerance, "\n"
-        # '   earth_radius' : self.earth_radius, "\n"
-        # '   coordinate_system' : self.coordinate_system, "\n"
-        # '   mcapa' : self.mcapa
-        # }
+        geoflood['user'] = {"\n"
+        '   # User defined parameters' : None, 
+        '   cuda' : self.cuda, "\n"
+        '   claw_version' : self.claw_version
+        }
 
         geoflood['clawpatch'] = {"\n"
         '   # Grid dimensions' : None,
@@ -244,7 +241,7 @@ class GeoFlooddata(object):
         #print(ascii_out)
         
         geoflood['geoclaw'] = {
-            '   cuda' : self.cuda,
+            # '   cuda' : self.cuda,
             '   # normal and transverse order': None,
             '   # Order of accuracy:': None,
             '   #   1 => Godunov,': None,  
