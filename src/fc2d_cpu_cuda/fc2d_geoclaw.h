@@ -30,6 +30,7 @@
 #include <fc2d_cudaclaw_cuda.h>  /* Needed for cuda_rpn2, cuda_rpt2 and other cuda functions */
 #include <fc2d_geoclaw_fort.h>  /* Needed for virtual functions */
 #include "fc2d_geoclaw_options.h"
+#include "geoflood_options_user.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -74,7 +75,7 @@ void fc2d_geoclaw_output(struct fclaw2d_global *glob, int iframe);
 void fc2d_geoclaw_solver_initialize(struct fclaw2d_global *glob);
 
 /* Initialize the model based on accelerated Riemann solvers */
-void fc2d_cudaclaw_solver_initialize(struct fclaw2d_global* glob);
+// void fc2d_cudaclaw_solver_initialize(struct fclaw2d_global* glob);
 
 #define CUDACLAW_SWAP_DATA FCLAW_F77_FUNC(cudaclaw_swap_data,CUDACLAW_SWAP_DATA)
 void CUDACLAW_SWAP_DATA(const int* mx, const int *my, const int *mbc, const int* meqn, const int* maux,
