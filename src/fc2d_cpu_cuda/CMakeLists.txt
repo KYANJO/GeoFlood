@@ -30,6 +30,7 @@ add_library(cpu_cuda_f OBJECT
     fortran_source/geoclaw_gauges_fort.f90  
     fortran_source/geoclaw_topo_update_fort.f 
     # fortran_source/geoclaw_bc2_fort.f 
+    fortran_source/extract_geoclaw_parameters.f90
     fortran_source/geoflood_bc2_fort.f90
     fortran_source/geoclaw_step2_fort.f90 
     fortran_source/geoclaw_setaux_fort.f90 

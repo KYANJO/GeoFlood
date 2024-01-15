@@ -38,9 +38,9 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 extern __constant__ GeofloodVars d_geofloodVars;
 
 /* function prototypes */
-__device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
+ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
 
-__device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
+ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
     double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir);
@@ -57,6 +57,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     double drytol = d_geofloodVars.dry_tolerance;
     double earth_radius = d_geofloodVars.earth_radius;
     int mcapa = d_geofloodVars.mcapa; 
+    double deg2rad = d_geofloodVars.deg2rad;
 
     /* Local variables */
     double wall[3], fw[9], sw[3];
@@ -67,17 +68,20 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     bool rare1, rare2;
     int mw, mu, mv;
 
+    // double pi = 4.0*atan(1.0);
+    // double deg2rad = pi/180.0;
+
     // int N = 4; 
 
-    //   bool debug;
-    //   if (idir == 0 && ix == 7 && iy == 15)
-    // // if (idir == 0)
-    //   {
-    //     debug = 1;
-    //   }
-    //   else{
-    //     debug = 0;
-    //   }
+      bool debug;
+      if (idir == 0 && ix == 7 && iy == 15)
+    // if (idir == 0)
+      {
+        debug = 1;
+      }
+      else{
+        debug = 0;
+      }
 
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
@@ -326,15 +330,17 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         if (idir == 0) {
             dxdc = earth_radius*deg2rad;
         } else {
-            dxdc = earth_radius*cos(auxl[2])*deg2rad;
+            dxdc = earth_radius*cos(auxr[2])*deg2rad;
+            // printf("deg2rad =%.16f, dxdc =%.16f\n",deg2rad,dxdc);
         }
+        
 
         // update fwave and corresponding speeds
         for (mw=0; mw<mwaves; mw++) {
-            s[mw] = dxdc*s[mw];
-            fwave[mw] = dxdc*fwave[mw];
-            fwave[mw + mwaves] = dxdc*fwave[mw + mwaves];
-            fwave[mw + 2*mwaves] = dxdc*fwave[mw + 2*mwaves];
+            s[mw] *= dxdc;
+            fwave[mw] *= dxdc;
+            fwave[mw + mwaves] *= dxdc;
+            fwave[mw + 2*mwaves] *= dxdc;
         }
     }
 
@@ -398,6 +404,7 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     double drytol = d_geofloodVars.dry_tolerance;
     double earth_radius = d_geofloodVars.earth_radius;
     int coordinate_system = d_geofloodVars.coordinate_system;
+    double deg2rad = d_geofloodVars.deg2rad;
 
     int mw, mu, mv;
     double s[3], beta[3];
@@ -406,7 +413,8 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
 
-    int N = 4;
+    //  double pi = 4.0*atan(1.0);
+    // double deg2rad = pi/180.0;
 
     /* Swapping left to right  (cudaclaw_flux2.cu)*/
     // double *qr = q_l;
@@ -432,27 +440,27 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
     // if (h > drytol) {  
         /* Compute velocities in relevant cell, and other quantities */
-        // int kv = 1 - idir;
+        int kv = 1 - idir;
         if (imp == 0) {
             // fluctuations being split is left-going
             u = ql[mu] / h;
             v = ql[mv] / h;
-            eta = h + aux2[0];
-            topo1 = aux1[0];
-            topo3 = aux3[0];
-            // eta = h + aux2[imp*maux + kv];
-            // topo1 = aux1[imp*maux + kv];
-            // topo3 = aux3[imp*maux + kv];
+            // eta = h + aux2[0];
+            // topo1 = aux1[0];
+            // topo3 = aux3[0];
+            eta = h + aux2[imp*maux + kv];
+            topo1 = aux1[imp*maux + kv];
+            topo3 = aux3[imp*maux + kv];
         } else {
             // fluctuations being split is right-going
             u = qr[mu] / h;
             v = qr[mv] / h;
-            eta = h + aux2[0];
-            topo1 = aux1[0];
-            topo3 = aux3[0];
-            // eta = h + aux2[imp*maux + kv];
-            // topo1 = aux1[imp*maux + kv];
-            // topo3 = aux3[imp*maux + kv];
+            // eta = h + aux2[0];
+            // topo1 = aux1[0];
+            // topo3 = aux3[0];
+            eta = h + aux2[imp*maux + kv];
+            topo1 = aux1[imp*maux + kv];
+            topo3 = aux3[imp*maux + kv];
         }
 
         /* Check if cell that transverse wave go into are both too high: */
@@ -468,15 +476,15 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
                     dxdcm = dxdcp;
                 } else {
                     if (imp == 0) {
-                        dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
-                        dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
-                        // dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
-                        // dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
+                        // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
+                        // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                        dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
+                        dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
                     } else {
-                        dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
-                        dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
-                        // dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
-                        // dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
+                        // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
+                        // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                        dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
+                        dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
                     }
                 }
             } else {

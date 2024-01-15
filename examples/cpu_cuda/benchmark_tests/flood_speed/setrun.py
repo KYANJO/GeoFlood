@@ -40,7 +40,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 0.5             # Total number of hours in simulation     
+    n_hours = 0.5            # Total number of hours in simulation     
     
     frames_per_minute = 1/30   # (1 frame every 30 mins)
 

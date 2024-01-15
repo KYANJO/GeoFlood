@@ -48,6 +48,7 @@ struct fclaw2d_patch;
 struct cudaclaw_fluxes;
 
 #include "riemann_source/variables.h" /* Needed for riemann solver */
+// #include <fclaw2d_include_all.h>
 
 /* ------------------------------ Typdefs for CUDA device functions --------------------*/
 

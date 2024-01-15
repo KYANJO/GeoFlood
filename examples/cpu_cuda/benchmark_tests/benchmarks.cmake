@@ -1,6 +1,6 @@
 #  =========== benchmark tests ===========
 
-add_subdirectory(flood_speed)
+# add_subdirectory(flood_speed)
 add_subdirectory(debug)
 # add_subdirectory(filling_depressions)
 # add_subdirectory(valley_flood)
