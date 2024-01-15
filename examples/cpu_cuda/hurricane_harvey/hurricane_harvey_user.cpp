@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "flood_speed_user.h"
+#include "harricane_harvey_user.h"
 
 #include <fclaw2d_include_all.h>
 
@@ -31,7 +31,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fc2d_geoclaw.h>
 
 static
-void flood_speed_problem_setup(fclaw2d_global_t* glob)
+void harricane_harvey_problem_setup(fclaw2d_global_t* glob)
 {
     const user_options_t* user_opt = geoflood_get_options(glob);
     fclaw2d_domain_barrier (glob->domain);
@@ -42,10 +42,10 @@ void flood_speed_problem_setup(fclaw2d_global_t* glob)
 }
 
 
-void flood_speed_link_solvers(fclaw2d_global_t *glob)
+void harricane_harvey_link_solvers(fclaw2d_global_t *glob)
 {   
     fclaw2d_vtable_t *vt = fclaw2d_vt(glob);
-    vt->problem_setup = &flood_speed_problem_setup;  /* Version-independent */
+    vt->problem_setup = &harricane_harvey_problem_setup;  /* Version-independent */
 
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
