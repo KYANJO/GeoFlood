@@ -33,9 +33,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static
 void malpasset_problem_setup(fclaw2d_global_t* glob)
 {
-    fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    const user_options_t* user_opt = geoflood_get_options(glob);
     fclaw2d_domain_barrier (glob->domain);
-    if (geo_opt->cuda != 0)
+    if (user_opt->cuda != 0)
     {
         setprob_cuda();
     }
