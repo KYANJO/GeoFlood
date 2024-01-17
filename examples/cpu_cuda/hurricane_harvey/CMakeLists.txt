@@ -1,6 +1,6 @@
 # Add boundary conditions as a library
 add_library(harvey_cpu_f OBJECT
-  qinit.f90
+  # qinit.f90
   # fortran/fc2d_geoflood_bc2.f90
 #   fortran/harvey_bc.f90
   ../../../src/fc2d_geoclaw/hydrograph/hydrograh_module.f90
@@ -11,8 +11,8 @@ add_library(harvey_cpu_f OBJECT
 )
 
 add_executable(harvey_cpucuda
-	harvey_user.cpp
-	harvey.cpp
+	hurricane_harvey_user.cpp
+	hurricane_harvey.cpp
 	$<TARGET_OBJECTS:harvey_cpu_f>
 )
 

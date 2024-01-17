@@ -37,7 +37,7 @@ extern "C"
 #endif
 
 // --------------------------------------------
-void harricane_harvey_link_solvers(fclaw2d_global_t *glob);
+void  hurricane_harvey_link_solvers(fclaw2d_global_t *glob);
 
 #define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 

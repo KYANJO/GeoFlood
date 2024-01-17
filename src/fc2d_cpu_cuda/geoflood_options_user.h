@@ -23,11 +23,12 @@ typedef struct user_options
 
 /* ------------------------------------- User Options made global ---------------------------------------*/
 user_options_t* geoflood_options_register (fclaw_app_t * app,
+                                        const char *section,
                                         const char *configfile);
 
-void geoflood_options_store (struct fclaw2d_global *glob, user_options_t* user);
+void geoflood_options_store (struct fclaw2d_global *glob, user_options_t* user_opt);
 
-const user_options_t* geoflood_get_options(struct fclaw2d_global *glob);
+user_options_t* geoflood_get_options(struct fclaw2d_global *glob);
 
 #ifdef __cplusplus
 #if 0

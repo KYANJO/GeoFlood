@@ -38,6 +38,8 @@ __constant__ int order[2];
 __constant__ int mthlim[FC2D_CUDACLAW_MWAVES];
 __constant__ int use_fwaves;
 
+extern __constant__ GeofloodVars d_geofloodVars;
+
 extern "C"
 {
 int cudaclaw_check_parameters(int mwaves)
@@ -259,6 +261,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     extern __shared__ double shared_mem[];
 
     double* start  = shared_mem + mwork*threadIdx.x;
+
+    int mcapa = d_geofloodVars.mcapa; /* capacity_index */
 
     /* --------------------------------- Start code ----------------------------------- */
 
@@ -597,8 +601,16 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             for(int mq = 0; mq < meqn; mq++)
             {
                 int I_q = I + mq*zs;
-                qold[I_q] = qold[I_q] - dtdx * (fm[I_q + 1] - fp[I_q]) 
+                if (mcapa == 0 ){ 
+                    qold[I_q] = qold[I_q] 
+                                      - dtdx * (fm[I_q + 1] - fp[I_q]) 
                                       - dtdy * (gm[I_q + ys] - gp[I_q]);
+                } else {
+                    qold[I_q] = qold[I_q] 
+                                      - (dtdx * (fm[I_q + 1] - fp[I_q]) 
+                                      + dtdy * (gm[I_q + ys] - gp[I_q]))/aux[mcapa];
+                }
+                
             }        
         }
         return;

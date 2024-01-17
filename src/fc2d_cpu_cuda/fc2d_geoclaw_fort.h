@@ -119,7 +119,8 @@ typedef void (*fc2d_geoclaw_fluxfun_t)(const int* meqn, double q[], double aux[]
 
 
 /* ---------------------------------- GeoClaw functions ------------------------------- */
-
+#define GET_GEOCLAW_PARAMETERS FCLAW_F77_FUNC(get_geoclaw_parameters, GET_GEOCLAW_PARAMETERS)
+void GET_GEOCLAW_PARAMETERS(const int* mcapa, const int* coord_system, const double* grav, const double* dry_tol, const double* earth_rad, const double* deg2rad);
 
 #define FC2D_GEOCLAW_BC2 FCLAW_F77_FUNC(fc2d_geoclaw_bc2, FC2D_GEOCLAW_BC2)
 void FC2D_GEOCLAW_BC2(const int* meqn, const int* mbc,

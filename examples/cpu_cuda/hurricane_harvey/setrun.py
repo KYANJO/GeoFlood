@@ -19,7 +19,7 @@ import tools
 #===============================================================================
 # Importing scripts dictionary
 #===============================================================================
-sys.path.append('../../../../scripts')
+sys.path.append('../../../scripts')
 import geoflood # -- importing geoflood.py
 import data
 from geoclaw.topotools import Topography
@@ -353,7 +353,7 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     hydrographdata = geoflood.Hydrographdata()
     hydrographdata.use_hydrograph = True  # True if using hydrograph data, False if not
-    hydrographdata.read_data = False      # False if reading from file, True if using reading from set values
+    hydrographdata.read_data = True      # False if reading from file, True if using reading from set values
     hydrographdata.initial_velocity = 0.0
     hydrographdata.initial_discharge = 0.0
     hydrographdata.initial_elevation = 0.0
@@ -362,11 +362,9 @@ def setrun(claw_pkg='geoclaw'):
     hydrographdata.channel_position = [0,1000]
     hydrographdata.channel_boundary_location = ['Left',None,None,None] # 'left', 'right', 'top', 'bottom'
     hydrographdata.hydrograph_type = 'discharge' # 'elevation' or 'discharge'
-    hydrographdata.time = [0.0, 300, 3600, 14400, 18000]
-    hydrographdata.discharge = [0.0, 0.0, 20.0, 20.0, 0.0]
-    hydrographdata.elevation = [0.0, 0.0, 0.0, 0.0, 0.0]
     
-    hydrographdata.hydrograph_filename = 'scratch/bc.txt'
+    hydrographdata.hydrograph_filename = hydrograph_file_30
+    hydrographdata.src_loc = src_loc_file_30
 
 
     # Specify when checkpoint files should be created that can be

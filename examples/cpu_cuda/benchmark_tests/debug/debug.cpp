@@ -71,7 +71,7 @@ void run_program(fclaw2d_global_t* glob)
        Set domain data.
        --------------------------------------------------------------- */
     fclaw2d_domain_data_new(glob->domain);
-    const user_options_t* user_opt = geoflood_get_options(glob);
+    user_options_t* user_opt = geoflood_get_options(glob);
     // fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
 
     /* Initialize virtual table for ForestClaw */
@@ -143,15 +143,15 @@ main (int argc, char **argv)
     /* Initialize application */
     app = fclaw_app_new (&argc, &argv, NULL);
 
-    fclaw_opt       =             fclaw_options_register(app,  NULL,       "geoflood.ini");
-    clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "geoflood.ini");
-    geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "geoflood.ini");
-    user_opt =                geoflood_options_register(app,"geoflood.ini"); 
+    fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
+    clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
+    geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
+    user_opt =                geoflood_options_register(app,  "user",       "fclaw_options.ini"); 
 
     /* Read configuration file(s) and command line, and process options */
     options = fclaw_app_get_options (app);
     retval = fclaw_options_read_from_file(options);
-    vexit =  fclaw_app_options_parse (app, &first_arg,"geoflood.ini.used");
+    vexit =  fclaw_app_options_parse (app, &first_arg,"fclaw_options.ini.used");
 
     /* Run the program */
     if (!retval & !vexit)

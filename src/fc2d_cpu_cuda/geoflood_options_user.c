@@ -127,31 +127,38 @@ static const fclaw_app_options_vtable_t options_vtable_user =
 
 /* --------------------- Public interface access functions ---------------------------- */
 
-user_options_t* geoflood_options_register (fclaw_app_t * app,
-                                       const char *configfile)
+user_options_t* geoflood_options_register (fclaw_app_t * app, 
+                                        const char *section,
+                                        const char *configfile)
 {
     user_options_t *user;
     FCLAW_ASSERT (app != NULL);
 
     user = FCLAW_ALLOC (user_options_t, 1);
-    fclaw_app_options_register (app,"user", configfile, &options_vtable_user,
-                                user);
+    fclaw_app_options_register (app, section, configfile, 
+                                &options_vtable_user, user);
 
-    fclaw_app_set_attribute(app,"user",user);
+    fclaw_app_set_attribute(app,section,user);
     return user;
+}
+
+user_options_t* geoflood_get_options(fclaw2d_global_t* glob)
+{
+    // int id = s_user_options_package_id;
+    // return (user_options_t*) fclaw_package_get_options(glob, id);    
+    user_options_t* user = (user_options_t*) 
+	   							fclaw_pointer_map_get(glob->options, "fc2d_cpu_cuda");
+	FCLAW_ASSERT(user != NULL);
+	return user;
 }
 
 void geoflood_options_store (fclaw2d_global_t* glob, user_options_t* user)
 {
-    FCLAW_ASSERT(s_user_options_package_id == -1);
-    int id = fclaw_package_container_add_pkg(glob,user);
-    s_user_options_package_id = id;
-}
-
-const user_options_t* geoflood_get_options(fclaw2d_global_t* glob)
-{
-    int id = s_user_options_package_id;
-    return (user_options_t*) fclaw_package_get_options(glob, id);    
+    // FCLAW_ASSERT(s_user_options_package_id == -1);
+    // int id = fclaw_package_container_add_pkg(glob,user);
+    // s_user_options_package_id = id;
+    FCLAW_ASSERT(fclaw_pointer_map_get(glob->options,"fc2d_cpu_cuda") == NULL);
+	fclaw_pointer_map_insert(glob->options, "fc2d_cpu_cuda", user, NULL);
 }
 
 #ifdef __cplusplus
