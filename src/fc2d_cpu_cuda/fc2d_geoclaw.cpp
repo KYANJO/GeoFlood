@@ -983,7 +983,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 	fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
 	fclaw2d_clawpatch_options_t* clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
 	fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
-    const user_options_t* user_opt = geoflood_get_options(glob);
+    user_options_t* user_opt = geoflood_get_options(glob);
 
     geo_opt->method[6] = clawpatch_opt->maux;
 
@@ -1004,7 +1004,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     fclaw2d_clawpatch_vtable_t*  clawpatch_vt = fclaw2d_clawpatch_vt(glob);
 
     fc2d_geoclaw_vtable_t*  geoclaw_vt = fc2d_geoclaw_vt_new();
-
+    printf("cuda = %d\n",user_opt->cuda);
     if (user_opt->cuda == 1){
         #if defined(_OPENMP)
             fclaw_global_essentialf("Current implementation does not allow OPENMP + CUDA\n");

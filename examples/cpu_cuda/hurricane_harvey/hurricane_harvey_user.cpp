@@ -33,7 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static
 void hurricane_harvey_problem_setup(fclaw2d_global_t* glob)
 {
-    const user_options_t* user_opt = geoflood_get_options(glob);
+    user_options_t* user_opt = geoflood_get_options(glob);
     fclaw2d_domain_barrier (glob->domain);
     if (user_opt->cuda != 0)
     {
