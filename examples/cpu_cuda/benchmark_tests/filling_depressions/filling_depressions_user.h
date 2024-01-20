@@ -39,15 +39,6 @@ extern "C"
 // --------------------------------------------
 void filling_depressions_link_solvers(fclaw2d_global_t *glob);
 
-#define FILLING_DEPRESSIONS_QINIT  FCLAW_F77_FUNC(filling_depressions_qinit, FILLING_DEPRESSIONS_QINIT)
-
-void FILLING_DEPRESSIONS_QINIT(const int* meqn, const int* mbc,
-                    const int* mx, const int* my,
-                    const double* xlower, const double* ylower,
-                    const double* dx, const double* dy,
-                    double q[], const int* maux, double aux[]);
-
-//  BC (Fortran to c)
 #define FILLING_DEPRESSIONS_BC2   FCLAW_F77_FUNC(filling_depressions_bc2, FILLING_DEPRESSIONS_BC2)
 
 void FILLING_DEPRESSIONS_BC2(const int* meqn, const int* mbc,
@@ -57,6 +48,7 @@ void FILLING_DEPRESSIONS_BC2(const int* meqn, const int* mbc,
                     const double q[], const int* maux,
                     const double aux[], const double* t,
                     const double* dt, const int mthbc[]);
+
 
 
 /* Mappings */

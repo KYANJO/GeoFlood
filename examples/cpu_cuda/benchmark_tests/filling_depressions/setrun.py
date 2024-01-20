@@ -74,7 +74,7 @@ manning_coefficient = 0.03
 num_dim = 2
 
 # ------------------  user options ---------------------------------------------------
-use_cuda = True
+use_cuda = False
 gravity = 9.81
 dry_tolerance = 1e-4
 earth_radius = 6371220.0
