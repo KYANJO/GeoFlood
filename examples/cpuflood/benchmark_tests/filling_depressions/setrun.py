@@ -475,7 +475,7 @@ def setrun(claw_pkg='geoclaw'):
     regions = rundata.regiondata.regions
 
     # Region containing initial reservoir
-    regions.append([maxlevel,maxlevel,0, 1e10, 0.00000000, 0.00000000,1900,2000]) # left wall
+    regions.append([maxlevel,maxlevel,0, 1e10, 0.02, 0.02,1900,1999]) # left wall
     
    # Gauges ( append lines of the form  [gaugeno, x, y, t1, t2])
     gaugeno,x,y = tools.read_locations_data(gauge_loc)
