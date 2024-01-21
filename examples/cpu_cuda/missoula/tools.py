@@ -1,4 +1,8 @@
+# @author :: Brian Kyanjo
+# @data   :: January 21, 2024
+
 import numpy as np
+import os
 
 def read_topo_data(topofile):
 
@@ -47,6 +51,11 @@ def convert_file_type(input_file,output_file,input_type,output_type):
             file_type = 3 : mx values per line
     returns a converted file
     """
+
+    # check if output file exists
+    if os.path.isfile(output_file):
+        print(f'Warning: Converted file: {output_file} already exists, skipping file conversion, delete it to overwrite.')
+        return
 
     # check input type
     if input_type == output_type:
