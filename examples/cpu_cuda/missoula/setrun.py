@@ -483,6 +483,20 @@ def setrun(claw_pkg='geoclaw'):
     #     print('\tGauge %s at (%s, %s)' % (i, x[i],y[i]))
     #     rundata.gaugedata.gauges.append([i, x[i],y[i], 0., 1e10])
 
+    # -----------------------------------------------
+    # == setflowgrades data values ==
+    flowgrades_data = geoflood.Flowgradesdata()
+    # this can be used to specify refinement criteria, for Overland flow problems.
+    # for using flowgrades for refinement append lines of the form
+    # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+    # where:
+    #flowgradevalue: floating point relevant flowgrade value for following measure:
+    #flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
+    #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
+    #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
+    
+    flowgrades_data.flowgrades.append([1.e-4, 1, 1, maxlevel])
+    flowgrades_data.flowgrades.append([1.e-8, 2, 1, maxlevel])
     
     # -------------------------------------------------------
     # For developers
@@ -500,7 +514,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, setprobdata
+    return rundata, geoflooddata, setprobdata, flowgrades_data
     # end of function setrun
     # ----------------------
 
@@ -563,37 +577,10 @@ def setgeo(rundata):
     # end of function setgeo
     # ---------------------
 
-#------------------- generate topo file -------------------
-def generate_topo_file():
-#-------------------
-    """
-    Generate topo file for the current run
-    """
-
-    buffer = 200
-    cellsize = 5
-    xlower = -buffer
-    xupper = 1000 + buffer
-    ylower = -buffer
-    yupper = 2000 + buffer
-    nxpoints =  int((xupper - xlower)/cellsize) 
-    nypoints =  int((yupper - ylower)/cellsize) 
-    outfile= "bathy2.topotype2"   
-
-    z = 0.0 # Dry bed  
-
-    topo = lambda x,y: 0*x**2 + 0*y**2 + z
-
-    topography = Topography(topo_func=topo)
-    topography.x = np.linspace(xlower,xupper,nxpoints)
-    topography.y = np.linspace(ylower,yupper,nypoints)
-    topography.write(outfile, topo_type=3, Z_format="%22.15e")
-
 if __name__ == '__main__':
-    # Set up run-time parameters and write all data files.
-    # generate_topo_file()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, setprobdata = setrun(*sys.argv[1:])
+    # Set up run-time parameters and write all data files
+    rundata,geoflooddata, setprobdata, flowgrades_data = setrun(*sys.argv[1:])
     rundata.write()
-    geoflood.write_data_outputs(rundata,geoflooddata, setprobdata)
+    geoflood.write_data_outputs(rundata,geoflooddata, setprobdata, flowgrades_data)
 
     

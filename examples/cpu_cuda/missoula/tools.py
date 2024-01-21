@@ -56,6 +56,8 @@ def convert_file_type(input_file,output_file,input_type,output_type):
     if os.path.isfile(output_file):
         print(f'Warning: Converted file: {output_file} already exists, skipping file conversion, delete it to overwrite.')
         return
+    else:
+        print (f'Converting {input_file} from type {input_type} to type {output_type} and saving as {output_file}.')
 
     # check input type
     if input_type == output_type:
