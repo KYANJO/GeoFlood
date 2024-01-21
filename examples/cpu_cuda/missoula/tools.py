@@ -2,10 +2,26 @@ import numpy as np
 
 def read_topo_data(topofile):
 
-    f = open(topofile,'r')
+    try:
+        f = open(topofile,'r')
+        l = f.readline()
+        first_entry = l.split()[0]
+        int(first_entry)
+    except ValueError:
+        print(f"Error: First entry '{first_entry}' in file header is not an integer.")
+        print('File header format not recognized. Please ensure the file has the following format:')
+        print('100         ncols')
+        print('100         nrows')
+        print('0.0         xllcorner')
+        print('0.0         yllcorner')
+        print('1.0         cellsize')
+        print('-9999.0     NODATA_value')
+        print('...')
+        print('And then run again')
+        return
 
-    l = f.readline()
-    ncols = np.fromstring(l.split()[0].strip(),sep=' ')                    
+
+    ncols = np.fromstring(l.split()[0].strip(),sep=' ')            
 
     l = f.readline()
     nrows = np.fromstring(l.split()[0].strip(),sep=' ')
@@ -20,6 +36,59 @@ def read_topo_data(topofile):
     cellsize = np.fromstring(l.split()[0].strip(),sep=' ')
 
     return ncols[0],nrows[0],xllcorner[0],yllcorner[0],cellsize[0]
+
+
+def convert_file_type(input_file,output_file,input_type,output_type):
+    """
+    Reads a file and converts from one type to another
+        file_type = 1 : columns of data: x y z
+        file_type = 2 and 3 : header describes grid format followed by z data 
+            file_type = 2 : one value per line
+            file_type = 3 : mx values per line
+    returns a converted file
+    """
+
+    # check input type
+    if input_type == output_type:
+        return input_file  
+    elif input_type == 2 or output_type == 3:
+        # read in header information
+        mx,my,xll,yll,cellsize = read_topo_data(input_file)
+        mx = int(mx)
+        my = int(my)
+        dx = cellsize
+        dy = dx             # grid spacing
+        xhi = xll + mx*dx   
+        yhi = yll + my*dy   
+
+        # read in the remaining data
+        data = np.loadtxt(input_file,skiprows=6)
+        if input_type == 2:
+            # save data as 1D array
+            data = data.flatten()
+        elif input_type == 3:
+            # convert 3 to 2
+            z = [] # save z values as a list 
+            k = 0
+            for j in range(my):
+                for i in range(mx):
+                    z.append(data[j])
+                    k += 1
+            data = np.array(z)
+    elif input_type == 1:
+        print('Error: Converting from file type 1 to file type 2 or 3 is not yet supported.')
+
+    
+    # convert from 2 or 3 to 1
+    if input_type == 2 or input_type == 3 and output_type == 1:
+        # write out the data
+        f = open(output_file,'w')
+        for j in range(my):
+            for i in range(mx):
+                f.write('%f %f %f\n' % (xll+i*dx,yll+j*dy,data[j*mx+i]))
+        f.close()
+            
+    return output_file
 
 def compute_distances(lon,lat):
 
