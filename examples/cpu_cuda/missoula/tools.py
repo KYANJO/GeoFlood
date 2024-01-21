@@ -51,7 +51,7 @@ def convert_file_type(input_file,output_file,input_type,output_type):
     # check input type
     if input_type == output_type:
         return input_file  
-    elif input_type == 2 or output_type == 3:
+    elif input_type == 2 or input_type == 3:
         # read in header information
         mx,my,xll,yll,cellsize = read_topo_data(input_file)
         mx = int(mx)
@@ -62,19 +62,26 @@ def convert_file_type(input_file,output_file,input_type,output_type):
         yhi = yll + my*dy   
 
         # read in the remaining data
-        data = np.loadtxt(input_file,skiprows=6)
         if input_type == 2:
+            data = np.loadtxt(input_file,skiprows=6)
             # save data as 1D array
             data = data.flatten()
+        
         elif input_type == 3:
             # convert 3 to 2
-            z = [] # save z values as a list 
-            k = 0
+            f = open(input_file,'r')
+        
+            # skip six header lines
+            for i in range(6):
+                f.readline()
+
+            data = [] # save z values as a list
             for j in range(my):
-                for i in range(mx):
-                    z.append(data[j])
-                    k += 1
-            data = np.array(z)
+                l = f.readline()
+                data2str = l.split()
+                for k in range(mx):
+                    data.append(float(data2str[k]))
+
     elif input_type == 1:
         print('Error: Converting from file type 1 to file type 2 or 3 is not yet supported.')
 
@@ -87,7 +94,7 @@ def convert_file_type(input_file,output_file,input_type,output_type):
             for i in range(mx):
                 f.write('%f %f %f\n' % (xll+i*dx,yll+j*dy,data[j*mx+i]))
         f.close()
-            
+               
     return output_file
 
 def compute_distances(lon,lat):
