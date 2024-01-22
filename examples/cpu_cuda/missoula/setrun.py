@@ -39,7 +39,7 @@ if output_style == 1:
 
     n_hours = 120             # Total number of hours in simulation     
     
-    frames_per_minute = 1/60   # (1 frame every 30 mins)
+    frames_per_minute = 1/30   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -287,7 +287,7 @@ def setrun(claw_pkg='geoclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.4
+    clawdata.cfl_desired = 0.8
     clawdata.cfl_max = 0.99
 
     # Maximum number of time steps to allow between output times:
@@ -298,7 +298,7 @@ def setrun(claw_pkg='geoclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -307,7 +307,7 @@ def setrun(claw_pkg='geoclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 0
+    clawdata.transverse_waves = 2
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 3
@@ -391,7 +391,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
-    geoflooddata.output = False
+    geoflooddata.output = True
     geoflooddata.output_gauges = False
 
 
