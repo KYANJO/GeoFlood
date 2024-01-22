@@ -314,15 +314,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
        
     }
 
-    // Debugging
-    // if (debug) {
-    //     printf("ix = %d, iy = %d\n " \
-    //     "s[0] = %.16f, s[1] = %.16f, s[2] = %.16f\n" \
-    //     "fwave[0] = %.16f, fwave[1] = %.16f, fwave[2] = %.16f\n" \
-    //     "fwave[3] = %.16f, fwave[4] = %.16f, fwave[5] = %.16f\n" \
-    //     "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
-    // }
-
     // label30: // (similar to 30 continue in Fortran)
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
@@ -334,7 +325,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             // printf("deg2rad =%.16f, dxdc =%.16f\n",deg2rad,dxdc);
         }
         
-
         // update fwave and corresponding speeds
         for (mw=0; mw<mwaves; mw++) {
             s[mw] *= dxdc;
@@ -343,6 +333,15 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             fwave[mw + 2*mwaves] *= dxdc;
         }
     }
+
+     // Debugging
+    // if (debug) {
+    //     printf("ix = %d, iy = %d\n " \
+    //     "s[0] = %.16f, s[1] = %.16f, s[2] = %.16f\n" \
+    //     "fwave[0] = %.16f, fwave[1] = %.16f, fwave[2] = %.16f\n" \
+    //     "fwave[3] = %.16f, fwave[4] = %.16f, fwave[5] = %.16f\n" \
+    //     "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
+    // }
 
     /* --- compute fluctuations --- */
     amdq[0] = 0.0;
@@ -416,12 +415,6 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     //  double pi = 4.0*atan(1.0);
     // double deg2rad = pi/180.0;
 
-    /* Swapping left to right  (cudaclaw_flux2.cu)*/
-    // double *qr = q_l;
-    // double *ql = q_r;
-    // double *bmasdq = bpasd_q;
-    // double *bpasdq = bmasd_q;
-
     mu = 1+idir;
     mv = 2-idir;
 
@@ -437,35 +430,39 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     bool debug = (idir == 0) ? 1 : 0;
   
-    if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
-    // if (h > drytol) {  
+    // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
+    if (h > drytol) {  
         /* Compute velocities in relevant cell, and other quantities */
         int kv = 1 - idir;
         if (imp == 0) {
             // fluctuations being split is left-going
             u = ql[mu] / h;
             v = ql[mv] / h;
-            // eta = h + aux2[0];
-            // topo1 = aux1[0];
-            // topo3 = aux3[0];
-            eta = h + aux2[imp*maux + kv];
-            topo1 = aux1[imp*maux + kv];
-            topo3 = aux3[imp*maux + kv];
+            eta = h + aux2[0];
+            topo1 = aux1[0];
+            topo3 = aux3[0];
+            // for(int kv=0; kv<maux; kv++){
+                // eta = h + aux2[imp*maux + kv];
+                // topo1 = aux1[imp*maux + kv];
+                // topo3 = aux3[imp*maux + kv];
+            // }
         } else {
             // fluctuations being split is right-going
             u = qr[mu] / h;
             v = qr[mv] / h;
-            // eta = h + aux2[0];
-            // topo1 = aux1[0];
-            // topo3 = aux3[0];
-            eta = h + aux2[imp*maux + kv];
-            topo1 = aux1[imp*maux + kv];
-            topo3 = aux3[imp*maux + kv];
+            eta = h + aux2[0];
+            topo1 = aux1[0];
+            topo3 = aux3[0];
+            // for(int kv=0; kv<maux; kv++){
+                // eta = h + aux2[imp*maux + kv];
+                // topo1 = aux1[imp*maux + kv];
+                // topo3 = aux3[imp*maux + kv];
+            // }
         }
 
         /* Check if cell that transverse wave go into are both too high: */
-        if (eta < fmin(topo1, topo3)) return; 
-        // if (eta >= fmin(topo1, topo3)) {
+        // if (eta < fmin(topo1, topo3)) return; 
+        if (eta >= fmin(topo1, topo3)) {
 
             /* Check if cell that transverse waves go into are both to high, if so,
             do the splitting (no dry cells), and compute necessary quantities */
@@ -475,6 +472,7 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
                     dxdcp = earth_radius * deg2rad;
                     dxdcm = dxdcp;
                 } else {
+                    int kv = 1 - idir;
                     if (imp == 0) {
                         // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
                         // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
@@ -537,8 +535,8 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
                     bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[2][mw];
                 }
             }
-        // }
-    // }
+        }
+    }
 }
 
 

@@ -28,7 +28,7 @@ from geoclaw.topotools import Topography
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1 # Initial time step
+initial_dt = 1e-8 # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------

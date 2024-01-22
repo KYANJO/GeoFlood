@@ -33,12 +33,14 @@
 #include <cub/block/block_reduce.cuh>  
 
 #include "cudaclaw_allocate.h"  /* Needed to for definition of 'fluxes' */
+#include "cudaclaw_flux2.h"
 
 __constant__ int order[2];
 __constant__ int mthlim[FC2D_CUDACLAW_MWAVES];
 __constant__ int use_fwaves;
 
 extern __constant__ GeofloodVars d_geofloodVars;
+__constant__ Set_method_parameters d_set_method_parameters;
 
 extern "C"
 {
@@ -53,6 +55,13 @@ void cudaclaw_set_method_parameters(int *order_in, int *mthlim_in, int mwaves,
     CHECK(cudaMemcpyToSymbol(order,order_in,2*sizeof(int)));
     CHECK(cudaMemcpyToSymbol(use_fwaves,&use_fwaves_in,sizeof(int)));
     CHECK(cudaMemcpyToSymbol(mthlim,mthlim_in,mwaves*sizeof(int)));
+
+    // Set_method_parameters set_method_parameters;
+    // set_method_parameters.order = order_in;
+    // set_method_parameters.mthlim = mthlim_in;
+    // set_method_parameters.use_fwaves = use_fwaves_in;
+
+    // CHECK(cudaMemcpyToSymbol(d_set_method_parameters, &set_method_parameters, sizeof(Set_method_parameters)));
 }
 
 }
@@ -263,6 +272,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     double* start  = shared_mem + mwork*threadIdx.x;
 
     int mcapa = d_geofloodVars.mcapa; /* capacity_index */
+    // int *order = d_set_method_parameters.order;
+    // int *mthlim = d_set_method_parameters.mthlim;
+    // int use_fwaves = d_set_method_parameters.use_fwaves;
 
     /* --------------------------------- Start code ----------------------------------- */
 
@@ -271,7 +283,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     if (threadIdx.x == 0)
     {
         dtdx = dt/dx;
-        dtdy = dt/dy;        
+        dtdy = dt/dy;       
+        // printf("dt = %.16f, dx = %.16f, dy = %.16f\n",dt,dx,dy);
 
         /* Compute strides */
         xs = 1;
@@ -363,6 +376,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             // --- use the speeds to compute maxcfl
             for(int mw = 0; mw < mwaves; mw++)
             {
+                // if (mcapa > 0) dtdx = dtdx/aux[mcapa-1];
+                // printf("mcapa = %d, s = %.16f, dtdx = %.16f, aux[mcapa] = %.16f\n",mcapa, s[mw], dtdx, aux[2] );
                 maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
                 
                 // --- save the speeds and waves to global memory
@@ -421,6 +436,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
             for(int mw = 0; mw < mwaves; mw++)
             {
+                // if (mcapa > 0) dtdy = dtdy/aux[mcapa-1];
                 maxcfl = max(maxcfl,fabs(s[mw])*dtdy);
 
                 if (order[0] == 2)
@@ -606,9 +622,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                                       - dtdx * (fm[I_q + 1] - fp[I_q]) 
                                       - dtdy * (gm[I_q + ys] - gp[I_q]);
                 } else {
+                    // dtdx = dt/dx;
+                    // dtdy = dt/dy;
                     qold[I_q] = qold[I_q] 
                                       - (dtdx * (fm[I_q + 1] - fp[I_q]) 
-                                      + dtdy * (gm[I_q + ys] - gp[I_q]))/aux[mcapa];
+                                      + dtdy * (gm[I_q + ys] - gp[I_q]))/aux[mcapa-1];
                 }
                 
             }        
