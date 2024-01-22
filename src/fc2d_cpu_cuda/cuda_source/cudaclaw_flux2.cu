@@ -40,7 +40,6 @@ __constant__ int mthlim[FC2D_CUDACLAW_MWAVES];
 __constant__ int use_fwaves;
 
 extern __constant__ GeofloodVars d_geofloodVars;
-__constant__ Set_method_parameters d_set_method_parameters;
 
 extern "C"
 {
@@ -55,13 +54,6 @@ void cudaclaw_set_method_parameters(int *order_in, int *mthlim_in, int mwaves,
     CHECK(cudaMemcpyToSymbol(order,order_in,2*sizeof(int)));
     CHECK(cudaMemcpyToSymbol(use_fwaves,&use_fwaves_in,sizeof(int)));
     CHECK(cudaMemcpyToSymbol(mthlim,mthlim_in,mwaves*sizeof(int)));
-
-    // Set_method_parameters set_method_parameters;
-    // set_method_parameters.order = order_in;
-    // set_method_parameters.mthlim = mthlim_in;
-    // set_method_parameters.use_fwaves = use_fwaves_in;
-
-    // CHECK(cudaMemcpyToSymbol(d_set_method_parameters, &set_method_parameters, sizeof(Set_method_parameters)));
 }
 
 }
