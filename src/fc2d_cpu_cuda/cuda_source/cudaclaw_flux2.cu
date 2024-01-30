@@ -271,26 +271,29 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     /* --------------------------------- Start code ----------------------------------- */
 
     __shared__ double dtdx, dtdy;
-    __shared__ int xs,ys,zs;
+    __shared__ int xs, ys, zs;
+    __shared__ int ifaces_x, ifaces_y, num_ifaces;
+
     if (threadIdx.x == 0)
     {
+        // Initialize variables related to time and grid spacing
         dtdx = dt/dx;
-        dtdy = dt/dy;       
-        // printf("dt = %.16f, dx = %.16f, dy = %.16f\n",dt,dx,dy);
+        dtdy = dt/dy;
 
-        /* Compute strides */
+        // Compute strides
         xs = 1;
         ys = (2*mbc + mx)*xs;
         zs = (2*mbc + my)*xs*ys;
+
+        // Initialize interface variables
+        ifaces_x = mx + 2*mbc - 1;
+        ifaces_y = my + 2*mbc - 1;
+        num_ifaces = ifaces_x * ifaces_y;
     }
-    
-    __shared__ int ifaces_x, ifaces_y, num_ifaces;
 
-    ifaces_x = mx + 2*mbc-1;
-    ifaces_y = my + 2*mbc-1;
-    num_ifaces = ifaces_x*ifaces_y;
-
+    // Synchronize to ensure all threads see the initialized values
     __syncthreads();
+
 
 
     double maxcfl = 0;
@@ -312,6 +315,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         {
             int I_q = I + mq*zs;
             qr[mq] = qold[I_q];        /* Right */
+            // printf("qold = %f\n",qold[I_q]);
         }
 
         // ---- store auxr after qr to occupy meqn memory, so its start address is qr + meqn
@@ -339,6 +343,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             {
                 int I_q = I + mq*zs;
                 ql[mq] = qold[I_q - 1];    /* Left  */
+                
             }
 
             // ---- pack auxl = {bl} from global memory (aux[I_aux - 1])
