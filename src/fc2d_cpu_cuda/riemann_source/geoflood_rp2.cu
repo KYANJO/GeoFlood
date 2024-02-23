@@ -85,9 +85,9 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
 
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
-    if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
-        printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
-    }
+    // if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
+    //     printf("Negative input: hl, hr = %f,%f\n", ql[0], qr[0]);
+    // }
 
     /* initialize Riemann problem for grid interface */
     for (mw = 0; mw < mwaves; mw++){
@@ -1038,98 +1038,3 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
     }
 } /* End of riemanntype function */
 
-
-
-// __device__  void riemann_type(double hL, double hR, double uL, double uR, double hm, 
-//     double s1m, double s2m, bool rare1, bool rare2)
-// {
-//     double g = d_geofloodVars.gravity;
-//     double drytol = d_geofloodVars.dry_tolerance;
-
-//     double um,u1m,u2m,delu;
-//     double h_max,h_min,h0,F_max,F_min,dfdh,F0,slope,gL,gR;
-//     double sqrtgh1,sqrtgh2;
-//     int iter;
-
-//     /* Test for Riemann structure */
-//     h_min = min(hR,hL);
-//     h_max = max(hR,hL);
-//     delu = uR - uL;
-
-//    if (h_min <= drytol){
-//     hm = 0.0;
-//     um = 0.0;
-//     s1m = uR + uL - 2.0*sqrt(g*hR) + 2.0*sqrt(g*hL);
-//     s2m = uR + uL - 2.0*sqrt(g*hR) + 2.0*sqrt(g*hL);
-
-//     if (hL <= 0.0){
-//         rare1 = false;
-//         rare2 = true;
-//     } else {
-//         rare1 = true;
-//         rare2 = false;
-//     }
-//    } else {
-//         F_min = delu + 2.0*(sqrt(g*h_min) - sqrt(g*h_max));
-//         F_max = delu + (h_max - h_min)*(sqrt(0.5*g*(h_max + h_min)/(h_max*h_min)));
-
-//         if (F_min < 0.0) {
-//             /* 2-rarefactions */
-//             hm = (1.0/(16.0*g))*(pow(max(0.0,-delu + 2.0*(sqrt(g*hL) + sqrt(g*hR))),2));
-//             um = copysign(1.0,hm)*(uL + 2.0*(sqrt(g*hL) - sqrt(g*hm)));
-//             s1m = uL + 2.0*sqrt(g*hL) - 3.0*sqrt(g*hm);
-//             s2m = uR - 2.0*sqrt(g*hR) + 3.0*sqrt(g*hm);
-//             rare1 = true;
-//             rare2 = true;
-//         } else if (F_max <= 0.0) {
-//             /* 2-shocks */
-//             /* Root finding using a Newton iteration on sqrt(h) */
-//             h0 = h_max;
-//             for (iter = 1; iter <= maxiter; iter++) {
-//                 gL = sqrt(0.5*g*(1.0/h0 + 1.0/hL));
-//                 gR = sqrt(0.5*g*(1.0/h0 + 1.0/hR));
-//                 F0 = delu + (h0 - hL)*gL + (h0 - hR)*gR;
-//                 dfdh = gL - g*(h0 - hL)/(4.0*h0*h0*gL) + gR - g*(h0 - hR)/(4.0*h0*h0*gR);
-//                 slope = 2.0*sqrt(h0)*dfdh;
-//                 h0 = pow(sqrt(h0) - F0/slope,2);
-//             }
-//             hm = h0;
-//             /* u1m and u2m are Eqns (13.19) and (13.20) in the FVMHP book */
-//             u1m = uL - (hm - hL)*sqrt(0.5*g*(1.0/hm + 1.0/hL));
-//             u2m = uR + (hm - hR)*sqrt(0.5*g*(1.0/hm + 1.0/hR));
-//             um = 0.5*(u1m + u2m);
-//             s1m = u1m - sqrt(g*hm);
-//             s2m = u2m + sqrt(g*hm);
-//             rare1 = false;
-//             rare2 = false;
-//         } else {
-//             /* 1-shock or 1-rarefaction */
-//             h0 = h_min;
-//             for (iter = 1; iter <= maxiter; iter++) {
-//                 F0 = delu + 2.0*(sqrt(g*h0) - sqrt(g*h_max)) + (h0 - h_min)*sqrt(0.5*g*(1.0/h0 + 1.0/h_min));
-//                 slope = (F_max - F0)/(h_max - h_min);
-//                 h0 = h0 - F0/slope;
-//             }
-//             hm = h0;
-//             sqrtgh2 = sqrt(g*hm);
-//             if (hL > hR) {
-//                 sqrtgh1 = sqrt(g*hL);
-//                 /* Eqn (13.55) in the FVMHP book */
-//                 um = uL + 2.0*sqrtgh1 - 2.0*sqrtgh2;
-//                 s1m = uL + 2.0*sqrtgh1 - 3.0*sqrtgh2;
-//                 s2m = uL + 2.0*sqrtgh1 - sqrtgh2;
-
-//                 rare1 = true;
-//                 rare2 = false;
-//             } else {
-//                 sqrtgh1 = sqrt(g*hR);
-//                 um = uR - 2.0*sqrtgh1 + 2.0*sqrtgh2;
-//                 s1m = uR - 2.0*sqrtgh1 + sqrtgh2;
-//                 s2m = uR - 2.0*sqrtgh1 + 3.0*sqrtgh2;
-//                 rare1 = false;
-//                 rare2 = true;
-//             }
-//         }
-//    }
-
-// }

@@ -387,6 +387,8 @@ double geoclaw_update(fclaw2d_global_t *glob,
                                   patch,
                                   blockno,
                                   patchno,t,dt);
+    
+//    printf("maxcfl = %f, blockno = %d, patchno = %d, dt = %f\n",maxcfl,blockno,patchno,dt);
 
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
 
@@ -443,6 +445,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     patch_buffer_len = cuclaw_opt->buffer_len;
     iter = buffer_data->iter;
     total = buffer_data->total_count; 
+    // total = 46;
+    // printf("iter = %d, total = %d\n",iter,total);
     
     /* Be sure to save current step! */
     fclaw2d_clawpatch_save_current_step(glob, this_patch);
@@ -498,7 +502,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         // printf("iter = %d maxcfl = %f\n",iter,maxcfl);
         // exit(0);
     }  
-
+    // printf("maxcfl = %f, iter = %d, total = %d\n",maxcfl,iter,total);
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
     
     /* -------------------------------- Source term ----------------------------------- */
@@ -509,7 +513,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         {   
             FCLAW_ASSERT(geoclaw_vt->src2 != NULL);
             // iterate over patches in buffer and call src2 to update them
-            for (int i = 0; i < (iter+1); i++)
+            for (int i = 0; i < (total); i++)
             {
                 geoclaw_src2(glob,patch_data->patch_array[i],
                               patch_data->blockno_array[i],
@@ -1062,7 +1066,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     geoclaw_vt->setaux           = FC2D_GEOCLAW_SETAUX;
     geoclaw_vt->qinit            = FC2D_GEOCLAW_QINIT;
     geoclaw_vt->bc2              = FC2D_GEOCLAW_BC2;
-    geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
+    // geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
 
     if (user_opt->cuda == 0){

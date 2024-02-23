@@ -85,9 +85,9 @@ c
 
 !-----------------------Initializing-----------------------------------
          !inform of a bad riemann problem from the start
-         if((qr(1,i-1).lt.0.d0).or.(ql(1,i) .lt. 0.d0)) then
-            write(*,*) 'Negative input: hl,hr,i=',qr(1,i-1),ql(1,i),i
-         endif
+c         if((qr(1,i-1).lt.0.d0).or.(ql(1,i) .lt. 0.d0)) then
+c            write(*,*) 'Negative input: hl,hr,i=',qr(1,i-1),ql(1,i),i
+c         endif
 
          !Initialize Riemann problem for grid interface
          do mw=1,mwaves
