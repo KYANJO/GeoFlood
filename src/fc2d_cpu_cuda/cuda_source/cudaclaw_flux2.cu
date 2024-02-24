@@ -262,7 +262,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             for(int mw = 0; mw < mwaves; mw++)
             {
                 // if (mcapa > 0) dtdy = dtdy/aux[mcapa-1];
-                if (ix > 0 && ix < my + 2)
+                // if (ix > 0 && ix < my + 2)
                 {
                     maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
                 }
@@ -281,8 +281,12 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
     }
-
-    maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
+    double aggregate = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
+    if (threadIdx.x == 0)
+    {
+        maxcflblocks[blockIdx.z] = aggregate;
+    }
+    // maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
 
     // __syncthreads();  /* Does block reduce take care of this sync? */
 
