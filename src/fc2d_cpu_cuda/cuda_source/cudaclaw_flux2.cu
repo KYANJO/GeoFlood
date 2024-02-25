@@ -123,6 +123,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
 
     double maxcfl = 0;
+    double aggregate = 0;
 
     /* -------------------------- Compute fluctuations -------------------------------- */
 
@@ -182,42 +183,60 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             // ---- call rpn2 to compute the fluctuations at the interface (I_q -1/2)
             rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, ix,iy); //<- added  thread_index
 
-            // --- save the fluctuations to global memory
-            for (int mq = 0; mq < meqn; mq++) 
-            {
-                int I_q = I + mq*zs;
-                fm[I_q] = amdq[mq];
-                fp[I_q] = -apdq[mq]; 
-                if (order[1] > 0)
+            // if (ix >= 0 && ix < mx+1 && iy > 0 && iy < my+1)
+            // {
+                // --- save the fluctuations to global memory
+                for (int mq = 0; mq < meqn; mq++) 
                 {
-                    /* store fluctuations into global memory for use in transverse solvers */
-                    amdq_trans[I_q] = amdq[mq];                                        
-                    apdq_trans[I_q] = apdq[mq];  
-                }
-            }
-        
-            // --- use the speeds to compute maxcfl
-            for(int mw = 0; mw < mwaves; mw++)
-            {
-                // if (mcapa > 0) dtdx = dtdx/aux[mcapa-1];
-                // printf("mcapa = %d, s = %.16f, dtdx = %.16f, aux[mcapa] = %.16f\n",mcapa, s[mw], dtdx, aux[2] );
-                if (ix > 0 && ix < mx + 2)
-                {
-                    maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
-                }
-                // --- save the speeds and waves to global memory
-                if (order[0] == 2)
-                {                    
-                    int I_speeds = I + mw*zs;
-                    speeds[I_speeds] = s[mw];
-                    for(int mq = 0; mq < meqn; mq++)
+                    int I_q = I + mq*zs;
+                    fm[I_q] = amdq[mq];
+                    fp[I_q] = -apdq[mq]; 
+                    if (order[1] > 0)
                     {
-                        int k = mw*meqn + mq;
-                        int I_waves = I + k*zs;
-                        waves[I_waves] = wave[k];
+                        /* store fluctuations into global memory for use in transverse solvers */
+                        amdq_trans[I_q] = amdq[mq];                                        
+                        apdq_trans[I_q] = apdq[mq];  
                     }
                 }
-            }
+            
+                // --- use the speeds to compute maxcfl
+                for(int mw = 0; mw < mwaves; mw++)
+                {
+                    // if (mcapa > 0) dtdx = dtdx/aux[mcapa-1];
+                    // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                    // if ((fabs(s[mw]*dtdx) > 0.057 )&& (fabs(s[mw]*dtdx) < 0.059))
+                    // {
+                    //     printf("ix = %d, iy = %d, maxcfl_0 = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                    // }
+                    // if (ix >= 0 && ix <= mx && s[mw] < 0)
+                    // // if (ix > 0 && ix < mx)
+                    // {
+                    //     // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
+                    //     maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
+                    // }
+
+                    if (ix > 0 && ix < mx)
+                    {
+                        // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
+                        maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
+                    }
+
+                    // --- save the speeds and waves to global memory
+                    if (order[0] == 2)
+                    {                    
+                        int I_speeds = I + mw*zs;
+                        speeds[I_speeds] = s[mw];
+                        for(int mq = 0; mq < meqn; mq++)
+                        {
+                            int k = mw*meqn + mq;
+                            int I_waves = I + k*zs;
+                            waves[I_waves] = wave[k];
+                        }
+                    }
+                }
+            // }
+            if (iy <= my+1) aggregate = fmax(aggregate, maxcfl);
+
         }
 
         // --- Restrict the scope of the following variables ---
@@ -245,47 +264,67 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     
             rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq,ix,iy);
             
-            /* Set value at bottom interface of cell I */
-            for (int mq = 0; mq < meqn; mq++) 
+            // if (ix >= 0 && ix < mx+1 && iy > 0 && iy < my+1)
             {
-                int I_q = I + mq*zs;
-                gm[I_q] = bmdq[mq];
-                gp[I_q] = -bpdq[mq]; 
-                if (order[1] > 0)
+                /* Set value at bottom interface of cell I */
+                for (int mq = 0; mq < meqn; mq++) 
                 {
-                    /* store fluctuations into global memory for use in transverse solvers */
-                    bmdq_trans[I_q] = bmdq[mq];                                                   
-                    bpdq_trans[I_q] = bpdq[mq];
-                }
-            }
-
-            for(int mw = 0; mw < mwaves; mw++)
-            {
-                // if (mcapa > 0) dtdy = dtdy/aux[mcapa-1];
-                // if (ix > 0 && ix < my + 2)
-                {
-                    maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
-                }
-                // maxcfl = max(maxcfl,fabs(s[mw])*dtdy);
-
-                if (order[0] == 2)
-                {                    
-                    int I_speeds = I + (mwaves + mw)*zs;
-                    speeds[I_speeds] = s[mw];
-                    for(int mq = 0; mq < meqn; mq++)
+                    int I_q = I + mq*zs;
+                    gm[I_q] = bmdq[mq];
+                    gp[I_q] = -bpdq[mq]; 
+                    if (order[1] > 0)
                     {
-                        int I_waves = I + ((mwaves + mw)*meqn + mq)*zs;
-                        waves[I_waves] = wave[mw*meqn + mq];
+                        /* store fluctuations into global memory for use in transverse solvers */
+                        bmdq_trans[I_q] = bmdq[mq];                                                   
+                        bpdq_trans[I_q] = bpdq[mq];
                     }
                 }
+
+                for(int mw = 0; mw < mwaves; mw++)
+                {
+                    // if (mcapa > 0) dtdy = dtdy/aux[mcapa-1];
+                    // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
+                    // if ((fabs(s[mw]*dtdx) > 0.057 )&& (fabs(s[mw]*dtdx) < 0.059))
+                    // {
+                    //     printf("ix = %d, iy = %d, maxcfl_1 = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                    // }
+                    // if (iy >= 0 && iy <= my && s[mw] < 0)
+                    // // if (iy > 0 && iy < my)
+                    // {
+                    //     // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                    //     maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
+                    // }
+                    
+                    if (iy > 0 && iy < my)
+                    {
+                        // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                        maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
+                    }
+
+                    if (order[0] == 2)
+                    {                    
+                        int I_speeds = I + (mwaves + mw)*zs;
+                        speeds[I_speeds] = s[mw];
+                        for(int mq = 0; mq < meqn; mq++)
+                        {
+                            int I_waves = I + ((mwaves + mw)*meqn + mq)*zs;
+                            waves[I_waves] = wave[mw*meqn + mq];
+                        }
+                    }
+                }
+                if (ix <= mx+1) aggregate = fmax(aggregate, maxcfl);
             }
         }
+        // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
     }
-    double aggregate = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
+    // printf("maxcfl = %f\n",maxcfl);
+    aggregate = BlockReduce(temp_storage).Reduce(aggregate,cub::Max());
     if (threadIdx.x == 0)
     {
         maxcflblocks[blockIdx.z] = aggregate;
+        // maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
     }
+
     // maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
 
     // __syncthreads();  /* Does block reduce take care of this sync? */
