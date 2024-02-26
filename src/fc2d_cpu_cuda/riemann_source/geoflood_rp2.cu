@@ -68,21 +68,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     bool rare1, rare2;
     int mw, mu, mv;
 
-    // double pi = 4.0*atan(1.0);
-    // double deg2rad = pi/180.0;
-
-    // int N = 4; 
-
-      bool debug;
-      if (idir == 0 && ix == 7 && iy == 15)
-    // if (idir == 0)
-      {
-        debug = 1;
-      }
-      else{
-        debug = 0;
-      }
-
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
     // if ((qr[0] < 0.0) || (ql[0] < 0.0)) {
@@ -116,17 +101,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         ql[2] = 0.0;
     }
 
-    // if (debug){
-    //     printf("ix = %d, iy = %d\n " \ 
-    //     "qr[0] = %.16f, ql[0] = %.16f\n" \
-    //     "qr[1] = %.16f, ql[1] = %.16f\n" \
-    //     "qr[2] = %.16f, ql[2] = %.16f\n\n", ix,iy,qr[0],ql[0],qr[1],ql[1],qr[2],ql[2]);
-    // }
-
-    // Skip problem if in a completely dry area
-    // if (qr[0] <= drytol && ql[0] <= drytol) {
-    //     goto label30;
-    // }
 
     if (ql[0] > drytol || qr[0] > drytol) {
         /* Riemann problem variables */
@@ -167,17 +141,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             vL = 0.0;
             phiL = 0.0;
         }
-    
-        // if (debug){
-        //     printf("ix = %d, iy = %d\n " \ 
-        //     "hL = %.16f, hR = %.16f\n" \
-        //     "huL = %.16f, huR = %.16f\n" \
-        //     "hvL = %.16f, hvR = %.16f\n" \
-        //     "uL = %.16f, uR = %.16f\n" \
-        //     "vL = %.16f, vR = %.16f\n" \
-        //     "phiL = %.16f, phiR = %.16f\n" \
-        //     "bL = %.16f, bR = %.16f\n\n", ix,iy,hL,hR,huL,huR,hvL,hvR,uL,uR,vL,vR,phiL,phiR,bL,bR);
-        // }
 
         /* left and right surfaces depth inrelation to topography */
         wall[0] = 1.0;
@@ -187,14 +150,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             /* determine the wave structure */
             riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
             // riemann_type(hL, hL, -uL, uL, hstar, s1m, s2m, rare1, rare2);
-
-        //     if (debug){
-        //     printf("ix = %d, iy = %d\n " \ 
-        //     "hL = %.16f, uL = %.16f\n" \
-        //     "hstar = %.16f\n" \
-        //     "s1m = %.16f, s2m = %.16f\n" \
-        //     "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,uL,hstar,s1m,s2m,rare1,rare2);
-        // }
 
             hstartest = fmax(hL,hstar);
             if (hstartest + bL < bR) {
@@ -221,14 +176,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             // riemann_type(hR, hR, uR, -uR, hstar, s1m, s2m, rare1, rare2);
             hstartest = fmax(hR,hstar);
 
-            // if (debug){
-            //     printf("ix = %d, iy = %d\n " \ 
-            //     "hR = %.16f, uR = %.16f\n" \
-            //     "hstar = %.16f\n" \
-            //     "s1m = %.16f, s2m = %.16f\n" \
-            //     "rare1 = %d, rare2 = %d\n\n", ix,iy,hR,uR,hstar,s1m,s2m,rare1,rare2);
-            // }
-
             if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
             {
                 wall[0] = 0.0;
@@ -244,17 +191,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             }
         }
 
-        // if (debug){
-        //     printf("ix = %d, iy = %d\n " \ 
-        //     "hL = %.16f, hR = %.16f\n" \
-        //     "huL = %.16f, huR = %.16f\n" \
-        //     "hvL = %.16f, hvR = %.16f\n" \
-        //     "uL = %.16f, uR = %.16f\n" \
-        //     "vL = %.16f, vR = %.16f\n" \
-        //     "phiL = %.16f, phiR = %.16f\n" \
-        //     "bL = %.16f, bR = %.16f\n\n", ix,iy,hL,hR,huL,huR,hvL,hvR,uL,uR,vL,vR,phiL,phiR,bL,bR);
-        // }
-
         /* determine wave speeds */
         sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
         sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
@@ -267,14 +203,6 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         sE1 = fmin(sL,sRoe1); // Einfeldt wave speed 1 wave
         sE2 = fmax(sR,sRoe2); // Einfeldt wave speed 2 wave
 
-        // if (ix == 7 && iy == 15) {
-        //     if (debug){
-        //         printf("ix = %d, iy = %d\n " \ 
-        //         "sL = %.16f, sR = %.16f\n" \ 
-        //         "sRoe1 = %.16f, sRoe2 = %.16f\n" \ 
-        //         "sE1 = %.16f, sE2 = %.16f\n\n", ix,iy,sL,sR,sRoe1,sRoe2,sE1,sE2);
-        //     }
-        // }
         /* --- end of initializing --- */
 
         /* === solve Riemann problem === */
@@ -318,21 +246,33 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
 
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
-        if (idir == 0) {
-            dxdc = earth_radius*deg2rad;
-        } else {
-            dxdc = earth_radius*cos(auxr[2])*deg2rad;
-            // printf("deg2rad =%.16f, dxdc =%.16f\n",deg2rad,dxdc);
-        }
-        
-        // update fwave and corresponding speeds
-        for (mw=0; mw<mwaves; mw++) {
+        // Compute dxdc based on idir without branching
+        dxdc = earth_radius * deg2rad * (idir == 0 ? 1.0 : cos(auxr[2]));
+    
+        // Update fwave and corresponding speeds
+        for (int mw = 0; mw < mwaves; mw++) {
             s[mw] *= dxdc;
             fwave[mw] *= dxdc;
             fwave[mw + mwaves] *= dxdc;
             fwave[mw + 2*mwaves] *= dxdc;
         }
     }
+    // if (mcapa > 0) {
+    //     if (idir == 0) {
+    //         dxdc = earth_radius*deg2rad;
+    //     } else {
+    //         dxdc = earth_radius*cos(auxr[2])*deg2rad;
+    //         // printf("deg2rad =%.16f, dxdc =%.16f\n",deg2rad,dxdc);
+    //     }
+        
+    //     // update fwave and corresponding speeds
+    //     for (mw=0; mw<mwaves; mw++) {
+    //         s[mw] *= dxdc;
+    //         fwave[mw] *= dxdc;
+    //         fwave[mw + mwaves] *= dxdc;
+    //         fwave[mw + 2*mwaves] *= dxdc;
+    //     }
+    // }
 
      // Debugging
     // if (debug) {
@@ -350,30 +290,36 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     apdq[0] = 0.0;
     apdq[1] = 0.0;
     apdq[2] = 0.0;
-    int idx; /* mw = idx/3 */
-    for (idx = 0; idx < mwaves*3; idx++) {
-        if (s[idx/3] < 0.0) { 
-            amdq[idx%3] += fwave[idx];  
-        } else if (s[idx/3] > 0.0) {
-            apdq[idx%3] += fwave[idx]; 
-        } else {
-            amdq[idx%3] += 0.5 * fwave[idx];  
-            apdq[idx%3] += 0.5 * fwave[idx]; 
-        }
+    for (int idx = 0; idx < mwaves * 3; idx++) {
+        double s_val = s[idx / 3];
+        double fwave_val = fwave[idx];
+    
+        double pos_weight = s_val > 0.0;
+        double neg_weight = s_val < 0.0;
+        double zero_weight = 1.0 - pos_weight - neg_weight; // 1 if s_val == 0, 0 otherwise
+    
+        // Update amdq and apdq based on the weights
+        amdq[idx % 3] += (neg_weight + 0.5 * zero_weight) * fwave_val;
+        apdq[idx % 3] += (pos_weight + 0.5 * zero_weight) * fwave_val;
     }
-    // int i;
-    // for(mw = 0; mw<mwaves; mw++){
-    //     for (i = 0; i<3; i++){
-    //         if (s[mw] < 0.0) { 
-    //             amdq[i] += fwave[mw*3 + i];  
-    //         } else if (s[mw] > 0.0) {
-    //             apdq[i] += fwave[mw*3 + i]; 
-    //         } else {
-    //             amdq[i] += 0.5 * fwave[mw*3 + i];  
-    //             apdq[i] += 0.5 * fwave[mw*3 + i]; 
-    //         }
+    
+    
+
+
+    // for (int idx = 0; idx < mwaves*3; idx++) {
+    //     if (s[idx/3] < 0.0) { 
+    //         amdq[idx%3] += fwave[idx];  
+    //     } else if (s[idx/3] > 0.0) {
+    //         apdq[idx%3] += fwave[idx]; 
+    //     } else {
+    //         amdq[idx%3] += 0.5 * fwave[idx];  
+    //         apdq[idx%3] += 0.5 * fwave[idx]; 
     //     }
     // }
+   
+
+
+
 }
 
 
@@ -430,39 +376,48 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
 
     bool debug = (idir == 0) ? 1 : 0;
   
-    // if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
-    if (h > drytol) {  
+    if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
+    
+    // if (h > drytol) {  
         /* Compute velocities in relevant cell, and other quantities */
-        int kv = 1 - idir;
-        if (imp == 0) {
-            // fluctuations being split is left-going
-            u = ql[mu] / h;
-            v = ql[mv] / h;
-            eta = h + aux2[0];
-            topo1 = aux1[0];
-            topo3 = aux3[0];
-            // for(int kv=0; kv<maux; kv++){
-                // eta = h + aux2[imp*maux + kv];
-                // topo1 = aux1[imp*maux + kv];
-                // topo3 = aux3[imp*maux + kv];
-            // }
-        } else {
-            // fluctuations being split is right-going
-            u = qr[mu] / h;
-            v = qr[mv] / h;
-            eta = h + aux2[0];
-            topo1 = aux1[0];
-            topo3 = aux3[0];
-            // for(int kv=0; kv<maux; kv++){
-                // eta = h + aux2[imp*maux + kv];
-                // topo1 = aux1[imp*maux + kv];
-                // topo3 = aux3[imp*maux + kv];
-            // }
-        }
+        int k = imp * maux; 
+
+        // fluctuations being split is either left-going or right-going
+        u = (imp == 0 ? ql[mu] : qr[mu]) / h;
+        v = (imp == 0 ? ql[mv] : qr[mv]) / h;
+
+        eta = h + aux2[k];
+        topo1 = aux1[k];
+        topo3 = aux3[k];
+
+               // int kv = 1 - idir;
+        // if (imp == 0) {
+        //     // fluctuations being split is left-going
+        //     u = ql[mu] / h;
+        //     v = ql[mv] / h;
+        //     // eta = h + aux2[0];
+        //     // topo1 = aux1[0];
+        //     // topo3 = aux3[0];
+        //     int k = imp*maux + 0;
+        //     eta = h + aux2[k];
+        //     topo1 = aux1[k];
+        //     topo3 = aux3[k];
+        // } else {
+        //     // fluctuations being split is right-going
+        //     u = qr[mu] / h;
+        //     v = qr[mv] / h;
+        //     // eta = h + aux2[0];
+        //     // topo1 = aux1[0];
+        //     // topo3 = aux3[0];
+        //     int k = imp*maux + 0;
+        //     eta = h + aux2[k];
+        //     topo1 = aux1[k];
+        //     topo3 = aux3[k];
+        // }
 
         /* Check if cell that transverse wave go into are both too high: */
-        // if (eta < fmin(topo1, topo3)) return; 
-        if (eta >= fmin(topo1, topo3)) {
+        if (eta < fmin(topo1, topo3)) return; 
+        // if (eta >= fmin(topo1, topo3)) {
 
             /* Check if cell that transverse waves go into are both to high, if so,
             do the splitting (no dry cells), and compute necessary quantities */
@@ -472,18 +427,24 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
                     dxdcp = earth_radius * deg2rad;
                     dxdcm = dxdcp;
                 } else {
-                    int kv = 1 - idir;
-                    if (imp == 0) {
-                        // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
-                        // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
-                        dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
-                        dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
-                    } else {
-                        // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
-                        // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
-                        dxdcp = earth_radius * cos(aux3[imp*maux + kv]) * deg2rad;
-                        dxdcm = earth_radius * cos(aux1[imp*maux + kv]) * deg2rad;
-                    }
+                    
+                    int k = imp * maux + 2;
+                    dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
+                    dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
+
+                    // if (imp == 0) {
+                    //     // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
+                    //     // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                    //     int k = imp*maux + 2;
+                    //     dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
+                    //     dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
+                    // } else {
+                    //     // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
+                    //     // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
+                    //     int k = imp*maux + 2;
+                    //     dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
+                    //     dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
+                    // }
                 }
             } else {
                 // Cartesian
@@ -524,19 +485,34 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
             r[2][2] = s[2];
 
             /* Compute transverse fluctuations */
-            for (mw = 0; mw < 3; mw++) {
-                if ((s[mw] < 0.0) && (eta >= topo1)) {
-                    bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[0][mw];
-                    bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[1][mw];
-                    bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[2][mw];
-                } else if ((s[mw] > 0.0) && (eta >= topo3)) {
-                    bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[0][mw];
-                    bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[1][mw];
-                    bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[2][mw];
-                }
+            for (int mw = 0; mw < 3; mw++) {
+                // Compute condition flags
+                double left_going_flag = (s[mw] < 0.0) && (eta >= topo1);
+                double right_going_flag = (s[mw] > 0.0) && (eta >= topo3);
+            
+                // Update bmasdq and bpasdq based on conditions
+                bmasdq[0] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[0][mw];
+                bmasdq[mu] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[1][mw];
+                bmasdq[mv] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[2][mw];
+            
+                bpasdq[0] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[0][mw];
+                bpasdq[mu] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[1][mw];
+                bpasdq[mv] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[2][mw];
             }
-        }
-    }
+            
+            // for (mw = 0; mw < 3; mw++) {
+            //     if ((s[mw] < 0.0) && (eta >= topo1)) {
+            //         bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[0][mw];
+            //         bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[1][mw];
+            //         bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[2][mw];
+            //     } else if ((s[mw] > 0.0) && (eta >= topo3)) {
+            //         bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[0][mw];
+            //         bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[1][mw];
+            //         bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[2][mw];
+            //     }
+            // }
+        // }
+    // }
 }
 
 
@@ -734,50 +710,80 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         s1s2tilde = fmax(0.0, uLstar * uRstar) - (s_grav * hbar);
 
         /* Based on the above conditon, smooth staedy state over slopping bathymetry cannot have a sonic point. Therefore, for regions with monotonically varying bathymetry, steady-state flow is either entirely subsonic (-u^2 +gh > 0) or entirely supersonic. */
-        sonic = false;
-        if (fabs(s1s2bar) <= criticaltol) {
-            sonic = true;
-        } else if (s1s2bar * s1s2tilde <= criticaltol * criticaltol) {
-            sonic = true;
-        } else if (s1s2bar * sE1 * sE2 <= criticaltol * criticaltol) {
-            sonic = true;
-        } else if (fmin(fabs(sE1), fabs(sE2)) < criticaltol_2) {
-            sonic = true;
-        } else if (sE1 < criticaltol_2 && s1m > -criticaltol_2) {
-            sonic = true;
-        } else if (sE2 > -criticaltol_2 && s2m < criticaltol_2) {
-            sonic = true;
-        } else if ((uL + sqrt(s_grav * hL)) * (uR + sqrt(s_grav * hR)) < 0.0) {
-            sonic = true;
-        } else if ((uL - sqrt(s_grav * hL)) * (uR - sqrt(s_grav * hR)) < 0.0) {
-            sonic = true;
-        }
+
+        sonic = (fabs(s1s2bar) <= criticaltol) ||
+                (s1s2bar * s1s2tilde <= criticaltol * criticaltol) ||
+                (s1s2bar * sE1 * sE2 <= criticaltol * criticaltol) ||
+                (fmin(fabs(sE1), fabs(sE2)) < criticaltol_2) ||
+                (sE1 < criticaltol_2 && s1m > -criticaltol_2) ||
+                (sE2 > -criticaltol_2 && s2m < criticaltol_2) ||
+                ((uL + sqrt(s_grav * hL)) * (uR + sqrt(s_grav * hR)) < 0.0) ||
+                ((uL - sqrt(s_grav * hL)) * (uR - sqrt(s_grav * hR)) < 0.0);
+
+        // sonic = false;
+        // if (fabs(s1s2bar) <= criticaltol) {
+        //     sonic = true;
+        // } else if (s1s2bar * s1s2tilde <= criticaltol * criticaltol) {
+        //     sonic = true;
+        // } else if (s1s2bar * sE1 * sE2 <= criticaltol * criticaltol) {
+        //     sonic = true;
+        // } else if (fmin(fabs(sE1), fabs(sE2)) < criticaltol_2) {
+        //     sonic = true;
+        // } else if (sE1 < criticaltol_2 && s1m > -criticaltol_2) {
+        //     sonic = true;
+        // } else if (sE2 > -criticaltol_2 && s2m < criticaltol_2) {
+        //     sonic = true;
+        // } else if ((uL + sqrt(s_grav * hL)) * (uR + sqrt(s_grav * hR)) < 0.0) {
+        //     sonic = true;
+        // } else if ((uL - sqrt(s_grav * hL)) * (uR - sqrt(s_grav * hR)) < 0.0) {
+        //     sonic = true;
+        // }
 
         /* find jump in h, deldelh */
-        if (sonic) {
-            deldelh = -delb;
-        } else {
-            deldelh = delb * s_grav * hbar / s1s2bar;
-        }
+        deldelh = sonic ? -delb : delb * s_grav * hbar / s1s2bar;
+        // if (sonic) {
+        //     deldelh = -delb;
+        // } else {
+        //     deldelh = delb * s_grav * hbar / s1s2bar;
+        // }
 
         /* find bounds in case of critical state resonance, or negative states */
-        if (sE1 < -criticaltol && sE2 > criticaltol) {
-            deldelh = fmin(deldelh, hstarHLL * (sE2 - sE1) / sE2);
-            deldelh = fmax(deldelh, hstarHLL * (sE2 - sE1) / sE1);
-        } else if (sE1 >= criticaltol) {
-            deldelh = fmin(deldelh, hstarHLL * (sE2 - sE1) / sE1);
-            deldelh = fmax(deldelh, -hL);
-        } else if (sE2 <= -criticaltol) {
-            deldelh = fmin(deldelh, hR);
-            deldelh = fmax(deldelh, hstarHLL * (sE2 - sE1) / sE2);
-        }
+        // Calculate condition flags as 0 or 1
+        double condition1 = (sE1 < -criticaltol) && (sE2 > criticaltol);
+        double condition2 = (sE1 >= criticaltol);
+        double condition3 = (sE2 <= -criticaltol);
+
+        // Compute potential updates to deldelh under each condition
+        double update1_min = hstarHLL * (sE2 - sE1) / sE2;
+        double update1_max = hstarHLL * (sE2 - sE1) / sE1;
+        double update2_min = hstarHLL * (sE2 - sE1) / sE1;
+        double update2_max = -hL;
+        double update3_min = hR;
+        double update3_max = hstarHLL * (sE2 - sE1) / sE2;
+
+        // Apply updates based on conditions
+        deldelh = fmin(deldelh, condition1 * update1_min + condition2 * update2_min + condition3 * update3_min + (!condition1 && !condition2 && !condition3) * deldelh);
+        deldelh = fmax(deldelh, condition1 * update1_max + condition2 * update2_max + condition3 * update3_max + (!condition1 && !condition2 && !condition3) * deldelh);
+
+        // if (sE1 < -criticaltol && sE2 > criticaltol) {
+        //     deldelh = fmin(deldelh, hstarHLL * (sE2 - sE1) / sE2);
+        //     deldelh = fmax(deldelh, hstarHLL * (sE2 - sE1) / sE1);
+        // } else if (sE1 >= criticaltol) {
+        //     deldelh = fmin(deldelh, hstarHLL * (sE2 - sE1) / sE1);
+        //     deldelh = fmax(deldelh, -hL);
+        // } else if (sE2 <= -criticaltol) {
+        //     deldelh = fmin(deldelh, hR);
+        //     deldelh = fmax(deldelh, hstarHLL * (sE2 - sE1) / sE2);
+        // }
 
         /* find jump in phi, ddphi */
-        if (sonic) {
-            deldelphi = -s_grav * hbar * delb;
-        } else {
-            deldelphi = -delb * s_grav * hbar * s1s2tilde / s1s2bar;
-        }
+        deldelphi = -delb * s_grav * hbar * (sonic ? 1.0 : s1s2tilde / s1s2bar);
+
+        // if (sonic) {
+        //     deldelphi = -s_grav * hbar * delb;
+        // } else {
+        //     deldelphi = -delb * s_grav * hbar * s1s2tilde / s1s2bar;
+        // }
 
         /* find bounds in case of critical state resonance, or negative states */
         deldelphi = fmin(deldelphi, s_grav * fmax(-hLstar * delb, -hRstar * delb));
@@ -796,22 +802,22 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         determinant = det1 - det2 + det3;
 
         /* solve for beta(k) */
-        for(k=0; k < 3; k++)
-        {   
-            for(mw=0; mw < 3; mw++)
-            {
-                A[0][mw] = r[0][mw];
-                A[1][mw] = r[1][mw];
-                A[2][mw] = r[2][mw];
-            }
-            A[0][k] = del[0];
-            A[1][k] = del[1];
-            A[2][k] = del[2];
-            det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
-            det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
-            det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
-            beta[k] = (det1 - det2 + det3)/determinant;
-        }
+        // for(k=0; k < 3; k++)
+        // {   
+        //     for(mw=0; mw < 3; mw++)
+        //     {
+        //         A[0][mw] = r[0][mw];
+        //         A[1][mw] = r[1][mw];
+        //         A[2][mw] = r[2][mw];
+        //     }
+        //     A[0][k] = del[0];
+        //     A[1][k] = del[1];
+        //     A[2][k] = del[2];
+        //     det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
+        //     det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
+        //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+        //     beta[k] = (det1 - det2 + det3)/determinant;
+        // }
         // for(k=0; k < 3; k++) {
         //     // Copying entire matrix r to A for each k, with kth column replaced by del vector
         //     for(mw=0; mw < 3; mw++) { // Notice this loop is now for the entire matrix, not nested
@@ -826,31 +832,31 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
         //     beta[k] = (det1 - det2 + det3)/determinant;
         // }        
-        // for (int k = 0; k < 3; k++) {
-        //     // Copy the entire matrix r into A for each iteration
-        //     A[0][0] = r[0][0];
-        //     A[0][1] = r[0][1];
-        //     A[0][2] = r[0][2];
-        //     A[1][0] = r[1][0];
-        //     A[1][1] = r[1][1];
-        //     A[1][2] = r[1][2];
-        //     A[2][0] = r[2][0];
-        //     A[2][1] = r[2][1];
-        //     A[2][2] = r[2][2];
+        for (int k = 0; k < 3; k++) {
+            // Copy the entire matrix r into A for each iteration
+            A[0][0] = r[0][0];
+            A[0][1] = r[0][1];
+            A[0][2] = r[0][2];
+            A[1][0] = r[1][0];
+            A[1][1] = r[1][1];
+            A[1][2] = r[1][2];
+            A[2][0] = r[2][0];
+            A[2][1] = r[2][1];
+            A[2][2] = r[2][2];
         
-        //     // Modify the k-th column of A
-        //     A[0][k] = del[0];
-        //     A[1][k] = del[1];
-        //     A[2][k] = del[2];
+            // Modify the k-th column of A
+            A[0][k] = del[0];
+            A[1][k] = del[1];
+            A[2][k] = del[2];
         
-        //     // Calculate the determinant components
-        //     double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
-        //     double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
-        //     double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+            // Calculate the determinant components
+            double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
+            double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
+            double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
         
-        //     // Compute the final value for this iteration
-        //     beta[k] = (det1 - det2 + det3) / determinant;
-        // }
+            // Compute the final value for this iteration
+            beta[k] = (det1 - det2 + det3) / determinant;
+        }
         
 
         /* exit if things aren't changing */
@@ -867,46 +873,64 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         huRstar = uRstar*hRstar;
 
         /* left state depth and momentum updates */
-        for (mw=0; mw < mwaves; mw++)
-        {
-            if (lambda[mw] < 0.0)
-            {
-               hLstar = hLstar + beta[mw]*r[0][mw];
-               huLstar = huLstar + beta[mw]*r[1][mw];
-            }
+        for (int mw = 0; mw < mwaves; mw++) {
+            double multiplier = lambda[mw] < 0.0 ? 1.0 : 0.0;
+            hLstar += multiplier * beta[mw] * r[0][mw];
+            huLstar += multiplier * beta[mw] * r[1][mw];
         }
+        
+        // for (mw=0; mw < mwaves; mw++)
+        // {
+        //     if (lambda[mw] < 0.0)
+        //     {
+        //        hLstar = hLstar + beta[mw]*r[0][mw];
+        //        huLstar = huLstar + beta[mw]*r[1][mw];
+        //     }
+        // }
 
         /* right state depth and momentum updates */
-        for (mw = mwaves-1; mw >= 0; mw--)
-        {
-            if (lambda[mw] > 0.0)
-            { 
-                hRstar = hRstar - beta[mw]*r[0][mw];
-                huRstar = huRstar - beta[mw]*r[1][mw];
-            }
+        for (int mw = mwaves - 1; mw >= 0; mw--) {
+            double multiplier = lambda[mw] > 0.0 ? 1.0 : 0.0;
+            hRstar -= multiplier * beta[mw] * r[0][mw];
+            huRstar -= multiplier * beta[mw] * r[1][mw];
         }
+    
+        // for (mw = mwaves-1; mw >= 0; mw--)
+        // {
+        //     if (lambda[mw] > 0.0)
+        //     { 
+        //         hRstar = hRstar - beta[mw]*r[0][mw];
+        //         huRstar = huRstar - beta[mw]*r[1][mw];
+        //     }
+        // }
 
         /* left state velocity update */
-        if (hLstar > drytol) 
-        {
-            uLstar = huLstar/hLstar;
-        }
-        else  /* dry state */
-        {
-            hLstar = fmax(hLstar,0.0);
-            uLstar = 0.0;
-        }
+        hLstar = fmax(hLstar, 0.0); // Ensure hLstar is non-negative
+        uLstar = hLstar > drytol ? huLstar / hLstar : 0.0; // Update uLstar: set to huLstar/hLstar if hLstar > drytol, else to 0.0
+
+        // if (hLstar > drytol) 
+        // {
+        //     uLstar = huLstar/hLstar;
+        // }
+        // else  /* dry state */
+        // {
+        //     hLstar = fmax(hLstar,0.0);
+        //     uLstar = 0.0;
+        // }
 
         /* right state velocity update */
-        if (hRstar > drytol) 
-        {
-            uRstar = huRstar/hRstar;
-        }
-        else /* dry state */
-        {
-            hRstar = fmax(hRstar,0.0);
-            uRstar = 0.0;
-        }
+        hRstar = fmax(hRstar, 0.0); // Ensure hRstar is non-negative
+        uRstar = hRstar > drytol ? huRstar / hRstar : 0.0; // // Update uRstar: set to huRstar/hRstar if hRstar > drytol, else to 0.0
+
+        // if (hRstar > drytol) 
+        // {
+        //     uRstar = huRstar/hRstar;
+        // }
+        // else /* dry state */
+        // {
+        //     hRstar = fmax(hRstar,0.0);
+        //     uRstar = 0.0;
+        // }
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
@@ -931,11 +955,15 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     fw[mwaves + mv] = 0.0;
 
     hustar_interface = hL*uL + fw[0];
-    if (hustar_interface <= 0.0) {
-        fw[mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
-    } else {
-        fw[2*mwaves + mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
-    }
+    int indexToUpdate = hustar_interface <= 0.0 ? mv : 2 * mwaves + mv;
+    fw[indexToUpdate] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2 * mwaves + mv]);
+
+    // hustar_interface = hL*uL + fw[0];
+    // if (hustar_interface <= 0.0) {
+    //     fw[mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
+    // } else {
+    //     fw[2*mwaves + mv] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2*mwaves + mv]);
+    // }
 }
 
 /* === Begin fuction Riemann type ============
