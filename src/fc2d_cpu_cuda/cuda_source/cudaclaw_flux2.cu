@@ -89,10 +89,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     double* start  = shared_mem + mwork*threadIdx.x;
 
-    int mcapa = d_geofloodVars.mcapa; /* capacity_index */
-    // int *order = d_set_method_parameters.order;
-    // int *mthlim = d_set_method_parameters.mthlim;
-    // int use_fwaves = d_set_method_parameters.use_fwaves;
+    int mcapa = d_geofloodVars.mcapa; /* capacity_index (index of the aux array corresponding to the capacity function) */
 
     /* --------------------------------- Start code ----------------------------------- */
 
@@ -124,6 +121,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     double maxcfl = 0;
     double aggregate = 0;
+    double dtdx_, dtdy_;
 
     /* -------------------------- Compute fluctuations -------------------------------- */
 
@@ -154,6 +152,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             auxr[m] = aux[I_aux];
         }               
 
+        int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        // dtdx = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        // dtdy = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        // printf("mcapa =%d, dtdx =%f, dtdy=%f\n",mcapa,dtdx,dtdy);
+
         // --- restrict the scope of the following variables
         {
             /* ------------------------ Normal solve in X direction ------------------- */
@@ -183,8 +186,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             // ---- call rpn2 to compute the fluctuations at the interface (I_q -1/2)
             rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, ix,iy); //<- added  thread_index
 
-            // if (ix >= 0 && ix < mx+1 && iy > 0 && iy < my+1)
-            // {
+            if (ix <= mx+1)
+            {
                 // --- save the fluctuations to global memory
                 for (int mq = 0; mq < meqn; mq++) 
                 {
@@ -198,15 +201,17 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                         apdq_trans[I_q] = apdq[mq];  
                     }
                 }
-            
+            }
                 // --- use the speeds to compute maxcfl
                 for(int mw = 0; mw < mwaves; mw++)
                 {
-                    // if (mcapa > 0) dtdx = dtdx/aux[mcapa-1];
-                    // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                    // if (mcapa > 0) dtdx = dtdx/aux[I + mcapa*zs];
+                    dtdx_ = dtdx/aux[I_capa];
+                    // printf("s = %.16f, dtdx = %.16f, dtdx_ = %.16f, aux[I_capa], = %f\n",s[mw], dtdx, dtdx_, aux[I_capa]);
+                    // printf("cfl = %.16f\n",fabs(s[mw]*dtdx_));
                     // if ((fabs(s[mw]*dtdx) > 0.057 )&& (fabs(s[mw]*dtdx) < 0.059))
                     // {
-                    //     printf("ix = %d, iy = %d, maxcfl_0 = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                        // printf("ix = %d, iy = %d, maxcfl_0 = %f\n",ix,iy,fabs(s[mw]*dtdy));
                     // }
                     // if (ix >= 0 && ix <= mx && s[mw] < 0)
                     // // if (ix > 0 && ix < mx)
@@ -215,10 +220,10 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     //     maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
                     // }
 
-                    if (ix > 0 && ix < mx)
+                    if (ix > 0 && ix <= mx+1)
                     {
                         // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
-                        maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
+                        maxcfl = max(maxcfl,fabs(s[mw]*dtdx_));
                     }
 
                     // --- save the speeds and waves to global memory
@@ -279,14 +284,14 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                         bpdq_trans[I_q] = bpdq[mq];
                     }
                 }
-
+                
                 for(int mw = 0; mw < mwaves; mw++)
                 {
                     // if (mcapa > 0) dtdy = dtdy/aux[mcapa-1];
                     // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
                     // if ((fabs(s[mw]*dtdx) > 0.057 )&& (fabs(s[mw]*dtdx) < 0.059))
                     // {
-                    //     printf("ix = %d, iy = %d, maxcfl_1 = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                        // printf("ix = %d, iy = %d, maxcfl_1 = %f\n",ix,iy,fabs(s[mw]*dtdy));
                     // }
                     // if (iy >= 0 && iy <= my && s[mw] < 0)
                     // // if (iy > 0 && iy < my)
@@ -294,11 +299,12 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     //     // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
                     //     maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
                     // }
+                    dtdy_ = dtdy/aux[I_capa];
                     
-                    if (iy > 0 && iy < my)
+                    if (iy > 0 && iy <= my+1)
                     {
                         // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
-                        maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
+                        maxcfl = max(maxcfl,fabs(s[mw]*dtdy_));
                     }
 
                     if (order[0] == 2)
@@ -321,6 +327,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     aggregate = BlockReduce(temp_storage).Reduce(aggregate,cub::Max());
     if (threadIdx.x == 0)
     {
+        dtdx = dtdx_;
+        dtdy = dtdy_;
         maxcflblocks[blockIdx.z] = aggregate;
         // maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
     }
@@ -500,8 +508,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }        
         }
         return;
-    }
-
+    } 
 
 
     /* ------------------------ Transverse Propagation : X-faces ---------------------- */
