@@ -12,8 +12,6 @@ add_library(flood_speed_cpu_f OBJECT
 
 add_executable(flood_speed_cpucuda
 	flood_speed_user.cpp
-	flood_speed_user.h
-  flood_speed_options.c
 	flood_speed.cpp
 	$<TARGET_OBJECTS:flood_speed_cpu_f>
 )
@@ -23,7 +21,7 @@ target_include_directories(flood_speed_cpucuda PRIVATE
 )
 
 target_link_libraries(flood_speed_cpucuda PRIVATE 
-  GEOFLOOD::CUDA_FLOOD
+  GEOFLOOD::CPU_CUDA
 )
 
 # -- set environment string used for regression tests

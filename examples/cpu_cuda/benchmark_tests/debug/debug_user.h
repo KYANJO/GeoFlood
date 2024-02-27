@@ -36,24 +36,8 @@ extern "C"
 #endif
 #endif
 
-typedef struct user_options
-{
-    int cuda;
-    int example;
-    double gravity;
-    double dry_tolerance;
-    double earth_radius;
-    double coordinate_system;
-    int mcapa;
-    int is_registered;
-} user_options_t;
-
 // --------------------------------------------
 void debug_link_solvers(fclaw2d_global_t *glob);
-user_options_t* debug_options_register (fclaw_app_t * app,
-                                          const char *configfile);
-void debug_options_store (fclaw2d_global_t* glob, user_options_t* user);
-user_options_t* debug_get_options(fclaw2d_global_t* glob);
 
 #define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 

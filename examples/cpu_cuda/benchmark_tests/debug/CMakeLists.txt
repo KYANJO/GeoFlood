@@ -12,8 +12,8 @@ add_library(debug_cpu_f OBJECT
 
 add_executable(debug
 	debug_user.cpp
-	debug_user.h
-  debug_options.c
+	# debug_user.h
+  # debug_options.c
 	debug.cpp
 	$<TARGET_OBJECTS:debug_cpu_f>
 )
@@ -23,7 +23,7 @@ target_include_directories(debug PRIVATE
 )
 
 target_link_libraries(debug PRIVATE 
-  GEOFLOOD::CUDA_FLOOD
+  GEOFLOOD::CPU_CUDA
 )
 
 # -- set environment string used for regression tests

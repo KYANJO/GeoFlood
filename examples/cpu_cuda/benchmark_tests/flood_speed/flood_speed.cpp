@@ -32,7 +32,6 @@
 #include <fclaw2d_clawpatch_options.h>
 
 #include <fc2d_geoclaw.h>
-#include <fc2d_geoclaw_options.h>
 
 static
 fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
@@ -71,23 +70,21 @@ void run_program(fclaw2d_global_t* glob)
        Set domain data.
        --------------------------------------------------------------- */
     fclaw2d_domain_data_new(glob->domain);
-    user_options_t* user_opt = flood_speed_get_options(glob);
-
+    fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    user_options_t* user_opt = geoflood_get_options(glob);
     /* Initialize virtual table for ForestClaw */
     fclaw2d_vtables_initialize(glob);
-
+    
     if(user_opt->cuda != 0)
     {
         /* Initialize virtual tables for solvers */
-        fc2d_geoclaw_options_t *clawopt = fc2d_geoclaw_get_options(glob);
-
         fc2d_cudaclaw_initialize_GPUs(glob);
 
         /* this has to be done after GPUs have been initialized */
-        cudaclaw_set_method_parameters(clawopt->order, 
-                                    clawopt->mthlim, 
-                                    clawopt->mwaves,
-                                    clawopt->use_fwaves);
+        cudaclaw_set_method_parameters(geo_opt->order, 
+                                    geo_opt->mthlim, 
+                                    geo_opt->mwaves,
+                                    geo_opt->use_fwaves);
     }
 
      /* Calls either the CPU or GPU solvers depending on user_opt->cuda */
@@ -105,16 +102,17 @@ void run_program(fclaw2d_global_t* glob)
         PROFILE_CUDA_GROUP("Allocate GPU and GPU buffers",1);
         fc2d_cudaclaw_allocate_buffers(glob);
     }
-
+    
     fclaw2d_initialize(glob);
-    fclaw2d_run(glob);
-
+    // fclaw2d_run(glob);
+    fc2d_geoclaw_run(glob);
+    
      if(user_opt->cuda != 0)
     {
         PROFILE_CUDA_GROUP("De-allocate GPU and GPU buffers",1);
         fc2d_cudaclaw_deallocate_buffers(glob);
     }
-
+    
     fclaw2d_finalize(glob);
 }
 
@@ -137,20 +135,19 @@ main (int argc, char **argv)
     sc_MPI_Comm mpicomm;
 
     int retval;
-
+    // printf("cuda = %d\n",user_opt->cuda);
     /* Initialize application */
     app = fclaw_app_new (&argc, &argv, NULL);
 
     fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
     clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
     geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
-    user_opt =                flood_speed_options_register(app,"fclaw_options.ini"); 
+    user_opt =                geoflood_options_register(app,  "user",       "fclaw_options.ini"); 
 
     /* Read configuration file(s) and command line, and process options */
     options = fclaw_app_get_options (app);
     retval = fclaw_options_read_from_file(options);
     vexit =  fclaw_app_options_parse (app, &first_arg,"fclaw_options.ini.used");
-
     /* Run the program */
     if (!retval & !vexit)
     {
@@ -165,7 +162,7 @@ main (int argc, char **argv)
         fclaw2d_options_store           (glob, fclaw_opt);
         fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
         fc2d_geoclaw_options_store      (glob, geoclaw_opt);
-        flood_speed_options_store       (glob, user_opt);
+        geoflood_options_store          (glob, user_opt);
         
         run_program(glob);
         

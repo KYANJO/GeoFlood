@@ -44,6 +44,7 @@ class GeoFlooddata(object):
         self.tikz_plot_suffix = 'png'
         self.buffer_len = 1024
         self.speed_tolerance_entries_c = 6
+        self.claw_version = 5
 
         self.mi = 1
         self.mj = 1
@@ -61,12 +62,8 @@ class GeoFlooddata(object):
 
         geoflood['user'] = {"\n"
         '   # User defined parameters' : None, 
-        '   cuda' : self.cuda,
-        '   gravity' : self.gravity, "\n"
-        '   dry_tolerance' : self.dry_tolerance, "\n"
-        '   earth_radius' : self.earth_radius, "\n"
-        '   coordinate_system' : self.coordinate_system, "\n"
-        '   mcapa' : self.mcapa
+        '   cuda' : self.cuda, "\n"
+        '   claw_version' : self.claw_version
         }
 
         geoflood['clawpatch'] = {"\n"
@@ -242,108 +239,58 @@ class GeoFlooddata(object):
 
         #print(clawdata.output_format)
         #print(ascii_out)
-        if self.cuda == None:
-            geoflood['geoclaw'] = {
-                '   cuda' : None,
-                '   # normal and transverse order': None,
-                '   # Order of accuracy:': None,
-                '   #   1 => Godunov,': None,  
-                '   #   2 => Lax-Wendroff plus limiters': None,
+        
+        geoflood['geoclaw'] = {
+            # '   cuda' : self.cuda,
+            '   # normal and transverse order': None,
+            '   # Order of accuracy:': None,
+            '   #   1 => Godunov,': None,  
+            '   #   2 => Lax-Wendroff plus limiters': None,
 
-                '   order': ord_str,"\n"
+            '   order': ord_str,"\n"
 
-                '   # Location of capacity function in auxiliary array' : None,
-                '   mcapa': clawdata.capa_index,"\n"
+            '   # Location of capacity function in auxiliary array' : None,
+            '   mcapa': clawdata.capa_index,"\n"
 
-                '   # Source term splitting' : None,
-                '   src_term': src_split,"\n"
+            '   # Source term splitting' : None,
+            '   src_term': src_split,"\n"
 
-                '   # Use an f-waves update (default : True)': None,
-                '   use_fwaves' : clawdata.use_fwaves,"\n"
+            '   # Use an f-waves update (default : True)': None,
+            '   use_fwaves' : clawdata.use_fwaves,"\n"
 
-                '   # Number of waves': None,
-                '   mwaves': clawdata.num_waves,"\n"
-
-
-                "   # mthlim (is a vector in general, with 'mwaves' entries": None,
-                '   # List of limiters to use for each wave family:': None,
-                '   # Required:  len(limiter) == num_waves': None,
-                '   # Some options:': None,
-                "   #   0 or 'none'     ==> no limiter (Lax-Wendroff)": None,
-                "   #   1 or 'minmod'   ==> minmod": None,
-                "   #   2 or 'superbee' ==> superbee": None,
-                "   #   3 or 'mc'       ==> MC limiter": None,
-                "   #   4 or 'vanleer'  ==> van Leer": None,
-                '   mthlim' : lim_str,"\n"
-
-                '   # mthbc (=left,right,bottom,top)' : None,
-                '   # Choice of BCs at xlower and xupper:':None,
-                '   # 0 => user specified (must modify bcN.f to use this option)':None,
-                '   # 1 => extrapolation (non-reflecting outflow)':None,
-                '   # 2 => periodic (must specify this at both boundaries)':None,
-                '   # 3 => solid wall for systems where q(2) is normal velocity':None,
-                '   mthbc' : mthbc_str,"\n"
-
-                '   dry_tolerance_c': geo_data.dry_tolerance,
-                '   wave_tolerance_c': refinement_data.wave_tolerance, 
-                '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
+            '   # Number of waves': None,
+            '   mwaves': clawdata.num_waves,"\n"
 
 
-                '   # Output' : None,
-                '   ascii-out': ascii_out
-                }
-        elif self.cuda == True or self.cuda == False:    
-            geoflood['cudaflood'] = {
-                '   cuda' : self.cuda,
-                '   # normal and transverse order': None,
-                '   # Order of accuracy:': None,
-                '   #   1 => Godunov,': None,  
-                '   #   2 => Lax-Wendroff plus limiters': None,
+            "   # mthlim (is a vector in general, with 'mwaves' entries": None,
+            '   # List of limiters to use for each wave family:': None,
+            '   # Required:  len(limiter) == num_waves': None,
+            '   # Some options:': None,
+            "   #   0 or 'none'     ==> no limiter (Lax-Wendroff)": None,
+            "   #   1 or 'minmod'   ==> minmod": None,
+            "   #   2 or 'superbee' ==> superbee": None,
+            "   #   3 or 'mc'       ==> MC limiter": None,
+            "   #   4 or 'vanleer'  ==> van Leer": None,
+            '   mthlim' : lim_str,"\n"
 
-                '   order': ord_str,"\n"
+            '   # mthbc (=left,right,bottom,top)' : None,
+            '   # Choice of BCs at xlower and xupper:':None,
+            '   # 0 => user specified (must modify bcN.f to use this option)':None,
+            '   # 1 => extrapolation (non-reflecting outflow)':None,
+            '   # 2 => periodic (must specify this at both boundaries)':None,
+            '   # 3 => solid wall for systems where q(2) is normal velocity':None,
+            '   mthbc' : mthbc_str,"\n"
 
-                '   # Location of capacity function in auxiliary array' : None,
-                '   mcapa': clawdata.capa_index,"\n"
+            '   dry_tolerance_c': geo_data.dry_tolerance,
+            '   wave_tolerance_c': refinement_data.wave_tolerance, 
+            '   speed_tolerance_entries_c':self.speed_tolerance_entries_c,
+            '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
 
-                '   # Source term splitting' : None,
-                '   src_term': src_split,"\n"
+            '   buffer-len': self.buffer_len,
 
-                '   # Use an f-waves update (default : True)': None,
-                '   use_fwaves' : clawdata.use_fwaves,"\n"
-
-                '   # Number of waves': None,
-                '   mwaves': clawdata.num_waves,"\n"
-
-
-                "   # mthlim (is a vector in general, with 'mwaves' entries": None,
-                '   # List of limiters to use for each wave family:': None,
-                '   # Required:  len(limiter) == num_waves': None,
-                '   # Some options:': None,
-                "   #   0 or 'none'     ==> no limiter (Lax-Wendroff)": None,
-                "   #   1 or 'minmod'   ==> minmod": None,
-                "   #   2 or 'superbee' ==> superbee": None,
-                "   #   3 or 'mc'       ==> MC limiter": None,
-                "   #   4 or 'vanleer'  ==> van Leer": None,
-                '   mthlim' : lim_str,"\n"
-
-                '   # mthbc (=left,right,bottom,top)' : None,
-                '   # Choice of BCs at xlower and xupper:':None,
-                '   # 0 => user specified (must modify bcN.f to use this option)':None,
-                '   # 1 => extrapolation (non-reflecting outflow)':None,
-                '   # 2 => periodic (must specify this at both boundaries)':None,
-                '   # 3 => solid wall for systems where q(2) is normal velocity':None,
-                '   mthbc' : mthbc_str,"\n"
-
-                '   dry_tolerance_c': geo_data.dry_tolerance,
-                '   wave_tolerance_c': refinement_data.wave_tolerance, 
-                '   speed_tolerance_entries_c':self.speed_tolerance_entries_c,
-                '   speed_tolerance_c': refinement_data.speed_tolerance, "\n"
-
-                '   buffer-len': self.buffer_len,
-
-                '   # Output' : None,
-                '   ascii-out': ascii_out
-                }
+            '   # Output' : None,
+            '   ascii-out': ascii_out
+            }
         with open('geoflood.ini','w') as geofloodfile:
             geoflood.write(geofloodfile)
 
