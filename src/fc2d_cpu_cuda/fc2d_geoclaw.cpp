@@ -1066,7 +1066,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     geoclaw_vt->setaux           = FC2D_GEOCLAW_SETAUX;
     geoclaw_vt->qinit            = FC2D_GEOCLAW_QINIT;
     geoclaw_vt->bc2              = FC2D_GEOCLAW_BC2;
-    // geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
+    geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
 
     if (user_opt->cuda == 0){

@@ -999,7 +999,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
         /* Either hR or hL is almost zero, so the expression below corresponds
            to either Eqn. (54a) or Eqn. (54b) in the JCP paper */
         *s1m = uR + uL - 2.0 * sqrt(s_grav * hR) + 2.0 * sqrt(s_grav * hL);
-        *s2m = *s1m; 
+        *s2m = uR + uL - 2.0 * sqrt(s_grav * hR) + 2.0 * sqrt(s_grav * hL); 
         *rare1 = (hL <= 0.0) ? false : true;
         *rare2 = !(*rare1);
     } else {
@@ -1043,25 +1043,36 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
                 slope = (F_max - F0) / (h_max - h_min);
                 h0 = h0 - F0 / slope;
             }
+
             *hm = h0;
             sqrtgh2 = sqrt(s_grav * *hm);
-            if (hL > hR) {
-                sqrtgh1 = sqrt(s_grav * hL);
-                /* Eqn (13.55) in the FVMHP book */
-                // um = uL + 2.0 * sqrtgh1 - 2.0 * sqrtgh2;
-                *s1m = uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2;
-                *s2m = uL + 2.0 * sqrtgh1 - sqrtgh2;
+            sqrtgh1 = sqrt(s_grav * (hL > hR ? hL : hR));
 
-                *rare1 = true;
-                *rare2 = false;
-            } else {
-                sqrtgh1 = sqrt(s_grav * hR);
-                // um = uR - 2.0 * sqrtgh1 + 2.0 * sqrtgh2;
-                *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
-                *s2m = uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2;
-                *rare1 = false;
-                *rare2 = true;
-            }
+             /* These two equations are extracted from Eqn (13.55) in the FVMHP book */
+            *s1m =  hL > hR ? (uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2) : (uR - 2.0 * sqrtgh1 + sqrtgh2);
+            *s2m =  hL > hR ? (uL + 2.0 * sqrtgh1 - sqrtgh2) : (uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2);
+
+            *rare1 =  hL > hR;
+            *rare2 = !(*rare1);
+
+            // sqrtgh2 = sqrt(s_grav * *hm);
+            // if (hL > hR) {
+            //     sqrtgh1 = sqrt(s_grav * hL);
+            //     /* Eqn (13.55) in the FVMHP book */
+            //     // um = uL + 2.0 * sqrtgh1 - 2.0 * sqrtgh2;
+            //     *s1m = uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2;
+            //     *s2m = uL + 2.0 * sqrtgh1 - sqrtgh2;
+
+            //     *rare1 = true;
+            //     *rare2 = false;
+            // } else {
+            //     sqrtgh1 = sqrt(s_grav * hR);
+            //     // um = uR - 2.0 * sqrtgh1 + 2.0 * sqrtgh2;
+            //     *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
+            //     *s2m = uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2;
+            //     *rare1 = false;
+            //     *rare2 = true;
+            // }
         }
     }
 } /* End of riemanntype function */

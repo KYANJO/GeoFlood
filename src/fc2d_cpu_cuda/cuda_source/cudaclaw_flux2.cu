@@ -120,7 +120,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
 
     double maxcfl = 0;
+    // double maxcfl_sweep = 0;
     double aggregate = 0;
+    // double aggregate;
     double dtdx_, dtdy_;
 
     /* -------------------------- Compute fluctuations -------------------------------- */
@@ -203,15 +205,15 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 }
             }
                 // --- use the speeds to compute maxcfl
+                double maxfl_update_x = (ix > 0 && ix <= mx+1) ? 1.0 : 0.0;
+
                 for(int mw = 0; mw < mwaves; mw++)
                 {
-                    // if (mcapa > 0) dtdx = dtdx/aux[I + mcapa*zs];
-                    // dtdx_ = dtdx/aux[I_capa];
-                    // printf("s = %.16f, dtdx = %.16f, dtdx_ = %.16f, aux[I_capa], = %f\n",s[mw], dtdx, dtdx_, aux[I_capa]);
                     // printf("cfl = %.16f\n",fabs(s[mw]*dtdx_));
-                    // if ((fabs(s[mw]*dtdx) > 0.057 )&& (fabs(s[mw]*dtdx) < 0.059))
+                    // if ((fabs(s[mw]*dtdx_) > 0.531 )&& (fabs(s[mw]*dtdx_) < 0.533))
+                    // if ((fabs(s[mw]*dtdx_) > 0.725 )&& (fabs(s[mw]*dtdx_) < 0.727))
                     // {
-                        // printf("ix = %d, iy = %d, maxcfl_0 = %f\n",ix,iy,fabs(s[mw]*dtdy));
+                    //     printf("ix = %d, iy = %d, maxcfl_0 = %f\n",ix,iy,fabs(s[mw]*dtdx_));
                     // }
                     // if (ix >= 0 && ix <= mx && s[mw] < 0)
                     // // if (ix > 0 && ix < mx)
@@ -220,11 +222,13 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     //     maxcfl = max(maxcfl,fabs(s[mw]*dtdx));
                     // }
 
-                    if (ix > 0 && ix <= mx+1)
-                    {
-                        // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
-                        maxcfl = max(maxcfl,fabs(s[mw]*dtdx_));
-                    }
+                    maxcfl = max(maxcfl, maxfl_update_x * fabs(s[mw] * dtdx_));
+
+                    // if (ix > 0 && ix <= mx+1)
+                    // {
+                    //     // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
+                    //     maxcfl = max(maxcfl,fabs(s[mw]*dtdx_));
+                    // }
 
                     // --- save the speeds and waves to global memory
                     if (order[0] == 2)
@@ -240,7 +244,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     }
                 }
             // }
-            if (iy <= my+1) aggregate = fmax(aggregate, maxcfl);
+            aggregate = (iy <= my + 1) ? fmax(aggregate, maxcfl) : aggregate;
+            // maxcfl_sweep = (iy <= my + 1) ? fmax(maxcfl_sweep, maxcfl) : maxcfl_sweep;
 
         }
 
@@ -284,31 +289,21 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                         bpdq_trans[I_q] = bpdq[mq];
                     }
                 }
+
+                double maxfl_update_y = (iy > 0 && iy <= my+1) ? 1.0 : 0.0;
                 
                 for(int mw = 0; mw < mwaves; mw++)
-                {
-                    // if (mcapa > 0) dtdy = dtdy/aux[mcapa-1];
-                    // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
-                    // if ((fabs(s[mw]*dtdx) > 0.057 )&& (fabs(s[mw]*dtdx) < 0.059))
-                    // {
-                        // printf("ix = %d, iy = %d, maxcfl_1 = %f\n",ix,iy,fabs(s[mw]*dtdy));
-                    // }
-                    // if (iy >= 0 && iy <= my && s[mw] < 0)
-                    // // if (iy > 0 && iy < my)
-                    // {
-                    //     // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
-                    //     maxcfl = max(maxcfl,fabs(s[mw]*dtdy));
-                    // }
-                    // dtdy_ = dtdy/aux[I_capa];
-                    
-                    if (iy > 0 && iy <= my+1)
+                { 
+                    if ((fabs(s[mw]*dtdy_) > 0.725 )&& (fabs(s[mw]*dtdy_) < 0.727))
                     {
-                        // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,fabs(s[mw]*dtdy));
-                        maxcfl = max(maxcfl,fabs(s[mw]*dtdy_));
+                        printf("ix = %d, iy = %d, maxcfl_1 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdy_),s[mw]);
                     }
 
-                    if (order[0] == 2)
-                    {                    
+                    maxcfl = max(maxcfl, maxfl_update_y * fabs(s[mw] * dtdy_));
+
+                    double execute_block = (order[0] == 2) ? 1.0 : 0.0;
+    
+                    if(execute_block > 0) { 
                         int I_speeds = I + (mwaves + mw)*zs;
                         speeds[I_speeds] = s[mw];
                         for(int mq = 0; mq < meqn; mq++)
@@ -317,8 +312,19 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                             waves[I_waves] = wave[mw*meqn + mq];
                         }
                     }
+
+                    // if (order[0] == 2)
+                    // {                    
+                    //     int I_speeds = I + (mwaves + mw)*zs;
+                    //     speeds[I_speeds] = s[mw];
+                    //     for(int mq = 0; mq < meqn; mq++)
+                    //     {
+                    //         int I_waves = I + ((mwaves + mw)*meqn + mq)*zs;
+                    //         waves[I_waves] = wave[mw*meqn + mq];
+                    //     }
+                    // }
                 }
-                if (ix <= mx+1) aggregate = fmax(aggregate, maxcfl);
+                aggregate = (ix <= mx + 1) ? fmax(aggregate, maxcfl) : aggregate;
             }
         }
         // printf("ix = %d, iy = %d, maxcfl = %f\n",ix,iy,maxcfl);
@@ -327,16 +333,10 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     aggregate = BlockReduce(temp_storage).Reduce(aggregate,cub::Max());
     if (threadIdx.x == 0)
     {
-        dtdx = dtdx_;
-        dtdy = dtdy_;
+        dtdx = dtdx_; 
+        dtdy = dtdy_; 
         maxcflblocks[blockIdx.z] = aggregate;
-        // maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
     }
-
-    // maxcflblocks[blockIdx.z] = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
-
-    // __syncthreads();  /* Does block reduce take care of this sync? */
-
 
     /* ---------------------- Second order corrections and limiters --------------------*/  
 
