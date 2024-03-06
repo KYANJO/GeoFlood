@@ -87,7 +87,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     mv = 2-idir;
 
     /* zero (small) negative values if they exist */
-    // left state
+
     if (qr[0] < 0.0) {
         qr[0] = 0.0;
         qr[1] = 0.0;
@@ -113,6 +113,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
 
         hvL = ql[mv];
         hvR = qr[mv];
+
 
         // Check for wet/dry left boundary
         if (hR > drytol) {
@@ -217,12 +218,12 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         fw[mwaves + 0] *= wall[1];
         fw[mu + mwaves] *= wall[1];
         fw[mv + mwaves] *= wall[1];
-        sw[mu] *= wall[1];
+        sw[mu] *= wall[mu];
 
         fw[2*mwaves + 0] *= wall[2];
         fw[2*mwaves + mu] *= wall[2];
         fw[2*mwaves + mv] *= wall[2];
-        sw[mv] *= wall[2];
+        sw[mv] *= wall[mv];
 
         /* update fwave and corresponding speeds */
         fwave[0] = fw[0];
@@ -257,32 +258,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             fwave[mw + 2*mwaves] *= dxdc;
         }
     }
-    // if (mcapa > 0) {
-    //     if (idir == 0) {
-    //         dxdc = earth_radius*deg2rad;
-    //     } else {
-    //         dxdc = earth_radius*cos(auxr[2])*deg2rad;
-    //         // printf("deg2rad =%.16f, dxdc =%.16f\n",deg2rad,dxdc);
-    //     }
-        
-    //     // update fwave and corresponding speeds
-    //     for (mw=0; mw<mwaves; mw++) {
-    //         s[mw] *= dxdc;
-    //         fwave[mw] *= dxdc;
-    //         fwave[mw + mwaves] *= dxdc;
-    //         fwave[mw + 2*mwaves] *= dxdc;
-    //     }
-    // }
-
-     // Debugging
-    // if (debug) {
-    //     printf("ix = %d, iy = %d\n " \
-    //     "s[0] = %.16f, s[1] = %.16f, s[2] = %.16f\n" \
-    //     "fwave[0] = %.16f, fwave[1] = %.16f, fwave[2] = %.16f\n" \
-    //     "fwave[3] = %.16f, fwave[4] = %.16f, fwave[5] = %.16f\n" \
-    //     "fwave[6] = %.16f, fwave[7] = %.16f, fwave[8] = %.16f\n\n", ix,iy,s[0],s[1],s[2],fwave[0],fwave[1],fwave[2],fwave[3],fwave[4],fwave[5],fwave[6],fwave[7],fwave[8]);
-    // }
-
+    
     /* --- compute fluctuations --- */
     amdq[0] = 0.0;
     amdq[1] = 0.0;
@@ -565,17 +541,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     int mu = 1+idir;
     int mv = 2-idir;
 
-    bool debug;
-    // if (idir == 0 && (ix-1) == 7 && (iy-1) == 15)
-    if (idir == 0 && ix == 7 && iy == 15)
-    // if (idir == 0)
-    {
-      debug = 1;
-    }
-    else{
-      debug = 0;
-    }
-
     /* determine del vectors */
     delh = hR - hL;
     delhu = huR - huL;
@@ -587,20 +552,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2);
     // riemann_type(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2);
 
-    // if (ix == 7 && iy == 0) {
-        // if ((hL >= 0.3280909317849093) && (hR >= 0.3280909317849093)){
-            // if (debug){
-            //     printf("ix = %d, iy = %d\n " \ 
-            //     "hL = %.16f, hR = %.16f\n" \
-            //     "uL = %.16f, uR = %.16f\n" \
-            //     "hm = %.16f\n" \
-            //     "s1m = %.16f, s2m = %.16f\n" \
-            //     "g = %.16f, drytol = %.16f\n" \
-            //     "rare1 = %d, rare2 = %d\n\n", ix,iy,hL,hR,uL,uR,hm,s1m,s2m,s_grav,drytol,rare1,rare2);
-            // }
-        // }
-    // }
-   
     /* For the solver to handle depth negativity, depth dh is included in the decompostion which gives as acess to using the depth positive semidefinite solver (HLLE). This makes the system to have 3 waves instead of 2. where the 1st and 3rd are the eigenpairs are related to the flux Jacobian matrix of the original SWE (since s1<s2<s3, and have been modified by Einfeldt to handle depth non-negativity) and the 2nd is refered to as the the entropy corrector wave since its introduced to correct entropy violating solutions with only 2 waves. */
     
     /* The 1st and 3rd speeds are the eigenvalues of the Jacobian matrix of the original SWE modified by Einfeldt's for use with the HLLE solver. */
@@ -934,6 +885,21 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
+    // fw[0] = beta[0]*r[1][0];
+    // fw[mu] = beta[0]*r[2][0];
+    // fw[mv] = beta[0]*r[1][0];
+    // sw[0] = lambda[0];
+
+    // fw[mwaves + 0] = beta[mu]*r[1][1];
+    // fw[mwaves + mu] = beta[mu]*r[2][1];
+    // fw[mwaves + mv] = beta[mu]*r[1][1];
+    // sw[mu] = lambda[mu];
+
+    // fw[2*mwaves + 0] = beta[mv]*r[1][2];
+    // fw[2*mwaves + mu] = beta[mv]*r[2][2];
+    // fw[2*mwaves + mv] = beta[mv]*r[1][2];
+    // sw[mv] = lambda[mv];
+
     fw[0] = beta[0]*r[1][0];
     fw[mu] = beta[0]*r[2][0];
     fw[mv] = beta[0]*r[1][0];
