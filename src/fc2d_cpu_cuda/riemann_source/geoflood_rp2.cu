@@ -885,21 +885,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
-    // fw[0] = beta[0]*r[1][0];
-    // fw[mu] = beta[0]*r[2][0];
-    // fw[mv] = beta[0]*r[1][0];
-    // sw[0] = lambda[0];
-
-    // fw[mwaves + 0] = beta[mu]*r[1][1];
-    // fw[mwaves + mu] = beta[mu]*r[2][1];
-    // fw[mwaves + mv] = beta[mu]*r[1][1];
-    // sw[mu] = lambda[mu];
-
-    // fw[2*mwaves + 0] = beta[mv]*r[1][2];
-    // fw[2*mwaves + mu] = beta[mv]*r[2][2];
-    // fw[2*mwaves + mv] = beta[mv]*r[1][2];
-    // sw[mv] = lambda[mv];
-
     fw[0] = beta[0]*r[1][0];
     fw[mu] = beta[0]*r[2][0];
     fw[mv] = beta[0]*r[1][0];

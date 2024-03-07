@@ -48,6 +48,7 @@ if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
+    n_hours = 0.5 
     step_interval = 1800   # Create output file every 10 steps
     total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
 
@@ -56,8 +57,8 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 25 # Number of x grids per block
-my = 25 # Number of y grids per block
+mx = 50 # Number of x grids per block
+my = 50 # Number of y grids per block
 
 mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
 mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
@@ -80,6 +81,7 @@ earth_radius = 6371220.0
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
 buffer_length = 1024
+regrid_interval = 16
 
 # --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -394,7 +396,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = True
-    geoflooddata.regrid_interval = 3
+    geoflooddata.regrid_interval = regrid_interval
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
@@ -440,7 +442,7 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
-    geoflooddata.report_timing_verbosity = 'all'
+    geoflooddata.report_timing_verbosity = 'counters'
 
     # -----------------------------------------------
     # setrob parameters:
@@ -470,7 +472,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
     amrdata.flag2refine_tol = 0.5
-    amrdata.regrid_interval = 3
+    amrdata.regrid_interval = regrid_interval
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
