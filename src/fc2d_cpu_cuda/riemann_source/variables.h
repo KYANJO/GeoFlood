@@ -18,10 +18,10 @@ extern "C"
 
 /* Define define and declare structures */
 struct GeofloodVars{
-    int mcapa;
+    // int mcapa;
     int coordinate_system;
     double gravity;
-    double dry_tolerance;
+    // double dry_tolerance;
     double earth_radius;
     double deg2rad;
     double theta_0;

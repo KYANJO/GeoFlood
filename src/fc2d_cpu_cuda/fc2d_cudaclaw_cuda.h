@@ -62,13 +62,13 @@ typedef void (*cudaclaw_cuda_rpn2_t)(int idir, int meqn, int mwaves, int maux,
                                      double ql[], double qr[], 
                                      double auxl[], double auxr[],
                                      double wave[], double s[], 
-                                     double amdq[], double apdq[], int ix, int iy);
+                                     double amdq[], double apdq[], double drytol, int mcapa);
 
 typedef void (*cudaclaw_cuda_rpt2_t)(int idir, int meqn, int mwaves, int maux,
                                      double ql[], double qr[], 
                                      double aux1[], double aux2[], double aux3[],
                                      int imp, double dsdq[],
-                                     double bmasdq[], double bpasdq[], int ix, int iy);
+                                     double bmasdq[], double bpasdq[], double drytol);
 
 typedef void (*cudaclaw_cuda_src2_t)(int meqn, int maux, 
                                      double xlower, double ylower,

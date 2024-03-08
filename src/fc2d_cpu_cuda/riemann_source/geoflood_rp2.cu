@@ -38,25 +38,23 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 extern __constant__ GeofloodVars d_geofloodVars;
 
 /* function prototypes */
- __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2);
+ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, double *s1m, double *s2m, bool *rare1, bool *rare2, double drytol);
 
  __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
-    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir);
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, double drytol, int idir);
 
 /* Normal Riemann solver for the 2d shallow water equations with topography */
 __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
                                 int maux, double ql[], double qr[],
                                 double auxl[], double auxr[],
                                 double fwave[], double s[], 
-                                double amdq[], double apdq[], int ix, int iy)
+                                double amdq[], double apdq[], double drytol, int mcapa)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
-    double drytol = d_geofloodVars.dry_tolerance;
     double earth_radius = d_geofloodVars.earth_radius;
-    int mcapa = d_geofloodVars.mcapa; 
     double deg2rad = d_geofloodVars.deg2rad;
 
     /* Local variables */
@@ -149,8 +147,8 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         wall[2] = 1.0;
         if (hR <= drytol) {
             /* determine the wave structure */
-            riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2);
-            // riemann_type(hL, hL, -uL, uL, hstar, s1m, s2m, rare1, rare2);
+            riemanntype(hL, hL, uL, -uL, &hstar, &s1m, &s2m, &rare1, &rare2, drytol);
+            // riemann_type(hL, hL, -uL, uL, hstar, s1m, s2m, rare1, rare2, drytol);
 
             hstartest = fmax(hL,hstar);
             if (hstartest + bL < bR) {
@@ -173,8 +171,8 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             }
         } else if (hL <= drytol) { /* right surface is lower than left topo */
             /* determine the Riemann structure */
-            riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2);
-            // riemann_type(hR, hR, uR, -uR, hstar, s1m, s2m, rare1, rare2);
+            riemanntype(hR, hR, -uR, uR, &hstar, &s1m, &s2m, &rare1, &rare2, drytol);
+            // riemann_type(hR, hR, uR, -uR, hstar, s1m, s2m, rare1, rare2, drytol);
             hstartest = fmax(hR,hstar);
 
             if (hstartest + bR < bL) //left state should become ghost values that mirror right for wall problem
@@ -207,7 +205,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         /* --- end of initializing --- */
 
         /* === solve Riemann problem === */
-        riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,ix,iy,idir);
+        riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,drytol,idir);
 
         // eliminate ghost fluxes for wall    
         fw[0] *= wall[0];
@@ -318,11 +316,10 @@ void cudaflood_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2)
 __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
                 double ql[], double qr[], double aux1[], 
                 double aux2[], double aux3[], int imp, 
-                double asdq[], double bmasdq[], double bpasdq[], int ix, int iy) 
+                double asdq[], double bmasdq[], double bpasdq[], double drytol) 
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
-    double drytol = d_geofloodVars.dry_tolerance;
     double earth_radius = d_geofloodVars.earth_radius;
     int coordinate_system = d_geofloodVars.coordinate_system;
     double deg2rad = d_geofloodVars.deg2rad;
@@ -516,11 +513,10 @@ void cudaflood_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2)
 __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double hR, double huL, double huR, double hvL, double hvR, 
     double bL, double bR, double uL, double uR, double vL, 
-    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, int ix, int iy, int idir)
+    double vR, double phiL, double phiR, double sE1, double sE2, double* sw, double* fw, double drytol, int idir)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
-    double drytol = d_geofloodVars.dry_tolerance;
 
     /* Local variables */
     // double A[9], r[9], lambda[3], del[3], beta[3];
@@ -549,8 +545,8 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     delnorm = delh * delh + delphi * delphi;
 
     /* Determine the Riemann structure */
-    riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2);
-    // riemann_type(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2);
+    riemanntype(hL,hR,uL,uR,&hm,&s1m,&s2m,&rare1,&rare2,drytol);
+    // riemann_type(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2, drytol);
 
     /* For the solver to handle depth negativity, depth dh is included in the decompostion which gives as acess to using the depth positive semidefinite solver (HLLE). This makes the system to have 3 waves instead of 2. where the 1st and 3rd are the eigenpairs are related to the flux Jacobian matrix of the original SWE (since s1<s2<s3, and have been modified by Einfeldt to handle depth non-negativity) and the 2nd is refered to as the the entropy corrector wave since its introduced to correct entropy violating solutions with only 2 waves. */
     
@@ -922,11 +918,10 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 */
 
 __device__ void riemanntype(double hL, double hR, double uL, double uR, double *hm, 
-                            double *s1m, double *s2m, bool *rare1, bool *rare2)
+                            double *s1m, double *s2m, bool *rare1, bool *rare2, double drytol)
 {
     /* Access the __constant__ variables in variables.h */
     double s_grav = d_geofloodVars.gravity;
-    double drytol = d_geofloodVars.dry_tolerance;
 
     // Local variables
     double u1m, u2m, h0, F_max, F_min, dfdh, F0, slope, gL, gR;

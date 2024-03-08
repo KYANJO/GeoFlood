@@ -66,7 +66,8 @@ __device__
 void cudaclaw_flux2_and_update(const int mx,   const int my, 
                                const int meqn, const int mbc,
                                const int maux, const int mwaves, 
-                               const int mwork,
+                               const int mwork, int src_term,
+                               const int mcapa, const double dry_tol,
                                const double xlower, const double ylower, 
                                const double dx,     const double dy,
                                double *const qold,       double *const aux, 
@@ -80,7 +81,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                                cudaclaw_cuda_rpt2_t rpt2,
                                cudaclaw_cuda_b4step2_t b4step2,
                                cudaclaw_cuda_src2_t src2,
-                               double t,double dt)
+                                double t,double dt)
 {
     typedef cub::BlockReduce<double,FC2D_CUDACLAW_BLOCK_SIZE> BlockReduce;
     
@@ -89,8 +90,6 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     extern __shared__ double shared_mem[];
 
     double* start  = shared_mem + mwork*threadIdx.x;
-
-    // int mcapa = d_geofloodVars.mcapa; /* capacity_index (index of the aux array corresponding to the capacity function) */
 
     /* --------------------------------- Start code ----------------------------------- */
 
@@ -181,7 +180,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             auxl[m] = aux[I_aux - 1];
         }               
 
-        rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, ix, iy);
+        rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, dry_tol, mcapa);
 
         for (int mq = 0; mq < meqn; mq++) 
         {
@@ -195,8 +194,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
         
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-        double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
         
         for(int mw = 0; mw < mwaves; mw++)
         {
@@ -286,7 +285,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             auxd[m] = aux[I_aux - ys];
         }               
 
-        rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq, ix, iy);
+        rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq, dry_tol, mcapa);
 
         /* Set value at bottom interface of cell I */
         for (int mq = 0; mq < meqn; mq++) 
@@ -301,8 +300,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-        double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
         for(int mw = 0; mw < mwaves; mw++)
         {
@@ -353,8 +352,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int iadd = mbc-1;  // Shift from corner by 1 in each direction
             int I = (iy + iadd)*ys + (ix + iadd);
 
-            int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-            double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            int I_capa = I + (mcapa-1)*zs; 
+            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
             
             /* ------------------------------- X-directions --------------------------- */
 
@@ -431,8 +430,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int iadd = mbc-1;  // Shift from corner by 1 in each direction
             int I = (iy + iadd)*ys + ix + iadd;
 
-            int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-            double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            int I_capa = I + (mcapa-1)*zs; 
+            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
             double *const s = start;
             double *const wave = s + mwaves;
@@ -494,27 +493,29 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     if (order[1] == 0)
     {
-        /* No transverse propagation; Update the solution and exit */
-        for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
-        {
-            int ix = thread_index % mx;
-            int iy = thread_index/mx;
 
-            int iadd = mbc;  // Only update interior cells
-            int I = (iy + iadd)*ys + (ix + iadd);
+        goto FINAL_UPDATE; /* No transverse propagation; Update the solution and exit */
+        // /* No transverse propagation; Update the solution and exit */
+        // for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
+        // {
+        //     int ix = thread_index % mx;
+        //     int iy = thread_index/mx;
 
-            int I_capa = I + (d_geofloodVars.mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
-            double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        //     int iadd = mbc;  // Only update interior cells
+        //     int I = (iy + iadd)*ys + (ix + iadd);
 
-            for(int mq = 0; mq < meqn; mq++)
-            {
-                int I_q = I + mq*zs;
-                qold[I_q] = qold[I_q] - dtdx_ * (fm[I_q + 1] - fp[I_q])
-                                    - dtdy_ * (gm[I_q + ys] - gp[I_q]);
-            }        
-        }
-        return;
+        //     int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        //     double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        //     double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+
+        //     for(int mq = 0; mq < meqn; mq++)
+        //     {
+        //         int I_q = I + mq*zs;
+        //         qold[I_q] = qold[I_q] - dtdx_ * (fm[I_q + 1] - fp[I_q])
+        //                             - dtdy_ * (gm[I_q + ys] - gp[I_q]);
+        //     }        
+        // }
+        // return;
     }
 
 
@@ -553,8 +554,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
 
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -587,7 +588,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq, ix, iy);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -621,8 +622,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -655,7 +656,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }         
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq, ix, iy);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,0,amdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -689,8 +690,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -724,7 +725,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         }
 
             
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq, ix, iy);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -758,8 +759,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -792,7 +793,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq, ix, iy);
+        rpt2(0,meqn,mwaves,maux,ql,qr,aux1,aux2,aux3,1,apdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -842,8 +843,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;  // Shift from corner by 1 in each direction
         int I =  (iy + iadd)*ys + (ix + iadd);
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
         double *const qr     = start;          /* meqn   */
         double *const qd     = qr + meqn;      /* meqn   */
@@ -876,7 +877,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq, ix, iy);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -912,8 +913,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
 
         double *const qr     = start;          /* meqn   */
@@ -946,7 +947,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq, ix, iy);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,0,bmdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -982,8 +983,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
 
         double *const qr     = start;          /* meqn   */
@@ -1016,7 +1017,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq, ix, iy);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -1051,8 +1052,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
 
         double *const qr     = start;          /* meqn   */
@@ -1085,7 +1086,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
         }
 
-        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq, ix, iy);
+        rpt2(1,meqn,mwaves,maux,qd,qr,aux1,aux2,aux3,1,bpdq,bmasdq,bpasdq, dry_tol);
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -1100,6 +1101,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     /* ------------------------------- Final update ----------------------------------- */
+FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
 
     for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
     {
@@ -1110,9 +1112,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc;
         int I = (iy + iadd)*ys + (ix + iadd);
 
-        int I_capa = I + (d_geofloodVars.mcapa-1)*zs; 
-        double dtdx_ = (d_geofloodVars.mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
-        double dtdy_ = (d_geofloodVars.mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; 
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
         for(int mq = 0; mq < meqn; mq++)
         {
@@ -1124,7 +1126,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         //__syncthreads();
 // #if 0
         // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
-        // if (src2 != NULL)
+        // printf(" src_term = %d\n",src_term);
+        if (src2 != NULL && src_term > 0)
         {
             // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
             double *const qr = start;          /* meqn   */
@@ -1163,8 +1166,9 @@ __global__
 void cudaclaw_flux2_and_update_batch (const int mx,    const int my, 
                                       const int meqn,  const int mbc, 
                                       const int maux,  const int mwaves, 
-                                      const int mwork,
-                                      const double dt, const double t,
+                                      const int mwork, const double dt, 
+                                      const double t,  const int src_term,
+                                      const int mcapa, const double dry_tol,
                                       cudaclaw_fluxes_t* array_fluxes_struct,
                                       double * maxcflblocks,
                                       cudaclaw_cuda_rpn2_t rpn2,
@@ -1173,6 +1177,7 @@ void cudaclaw_flux2_and_update_batch (const int mx,    const int my,
                                       cudaclaw_cuda_src2_t src2)
     {
         cudaclaw_flux2_and_update(mx,my,meqn,mbc,maux,mwaves,mwork,
+                                  src_term, mcapa, dry_tol,
                                   array_fluxes_struct[blockIdx.z].xlower,
                                   array_fluxes_struct[blockIdx.z].ylower,
                                   array_fluxes_struct[blockIdx.z].dx,
@@ -1190,6 +1195,6 @@ void cudaclaw_flux2_and_update_batch (const int mx,    const int my,
                                   array_fluxes_struct[blockIdx.z].waves_dev,
                                   array_fluxes_struct[blockIdx.z].speeds_dev, 
                                   maxcflblocks,
-                                  rpn2, rpt2, b4step2, src2,t,dt);
+                                  rpn2, rpt2, b4step2, src2, t, dt);
 }
 

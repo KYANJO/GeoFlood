@@ -29,14 +29,15 @@ __global__
 void cudaclaw_flux2_and_update_batch (const int mx,    const int my, 
                                       const int meqn,  const int mbc, 
                                       const int maux,  const int mwaves, 
-                                      const int mwork,
-                                      const double dt, const double t,
+                                      const int mwork, const double dt, 
+                                      const double t,  const int src_term,
+                                      const int mcapa, const double dry_tol,
                                       struct cudaclaw_fluxes* array_fluxes_struct_dev,
                                       double * maxcflblocks,
                                       cudaclaw_cuda_rpn2_t rpn2,
                                       cudaclaw_cuda_rpt2_t rpt2,
                                       cudaclaw_cuda_b4step2_t b4step2,
-                                      cudaclaw_cuda_src2_t src2);
+                                      cudaclaw_cuda_src2_t src2); 
 
 __global__
 void cudaclaw_compute_speeds_batch (const int mx,    const int my, 
@@ -177,39 +178,40 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
 
 
 #if 0
-    {
-        PROFILE_CUDA_GROUP("Configure and call to compute speeds",6);  
+    // {
+    //     PROFILE_CUDA_GROUP("Configure and call to compute speeds",6);  
+        
+    //     /* Compute speeds */
+    //     int block_size = FC2D_CUDACLAW_BLOCK_SIZE;
 
-        /* Compute speeds */
-        int block_size = FC2D_CUDACLAW_BLOCK_SIZE;
+    //     dim3 block(block_size,1,1);
+    //     dim3 grid(1,1,batch_size);
 
-        dim3 block(block_size,1,1);
-        dim3 grid(1,1,batch_size);
+    //     mwork = 2*(meqn + maux) + mwaves;
+    //     bytes_per_thread = sizeof(double)*mwork;
+    //     bytes = bytes_per_thread*block_size;
+    //     bytes_kb = bytes/1024.0;
 
-        mwork = 2*(meqn + maux) + mwaves;
-        bytes_per_thread = sizeof(double)*mwork;
-        bytes = bytes_per_thread*block_size;
-        bytes_kb = bytes/1024.0;
+    //     cudaclaw_flux2_and_update_batch<<<grid,block,bytes>>>(mx,my,meqn,mbc,maux,mwaves,
+    //                                                           mwork, dt,t, src_term,
+    //                                                           mcapa, dry_tol,
+    //                                                           array_fluxes_struct_dev,
+    //                                                           maxcflblocks_dev,
+    //                                                           cuclaw_vt->cuda_rpn2,
+    //                                                           cuclaw_vt->cuda_rpt2,
+    //                                                           cuclaw_vt->cuda_b4step2,
+    //                                                           cuclaw_vt->cuda_src2);
 
-        cudaclaw_flux2_and_update_batch<<<grid,block,bytes>>>(mx,my,meqn,mbc,maux,mwaves,
-                                                              mwork, dt,t,
-                                                              array_fluxes_struct_dev,
-                                                              maxcflblocks_dev,
-                                                              cuclaw_vt->cuda_rpn2,
-                                                              cuclaw_vt->cuda_rpt2,
-                                                              cuclaw_vt->cuda_b4step2,
-                                                              cuclaw_vt->cuda_src2);
+    //     cudaDeviceSynchronize();
 
-        cudaDeviceSynchronize();
-
-        cudaError_t code = cudaPeekAtLastError();
-        if (code != cudaSuccess) 
-        {
-            fclaw_global_essentialf("ERROR (cudaclaw_step2.cu (compute_speeds)) : %s\n\n", 
-                                    cudaGetErrorString(code));
-            exit(code);
-        }
-    }        
+    //     cudaError_t code = cudaPeekAtLastError();
+    //     if (code != cudaSuccess) 
+    //     {
+    //         fclaw_global_essentialf("ERROR (cudaclaw_step2.cu (compute_speeds)) : %s\n\n", 
+    //                                 cudaGetErrorString(code));
+    //         exit(code);
+    //     }
+    // }        
 #endif    
 
     {
@@ -230,8 +232,13 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
         bytes_kb = bytes/1024.0;
         //fclaw_global_essentialf("[fclaw] Shared memory  : %0.2f kb\n\n",bytes_kb);
 
+        int src_term = clawopt->src_term;
+        int mcapa = clawopt->mcapa;
+        double dry_tol = clawopt->dry_tolerance_c;
+
         cudaclaw_flux2_and_update_batch<<<grid,block,bytes>>>(mx,my,meqn,mbc,maux,mwaves,
-                                                              mwork, dt,t,
+                                                              mwork, dt,t, src_term,
+                                                              mcapa, dry_tol,
                                                               array_fluxes_struct_dev,
                                                               maxcflblocks_dev,
                                                               cuclaw_vt->cuda_rpn2,
