@@ -35,7 +35,8 @@ void cudaclaw_flux2_and_update_batch (const int mx,    const int my,
                                       double * maxcflblocks,
                                       cudaclaw_cuda_rpn2_t rpn2,
                                       cudaclaw_cuda_rpt2_t rpt2,
-                                      cudaclaw_cuda_b4step2_t b4step2);
+                                      cudaclaw_cuda_b4step2_t b4step2,
+                                      cudaclaw_cuda_src2_t src2);
 
 __global__
 void cudaclaw_compute_speeds_batch (const int mx,    const int my, 
@@ -190,12 +191,14 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
         bytes = bytes_per_thread*block_size;
         bytes_kb = bytes/1024.0;
 
-        cudaclaw_compute_speeds_batch <<<grid,block,bytes>>>(mx,my,meqn, mbc, maux, mwaves,
-                                                             mwork, dt, t, 
-                                                             array_fluxes_struct_dev,
-                                                             maxcflblocks_dev,
-                                                             cuclaw_vt->cuda_speeds,
-                                                             cuclaw_vt->cuda_b4step2);
+        cudaclaw_flux2_and_update_batch<<<grid,block,bytes>>>(mx,my,meqn,mbc,maux,mwaves,
+                                                              mwork, dt,t,
+                                                              array_fluxes_struct_dev,
+                                                              maxcflblocks_dev,
+                                                              cuclaw_vt->cuda_rpn2,
+                                                              cuclaw_vt->cuda_rpt2,
+                                                              cuclaw_vt->cuda_b4step2,
+                                                              cuclaw_vt->cuda_src2);
 
         cudaDeviceSynchronize();
 
@@ -233,7 +236,8 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
                                                               maxcflblocks_dev,
                                                               cuclaw_vt->cuda_rpn2,
                                                               cuclaw_vt->cuda_rpt2,
-                                                              cuclaw_vt->cuda_b4step2);
+                                                              cuclaw_vt->cuda_b4step2,
+                                                              cuclaw_vt->cuda_src2);
         cudaDeviceSynchronize();
 
         

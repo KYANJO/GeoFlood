@@ -416,8 +416,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     FC2D_GEOCLAW_TOPO_UPDATE(&t);
 
     // PROFILE_CUDA_GROUP("cudaclaw_update",3);
-    fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
-    // fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
+    // fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
+    fc2d_geoclaw_vtable_t*  cudaclaw_vt = fc2d_geoclaw_vt(glob);
     const fc2d_geoclaw_options_t* cuclaw_opt;
 
     int iter, total, patch_buffer_len;
@@ -425,7 +425,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     double maxcfl;
 
     /* ------------------------------- Call b4step2 ----------------------------------- */
-    if (geoclaw_vt->b4step2 != NULL)
+    if (cudaclaw_vt->b4step2 != NULL)
     {
         fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
         geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
@@ -460,14 +460,15 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         /* Create array to store pointers to patch data */
         patch_data = (cudaclaw_patch_data_t*) FCLAW_ALLOC(cudaclaw_patch_data_t,1);
         size = (total < patch_buffer_len) ? total : patch_buffer_len;
-        bytes = size*sizeof(cudaclaw_fluxes_t);
-        
-        if (cuclaw_opt->src_term > 0)
+        //int bytes = size*sizeof(cudaclaw_fluxes_t);
+#if 1        
+        if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
         {
             patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
             patch_data->patchno_array = FCLAW_ALLOC(int,size);
             patch_data->blockno_array = FCLAW_ALLOC(int,size);
         }
+#endif        
  
         patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,size); // Is it bytes or size?
         // buffer_data->user = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes);
@@ -488,50 +489,64 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     if ((iter+1) % patch_buffer_len == 0)
     {
         /* (1) We have filled the buffer */
-        maxcfl = cudaclaw_step2_batch(glob,(cudaclaw_fluxes_t*) patch_data->flux_array,
+        //printf("fc2d_cudaclaw : Processing full buffer; iter = %d\n",iter);        
+        maxcfl = cudaclaw_step2_batch(glob,
+                                      (cudaclaw_fluxes_t*) patch_data->flux_array,
                                       patch_buffer_len,t,dt);
-        // printf("iter = %d maxcfl_0 = %f\n",iter,maxcfl);
-        // exit(0);
     }
     else if ((iter+1) == total)
     {        
         /* (2) We have a partially filled buffer, but are done with all the patches 
             that need to be updated.  */
-        maxcfl = cudaclaw_step2_batch(glob,(cudaclaw_fluxes_t*) patch_data->flux_array,
-                                      total%patch_buffer_len,t,dt); 
-        // printf("iter = %d maxcfl = %f\n",iter,maxcfl);
-        // exit(0);
+        int remaining_patches = total % patch_buffer_len;
+        //printf("fc2d_cudaclaw : Processing partial buffer;  iter = %d\n",iter);
+        maxcfl = cudaclaw_step2_batch(glob,
+                                      (cudaclaw_fluxes_t*) patch_data->flux_array,
+                                      remaining_patches,t,dt); 
     }  
-    // printf("maxcfl = %f, iter = %d, total = %d\n",maxcfl,iter,total);
-    fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
     
     /* -------------------------------- Source term ----------------------------------- */
     // Check if we have stored all the patches in the buffer
+ #if 1
+    // Check if we have stored all the patches in the buffer
     if (((iter+1) % patch_buffer_len == 0) || ((iter+1) == total))
     {
-        if (cuclaw_opt->src_term > 0)
+        int remaining = (iter+1) % patch_buffer_len == 0 ? patch_buffer_len : 
+              total-iter;
+        //printf("fc2d_cudaclaw : Remaining : %d\n",remaining);
+        if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
         {   
-            FCLAW_ASSERT(geoclaw_vt->src2 != NULL);
+            //FCLAW_ASSERT(cudaclaw_vt->src2 != NULL);
             // iterate over patches in buffer and call src2 to update them
-            for (int i = 0; i < (total); i++)
+            for (int i = 0; i < remaining; i++)
             {
                 geoclaw_src2(glob,patch_data->patch_array[i],
                               patch_data->blockno_array[i],
                               patch_data->patchno_array[i],t,dt);
             }
-            FCLAW_FREE(patch_data->patch_array);
-            FCLAW_FREE(patch_data->patchno_array);
-            FCLAW_FREE(patch_data->blockno_array);
         }
     }   
-   
-    if (iter == total-1)
+#endif    
+
+    if (iter+1 == total)
     {
         // FCLAW_FREE(patch_data->patch_array);
         FCLAW_FREE(patch_data->flux_array);   
-        FCLAW_FREE(buffer_data->user);                                   
-    }   
+        FCLAW_FREE(buffer_data->user);  
 
+#if 1
+        if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
+        {
+            FCLAW_FREE(patch_data->patch_array);
+            FCLAW_FREE(patch_data->patchno_array);
+            FCLAW_FREE(patch_data->blockno_array);       
+        }
+#endif    
+    }
+
+    fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);    
+
+    //printf("fc2d_cudaclaw : (after) dt = %24.16e\n\n",dt);
     return maxcfl;
 }
 
@@ -1078,6 +1093,9 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 
         cudaflood_assign_rpt2(&geoclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpt2 != NULL);
+
+        cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
+        FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
     }
  
     gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;

@@ -27,6 +27,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FC2D_GEOCLAW_FORT_H
 
 #include <fclaw_base.h>  /* Needed for FCLAW_F77_FUNC macro */
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -120,7 +121,17 @@ typedef void (*fc2d_geoclaw_fluxfun_t)(const int* meqn, double q[], double aux[]
 
 /* ---------------------------------- GeoClaw functions ------------------------------- */
 #define GET_GEOCLAW_PARAMETERS FCLAW_F77_FUNC(get_geoclaw_parameters, GET_GEOCLAW_PARAMETERS)
-void GET_GEOCLAW_PARAMETERS(const int* mcapa, const int* coord_system, const double* grav, const double* dry_tol, const double* earth_rad, const double* deg2rad);
+void GET_GEOCLAW_PARAMETERS(int* mcapa, int* coord_system, double* grav, double* dry_tol, 
+                            double* earth_rad, double* deg2rad, double* theta_0, 
+                            double* omega, bool* coriolis_forcing, bool* friction_forcing, 
+                            double* friction_depth, bool* variable_friction, 
+                            int* num_manning, int* friction_index, double* manning_coeff, 
+                            double* manning_break);
+
+// void GET_GEOCLAW_PARAMETERS(const int* mcapa, const int* coord_system, const double* grav, const double* dry_tol, const double* earth_rad, const double* deg2rad);
+#define CLEANUP_GEOCLAW_PARAMETERS FCLAW_F77_FUNC(cleanup_geoclaw_parameters, CLEANUP_GEOCLAW_PARAMETERS)
+void CLEANUP_GEOCLAW_PARAMETERS(double manning_coefficient[], double manning_break[]);
+
 
 #define FC2D_GEOCLAW_BC2 FCLAW_F77_FUNC(fc2d_geoclaw_bc2, FC2D_GEOCLAW_BC2)
 void FC2D_GEOCLAW_BC2(const int* meqn, const int* mbc,

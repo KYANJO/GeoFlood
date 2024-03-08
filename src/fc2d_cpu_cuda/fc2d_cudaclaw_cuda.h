@@ -70,6 +70,13 @@ typedef void (*cudaclaw_cuda_rpt2_t)(int idir, int meqn, int mwaves, int maux,
                                      int imp, double dsdq[],
                                      double bmasdq[], double bpasdq[], int ix, int iy);
 
+typedef void (*cudaclaw_cuda_src2_t)(int meqn, int maux, 
+                                     double xlower, double ylower,
+                                     double dx, double dy, 
+                                     double q[], double aux[],
+                                     double time, double dt, 
+                                     int i, int j);
+
 typedef void (*cudaclaw_cuda_speeds_t)(int idir, int meqn, int mwaves, int maux,
                                        double ql[], double  qr[],
                                        double auxl[], double auxr[],
@@ -108,6 +115,9 @@ struct cudaclaw_fluxes* cudaclaw_get_flux_buffer();
 /* Riemann solver assign functions */
 void cudaflood_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
 void cudaflood_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
+
+/* Source term assign functions */
+void cudaflood_assign_src2(cudaclaw_cuda_src2_t *src2);
 
 /* Needed to fetch variables for the Riemann solvers*/
 void setprob_cuda(); 

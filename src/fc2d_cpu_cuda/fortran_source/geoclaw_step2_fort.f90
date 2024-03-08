@@ -94,33 +94,33 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
        q1d(:,1-mbc:mx+mbc) = qold(:,1-mbc:mx+mbc,j)
 
        !! FORESTCLAW change to handle cubed sphere
-       IF (j .EQ. 0) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(0) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,1-ibc) = qold(m,ibc,0)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(1) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,mx+ibc) = qold(m,mx-ibc+1,0)
-                ENDDO
-             ENDIF
-          ENDDO
-       ELSE IF (j .EQ. my+1) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(2) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,1-ibc) = qold(m,ibc,my+1)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(3) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,mx+ibc) = qold(m,mx-ibc+1,my+1)
-                ENDDO
-             ENDIF
-          ENDDO
-       ENDIF
+      !  IF (j .EQ. 0) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(0) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,1-ibc) = qold(m,ibc,0)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(1) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,mx+ibc) = qold(m,mx-ibc+1,0)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ELSE IF (j .EQ. my+1) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(2) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,1-ibc) = qold(m,ibc,my+1)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(3) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,mx+ibc) = qold(m,mx-ibc+1,my+1)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ENDIF
 
 
         ! Set dtdx slice if a capacity array exists
@@ -168,33 +168,33 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
        q1d(:,1-mbc:my+mbc) = qold(:,i,1-mbc:my+mbc)
 
        !! FORESTCLAW change to handle cubed sphere
-       IF (i .EQ. 0) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(0) .EQ. 3) THEN
-                DO jbc = 1,mbc
-                   q1d(m,1-jbc) = qold(m,0,jbc)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(2) .EQ. 3) THEN
-                DO jbc = 1,mbc
-                   q1d(m,my+jbc) = qold(m,0,my-jbc+1)
-                ENDDO
-             ENDIF
-          ENDDO
-       ELSE IF (i .EQ. mx+1) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(1) .EQ. 3) THEN
-                DO jbc = 1,mbc
-                   q1d(m,1-jbc) = qold(m,mx+1,jbc)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(3) .EQ. 3) THEN
-                DO jbc= 1,mbc
-                   q1d(m,my+jbc) = qold(m,mx+1,my-jbc+1)
-                ENDDO
-             ENDIF
-          ENDDO
-       ENDIF
+      !  IF (i .EQ. 0) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(0) .EQ. 3) THEN
+      !           DO jbc = 1,mbc
+      !              q1d(m,1-jbc) = qold(m,0,jbc)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(2) .EQ. 3) THEN
+      !           DO jbc = 1,mbc
+      !              q1d(m,my+jbc) = qold(m,0,my-jbc+1)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ELSE IF (i .EQ. mx+1) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(1) .EQ. 3) THEN
+      !           DO jbc = 1,mbc
+      !              q1d(m,1-jbc) = qold(m,mx+1,jbc)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(3) .EQ. 3) THEN
+      !           DO jbc= 1,mbc
+      !              q1d(m,my+jbc) = qold(m,mx+1,my-jbc+1)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ENDIF
 
 
         ! Set dt/dy ratio in slice
