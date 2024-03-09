@@ -74,7 +74,7 @@ __device__ void cuda_flood_src2(int meqn, int maux, double xlower, double ylower
     // ------------- End of friction source term -----------------
 
     // ------------- Coriolis source term -----------------------
-    // printf("Coriolis source term\n", coriolis_forcing);
+    // printf("Coriolis source term %d\n", d_geofloodVars.coriolis_forcing);
     if (d_geofloodVars.coriolis_forcing)
     {
         double y = ylower + (j - 0.5) * dy;

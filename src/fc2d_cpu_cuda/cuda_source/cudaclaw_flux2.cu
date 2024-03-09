@@ -123,6 +123,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     double maxcfl = 0;
+    // double aggregate = 0;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     {
 
@@ -196,10 +197,18 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         
         int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
         double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+
+        double maxfl_update_x = (ix > 0 && ix <= mx + 1) ? 1.0 : 0.0;
         
         for(int mw = 0; mw < mwaves; mw++)
         {
-            maxcfl = max(maxcfl,fabs(s[mw])*dtdx_);
+            // if ((fabs(s[mw]*dtdx_) > 5.6 )&& (fabs(s[mw]*dtdx_) < 5.63))
+            // {
+            //     printf("ix = %d, iy = %d, maxcfl_0 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdx_),s[mw]);
+            // }
+
+            // maxcfl = max(maxcfl,fabs(s[mw])*dtdx_);
+            maxcfl = max(maxcfl, maxfl_update_x * fabs(s[mw] * dtdx_));
 
             if (order[0] == 2)
             {                    
@@ -213,8 +222,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 }
             }
         }
-    }
+        // aggregate = (iy <= my + 1) ? fmax(aggregate, maxcfl) : aggregate;
 
+    }
     __syncthreads();
     
     if (threadIdx.x == 0)
@@ -303,9 +313,17 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
         double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
+        double maxfl_update_y = (iy > 0 && iy <= my+1) ? 1.0 : 0.0;
+
         for(int mw = 0; mw < mwaves; mw++)
         {
-            maxcfl = max(maxcfl,fabs(s[mw])*dtdy_);
+            // if ((fabs(s[mw]*dtdy_) > 5.6 )&& (fabs(s[mw]*dtdy_) < 5.63))
+            // {
+            //     printf("ix = %d, iy = %d, maxcfl_1 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdy_),s[mw]);
+            // }
+
+            // maxcfl = max(maxcfl,fabs(s[mw])*dtdy_);
+            maxcfl = max(maxcfl, maxfl_update_y * fabs(s[mw] * dtdy_));
             if (order[0] == 2)
             {                    
                 int I_speeds = I + (mwaves + mw)*zs;
@@ -317,6 +335,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 }
             }
         }
+        // aggregate = (ix <= mx + 1) ? fmax(aggregate, maxcfl) : aggregate;
     }
 
 
@@ -324,6 +343,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     double aggregate = BlockReduce(temp_storage).Reduce(maxcfl,cub::Max());
+    // aggregate = BlockReduce(temp_storage).Reduce(aggregate,cub::Max());
     if (threadIdx.x == 0)
     {
         maxcflblocks[blockIdx.z] = aggregate;
@@ -1125,38 +1145,79 @@ FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
         }        
         //__syncthreads();
 // #if 0
-        // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
-        // printf(" src_term = %d\n",src_term);
-        if (src2 != NULL && src_term > 0)
-        {
-            // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
-            double *const qr = start;          /* meqn   */
-            for(int mq = 0; mq < meqn; mq++)
-            {
-                int I_q = I + mq*zs;
-                qr[mq] = qold[I_q];  
-            }
-            double *const auxr   = qr + meqn;         /* maux        */
-            for(int m = 0; m < maux; m++)
-            {
-                /* In case aux is already set */
-                int I_aux = I + m*zs;
-                auxr[m] = aux[I_aux];
-            }    
+    // if (src2 != NULL && src_term > 0)
+    // {
+    //     // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
+    //     double *const qr = start;          /* meqn   */
+    //     for(int mq = 0; mq < meqn; mq++)
+    //     {
+    //         int I_q = I + mq*zs;
+    //         qr[mq] = qold[I_q];  
+    //     }
+    //     double *const auxr   = qr + meqn;         /* maux        */
+    //     for(int m = 0; m < maux; m++)
+    //     {
+    //         /* In case aux is already set */
+    //         int I_aux = I + m*zs;
+    //         auxr[m] = aux[I_aux];
+    //     }    
 
-            // First cell in non-ghost cells should be (1,1)
-            int i = ix+1;  
-            int j = iy+1;
-            src2(meqn,maux,xlower,ylower,dx,dy,qr,auxr,t,dt,i,j);
+    //     // First cell in non-ghost cells should be (1,1)
+    //     int i = ix+1;  
+    //     int j = iy+1;
+    //     src2(meqn,maux,xlower,ylower,dx,dy,qr,auxr,t,dt,i,j);
 
-            for(int mq = 0; mq < meqn; mq++)
-            {
-                int I_q = I + mq*zs;
-                qold[I_q] = qr[mq];  
-            }
-        }
+    //     for(int mq = 0; mq < meqn; mq++)
+    //     {
+    //         int I_q = I + mq*zs;
+    //         qold[I_q] = qr[mq];  
+    //     }
+    // }
+// }
     }
-// #endif
+
+#if 0  
+    __syncthreads();
+
+    if (src2 != NULL && src_term > 0)
+    {
+        for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
+        {
+            // Loop over interior cells only
+            int ix = thread_index % mx;
+            int iy = thread_index/my;
+
+            int iadd = mbc;
+            int I = (iy + iadd)*ys + (ix + iadd);
+            
+                // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
+                double *const qr = start;          /* meqn   */
+                for(int mq = 0; mq < meqn; mq++)
+                {
+                    int I_q = I + mq*zs;
+                    qr[mq] = qold[I_q];  
+                }
+                double *const auxr   = qr + meqn;         /* maux        */
+                for(int m = 0; m < maux; m++)
+                {
+                    /* In case aux is already set */
+                    int I_aux = I + m*zs;
+                    auxr[m] = aux[I_aux];
+                }    
+
+                // First cell in non-ghost cells should be (1,1)
+                int i = ix+1;  
+                int j = iy+1;
+                src2(meqn,maux,xlower,ylower,dx,dy,qr,auxr,t,dt,i,j);
+
+                for(int mq = 0; mq < meqn; mq++)
+                {
+                    int I_q = I + mq*zs;
+                    qold[I_q] = qr[mq];  
+                }
+            }
+    }
+#endif
 }
 
 /* ---------------------------------------------------------------------------------------
