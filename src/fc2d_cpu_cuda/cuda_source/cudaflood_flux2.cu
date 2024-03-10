@@ -183,47 +183,42 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, dry_tol, mcapa);
 
-        // double maxfl_update_x = (ix > 0 && ix <= mx + 1) ? 1.0 : 0.0;
-
-        // if ((ix > 0 && ix <= mx + 1 ) && (iy >= 0 && iy <= mx + 1))
+        for (int mq = 0; mq < meqn; mq++) 
         {
-            for (int mq = 0; mq < meqn; mq++) 
+            int I_q = I + mq*zs;
+            fm[I_q] = amdq[mq];
+            fp[I_q] = -apdq[mq]; 
+            if (order[1] > 0)
             {
-                int I_q = I + mq*zs;
-                fm[I_q] = amdq[mq];
-                fp[I_q] = -apdq[mq]; 
-                if (order[1] > 0)
-                {
-                    amdq_trans[I_q] = amdq[mq];                                        
-                    apdq_trans[I_q] = apdq[mq];  
-                }
+                amdq_trans[I_q] = amdq[mq];                                        
+                apdq_trans[I_q] = apdq[mq];  
             }
-            
-            int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        }
+        
+        int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
-            
-            
-            for(int mw = 0; mw < mwaves; mw++)
-            {
-                // if ((fabs(s[mw]*dtdx_) > 5.6 )&& (fabs(s[mw]*dtdx_) < 5.63))
-                // {
-                //     printf("ix = %d, iy = %d, maxcfl_0 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdx_),s[mw]);
-                // }
+        double maxfl_update_x = (ix > 0 && ix <= mx + 1) ? 1.0 : 0.0;
+        
+        for(int mw = 0; mw < mwaves; mw++)
+        {
+            // if ((fabs(s[mw]*dtdx_) > 5.6 )&& (fabs(s[mw]*dtdx_) < 5.63))
+            // {
+            //     printf("ix = %d, iy = %d, maxcfl_0 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdx_),s[mw]);
+            // }
 
-                maxcfl = max(maxcfl,fabs(s[mw])*dtdx_);
-                // maxcfl = max(maxcfl, maxfl_update_x * fabs(s[mw] * dtdx_));
+            // maxcfl = max(maxcfl,fabs(s[mw])*dtdx_);
+            maxcfl = max(maxcfl, maxfl_update_x * fabs(s[mw] * dtdx_));
 
-                if (order[0] == 2)
-                {                    
-                    int I_speeds = I + mw*zs;
-                    speeds[I_speeds] = s[mw];
-                    for(int mq = 0; mq < meqn; mq++)
-                    {
-                        int k = mw*meqn + mq;
-                        int I_waves = I + k*zs;
-                        waves[I_waves] = wave[k];
-                    }
+            if (order[0] == 2)
+            {                    
+                int I_speeds = I + mw*zs;
+                speeds[I_speeds] = s[mw];
+                for(int mq = 0; mq < meqn; mq++)
+                {
+                    int k = mw*meqn + mq;
+                    int I_waves = I + k*zs;
+                    waves[I_waves] = wave[k];
                 }
             }
         }
@@ -302,46 +297,41 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq, dry_tol, mcapa);
 
-        // double maxfl_update_y = (iy > 0 && iy <= my+1) ? 1.0 : 0.0;
-
         /* Set value at bottom interface of cell I */
-        // if ((iy > 0 && iy <= my+1) && (ix >= 0 && ix <= mx + 1))
+        for (int mq = 0; mq < meqn; mq++) 
         {
-            for (int mq = 0; mq < meqn; mq++) 
+            int I_q = I + mq*zs;
+            gm[I_q] = bmdq[mq];
+            gp[I_q] = -bpdq[mq]; 
+            if (order[1] > 0)
             {
-                int I_q = I + mq*zs;
-                gm[I_q] = bmdq[mq];
-                gp[I_q] = -bpdq[mq]; 
-                if (order[1] > 0)
-                {
-                    bmdq_trans[I_q] = bmdq[mq];                                                   
-                    bpdq_trans[I_q] = bpdq[mq];
-                }
+                bmdq_trans[I_q] = bmdq[mq];                                                   
+                bpdq_trans[I_q] = bpdq[mq];
             }
+        }
 
-            int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
-            
+        double maxfl_update_y = (iy > 0 && iy <= my+1) ? 1.0 : 0.0;
 
-            for(int mw = 0; mw < mwaves; mw++)
-            {
-                // if ((fabs(s[mw]*dtdy_) > 5.6 )&& (fabs(s[mw]*dtdy_) < 5.63))
-                // {
-                //     printf("ix = %d, iy = %d, maxcfl_1 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdy_),s[mw]);
-                // }
+        for(int mw = 0; mw < mwaves; mw++)
+        {
+            // if ((fabs(s[mw]*dtdy_) > 5.6 )&& (fabs(s[mw]*dtdy_) < 5.63))
+            // {
+            //     printf("ix = %d, iy = %d, maxcfl_1 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdy_),s[mw]);
+            // }
 
-                maxcfl = max(maxcfl,fabs(s[mw])*dtdy_);
-                // maxcfl = max(maxcfl, maxfl_update_y * fabs(s[mw] * dtdy_));
-                if (order[0] == 2)
-                {                    
-                    int I_speeds = I + (mwaves + mw)*zs;
-                    speeds[I_speeds] = s[mw];
-                    for(int mq = 0; mq < meqn; mq++)
-                    {
-                        int I_waves = I + ((mwaves + mw)*meqn + mq)*zs;
-                        waves[I_waves] = wave[mw*meqn + mq];
-                    }
+            // maxcfl = max(maxcfl,fabs(s[mw])*dtdy_);
+            maxcfl = max(maxcfl, maxfl_update_y * fabs(s[mw] * dtdy_));
+            if (order[0] == 2)
+            {                    
+                int I_speeds = I + (mwaves + mw)*zs;
+                speeds[I_speeds] = s[mw];
+                for(int mq = 0; mq < meqn; mq++)
+                {
+                    int I_waves = I + ((mwaves + mw)*meqn + mq)*zs;
+                    waves[I_waves] = wave[mw*meqn + mq];
                 }
             }
         }
@@ -524,28 +514,28 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     if (order[1] == 0)
     {
 
-        // goto FINAL_UPDATE; /* No transverse propagation; Update the solution and exit */
+        goto FINAL_UPDATE; /* No transverse propagation; Update the solution and exit */
         // /* No transverse propagation; Update the solution and exit */
-        for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
-        {
-            int ix = thread_index % mx;
-            int iy = thread_index/mx;
+        // for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
+        // {
+        //     int ix = thread_index % mx;
+        //     int iy = thread_index/mx;
 
-            int iadd = mbc;  // Only update interior cells
-            int I = (iy + iadd)*ys + (ix + iadd);
+        //     int iadd = mbc;  // Only update interior cells
+        //     int I = (iy + iadd)*ys + (ix + iadd);
 
-            int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
-            double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        //     int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        //     double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        //     double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
-            for(int mq = 0; mq < meqn; mq++)
-            {
-                int I_q = I + mq*zs;
-                qold[I_q] = qold[I_q] - dtdx_ * (fm[I_q + 1] - fp[I_q])
-                                    - dtdy_ * (gm[I_q + ys] - gp[I_q]);
-            }        
-        }
-        return;
+        //     for(int mq = 0; mq < meqn; mq++)
+        //     {
+        //         int I_q = I + mq*zs;
+        //         qold[I_q] = qold[I_q] - dtdx_ * (fm[I_q + 1] - fp[I_q])
+        //                             - dtdy_ * (gm[I_q + ys] - gp[I_q]);
+        //     }        
+        // }
+        // return;
     }
 
 
@@ -1131,7 +1121,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     /* ------------------------------- Final update ----------------------------------- */
-// FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
+FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
 
     for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
     {
