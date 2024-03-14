@@ -1,5 +1,5 @@
 OutputFlag = 'ForestClaw';   % default value.
-OutputDir = './results_3_6';            % Default (reassign them here anyway)
+OutputDir = '.';            % Default (reassign them here anyway)
 
 ForestClaw = 1;     % Plot using ForestClaw preferences.
 
