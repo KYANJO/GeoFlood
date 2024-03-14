@@ -55,9 +55,9 @@ def setplot(plotdata):
     # plotdata.kml_user_files.append(['malpasset_dam_validate.kml',True])
 
     # Cells used in setrun.py (original)
-    num_cells = [54,19]
-    lower = [953236.00000000, 1832407.25000000]
-    upper = [959554.00000000, 1848572.75000000]
+    num_cells = [16*5,16*3]
+    lower = [302901.6624167535,  1111417.5338057536]
+    upper = [1172647.141836348, 1658032.3788042287]
 
     # lower = [6.69262004,  43.40252126]
     # upper = [6.78171094,  43.55083988 ]
@@ -90,14 +90,14 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 32
-    mi = 1
-    mj = 2
+    mx = 16
+    mi = 5
+    mj = 3
     minlevel = 1
-    maxlevel = 6
+    maxlevel = 4
     p = 1
-    plotfigure.kml_figsize = [2,4]  #[mx*2**p*mi,mx*2**p*mj]
-    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2  
+    plotfigure.kml_figsize = [5,3]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/3  
 
     # --------------------------------------------------
 
@@ -180,29 +180,29 @@ def setplot(plotdata):
     # plotitem.pcolor_cmax = cmax
 
     # plot point locations 
-    police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
+    # police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
     
     # Physical model points locations (Gauges)
-    gauge_points = ['P6','P7','P8','P9','P10','P11','P12','P13','P14']
-    gauge_loc = []
-    for i in range(len(gauges[0])):
-        gauge_loc.append([gauges[1][i],gauges[2][i]])   
+    # gauge_points = ['P6','P7','P8','P9','P10','P11','P12','P13','P14']
+    # gauge_loc = []
+    # for i in range(len(gauges[0])):
+    #     gauge_loc.append([gauges[1][i],gauges[2][i]])   
 
-    # Physical model points locations (Transformers)
-    transformer_points = ['A','B','c']
-    transformer_loc = []
-    for i in range(len(transformers[0])):
-        transformer_loc.append([transformers[1][i],transformers[2][i]])
+    # # Physical model points locations (Transformers)
+    # transformer_points = ['A','B','c']
+    # transformer_loc = []
+    # for i in range(len(transformers[0])):
+    #     transformer_loc.append([transformers[1][i],transformers[2][i]])
 
-    # Physical model points locations (Police)
-    police_points = ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15','S16','S17']
-    police_loc = []
-    for i in range(len(police[0])):
-        police_loc.append([police[1][i],police[2][i]])
+    # # Physical model points locations (Police)
+    # police_points = ['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','S11','S12','S13','S14','S15','S16','S17']
+    # police_loc = []
+    # for i in range(len(police[0])):
+    #     police_loc.append([police[1][i],police[2][i]])
 
-    point_labels = transformer_points + gauge_points + police_points
-    point_list = [transformer_loc, gauge_loc, police_loc]
-    point_list = [item for sublist in point_list for item in sublist]
+    # point_labels = transformer_points + gauge_points + police_points
+    # point_list = [transformer_loc, gauge_loc, police_loc]
+    # point_list = [item for sublist in point_list for item in sublist]
     
     # # Plot and overlay points on the plotted image
     # plt.style.use('default')
