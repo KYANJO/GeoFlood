@@ -2,8 +2,7 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2024-01-11
-# @desc:    Hurricane Harvey tiggered flooding (10 day simulation)
-#           --simulating both 30 and 10 m resolutions
+# @desc:    Missoula Flood (Ice Age flood)
 # @version: 2.0
 # ------------------------------------------------
 
@@ -28,7 +27,7 @@ from geoclaw.topotools import Topography
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1e-8 # Initial time step
+initial_dt = 1e-4 # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -53,11 +52,11 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 16 # Number of x grids per block
-my = 16 # Number of y grids per block
+mx = 16*2 # Number of x grids per block
+my = 16*2 # Number of y grids per block
 
-mi = 5 # Number of x grids per block  <-- mx = mi*mx 
-mj = 3  # Number of y grids per block   <-- my = mj*my 
+mi = 2 # Number of x grids per block  <-- mx = mi*mx 
+mj = 1  # Number of y grids per block   <-- my = mj*my 
 
 minlevel = 1 
 maxlevel = 4 #resolution based on levels
@@ -83,6 +82,7 @@ buffer_length = 1024
 
 topo_file = "Missoula4Brian/topo/Scenario4a_maxice_except_Okanogan/topo_with_ice.tt3"
 init_file = "Missoula4Brian/topo/lakemissoula/lakemissoula1295.tt3"
+ice_dam   = "Missoula4Brian/topo/lakemissoula/LakeM_1295ascii/icedam1295.asc"
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -320,7 +320,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'mc'       ==> MC limiter
     #   4 or 'vanleer'  ==> van Leer
-    clawdata.limiter = ['mc', 'mc', 'mc']
+    clawdata.limiter = ['vanleer', 'vanleer', 'vanleer']
 
     clawdata.use_fwaves = True    # True ==> use f-wave version of algorithms
 
@@ -384,7 +384,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = True
-    geoflooddata.regrid_interval = 3
+    geoflooddata.regrid_interval = 16
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
@@ -392,7 +392,7 @@ def setrun(claw_pkg='geoclaw'):
 
     geoflooddata.subcycle = True
     geoflooddata.output = True
-    geoflooddata.output_gauges = False
+    geoflooddata.output_gauges = True
 
 
     # Block dimensions for non-square domains
@@ -403,7 +403,7 @@ def setrun(claw_pkg='geoclaw'):
     # Tikz output parameters:
     # -----------------------------------------------
     geoflooddata.tikz_out = True
-    geoflooddata.tikz_figsize = "5 3"
+    geoflooddata.tikz_figsize = "4 2"
     geoflooddata.tikz_plot_prefix = "missoula"
     geoflooddata.tikz_plot_suffix = "png"
 
@@ -460,7 +460,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
     amrdata.flag2refine_tol = 0.5
-    amrdata.regrid_interval = 3
+    amrdata.regrid_interval = 16
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
@@ -487,9 +487,9 @@ def setrun(claw_pkg='geoclaw'):
     g8=(8, 563803.5727, 1391251.482, 0.e3, 60e3)
     gauges = [g1,g2,g3,g4,g5,g6,g7,g8]
     # print('\nLocation of Gauges:')
-    # for g in gauges:
+    for g in gauges:
     #     # print([g[0],g[1],g[2],g[3],g[4]])
-    #     rundata.gaugedata.gauges.append([g[0],g[1],g[2],g[3],g[4]])
+        rundata.gaugedata.gauges.append([g[0],g[1],g[2],g[3],g[4]])
     
 
     # -----------------------------------------------
@@ -550,7 +550,7 @@ def setgeo(rundata):
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = -1000.0
+    geo_data.sea_level = 0.0
     geo_data.dry_tolerance = dry_tolerance
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
@@ -566,7 +566,7 @@ def setgeo(rundata):
 
     # == settopo.data values ==
     topo_data = rundata.topo_data
-    topo_data.topo_missing = -9999.0
+    topo_data.topo_missing = 9999.0 # set such that sea-level<topo_missing (to form very high clifs instead of holes)
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
     topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, topo_file])
@@ -581,6 +581,8 @@ def setgeo(rundata):
     # convert filetype = 3 to 1
     qinitfile_eta = 'init_eta.xyz'
     tools.convert_file_type(init_file, qinitfile_eta, 3, 1)
+    # tools.convert_file_type(ice_dam, qinitfile_eta, 3, 1)
+    # qinitfile_eta = 'init_eta_ice_dam.xyz'
     rundata.qinit_data.qinitfiles.append([minlevel,minlevel,qinitfile_eta])
 
     return rundata
