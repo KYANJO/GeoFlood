@@ -18,6 +18,8 @@
 #include <fc2d_cuda_profiler.h>
 #include <cub/cub.cuh>
 
+#include <cuda_runtime.h>
+
 // #include "data_swap.h"
 // #include "../fc2d_cudaclaw_fort.h"
 
@@ -51,6 +53,7 @@ void cudaclaw_compute_speeds_batch (const int mx,    const int my,
                                     cudaclaw_cuda_b4step2_t b4step2);
 
 
+                                    
 double cudaclaw_step2_batch(fclaw2d_global_t *glob,
         cudaclaw_fluxes_t* array_fluxes_struct, 
         int batch_size, double t, double dt)
@@ -228,6 +231,7 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
         mwork = (mwork1 > mwork2) ? mwork1 : mwork2;
         bytes_per_thread = sizeof(double)*mwork;
         bytes = bytes_per_thread*block_size;
+        
 
         bytes_kb = bytes/1024.0;
         //fclaw_global_essentialf("[fclaw] Shared memory  : %0.2f kb\n\n",bytes_kb);
@@ -235,7 +239,12 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
         int src_term = clawopt->src_term;
         int mcapa = clawopt->mcapa;
         double dry_tol = clawopt->dry_tolerance_c;
-
+        
+        
+        cudaError_t cudaStatus = cudaFuncSetAttribute(cudaclaw_flux2_and_update_batch, 
+                                                    cudaFuncAttributeMaxDynamicSharedMemorySize, 
+                                                    bytes);
+                                                    
         cudaclaw_flux2_and_update_batch<<<grid,block,bytes>>>(mx,my,meqn,mbc,maux,mwaves,
                                                               mwork, dt,t, src_term,
                                                               mcapa, dry_tol,
@@ -245,6 +254,8 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
                                                               cuclaw_vt->cuda_rpt2,
                                                               cuclaw_vt->cuda_b4step2,
                                                               cuclaw_vt->cuda_src2);
+
+
         cudaDeviceSynchronize();
 
         

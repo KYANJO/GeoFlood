@@ -440,11 +440,13 @@ class QinitData(clawpack.clawutil.data.ClawData):
 
         # Initial perturbation
         self.open_data_file(out_file, data_source)
-        # self.data_write('qinit_type')
+        self.data_write('qinit_type')
 
-        nqinits = len(self.qinitfiles)
-        self.data_write(value=nqinits,alt_name='mqinitfiles')
-        self.data_write()
+        # --------------------------
+        # nqinits = len(self.qinitfiles)
+        # self.data_write(value=nqinits,alt_name='mqinitfiles')
+        # self.data_write()
+        # --------------------------
 
         # Perturbation requested
         if self.qinit_type == 0:
@@ -452,6 +454,7 @@ class QinitData(clawpack.clawutil.data.ClawData):
         else:
             # Check to see if each qinit file is present and then write the data
             for tfile in self.qinitfiles:
+                # ---------------------------------------------------------------------------------
                 try:
                     fname = "'%s'" % os.path.abspath(tfile[-1])
                 except:
@@ -459,7 +462,8 @@ class QinitData(clawpack.clawutil.data.ClawData):
                     w = '\n  *** WARNING: qinit file not found: %s' % tfile[-1]
                     warnings.warn(w, UserWarning)
                 self._out_file.write("\n %s \n" % fname)
-                self._out_file.write("%3i %3i %3i %3i \t=: qinitftype, qinit_type, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
+                self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
+                # ---------------------------------------------------------------------------------
                 # if len(tfile) == 3:
                 #     w = '\n  *** WARNING: qinit specs changed in v5.8.0 -- ' + \
                 #           'Flag level info now ignored'
