@@ -572,18 +572,28 @@ def setgeo(rundata):
     topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, topo_file])
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4
-    rundata.qinit_data.qinitfiles = []
-    rundata.qinit_data.variable_eta_init = True
+    # rundata.qinit_data.qinit_type = 4
+    # rundata.qinit_data.qinitfiles = []
+    # rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
 
     # convert filetype = 3 to 1
-    qinitfile_eta = 'init_eta.xyz'
-    tools.convert_file_type(init_file, qinitfile_eta, 3, 1)
+    # qinitfile_eta = 'init_eta.xyz'
+    # tools.convert_file_type(init_file, qinitfile_eta, 3, 1)
     # tools.convert_file_type(ice_dam, qinitfile_eta, 3, 1)
     # qinitfile_eta = 'init_eta_ice_dam.xyz'
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,qinitfile_eta])
+    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,qinitfile_eta])
+
+    # for qinit perturbations append lines of the form
+    #   [qinitftype,iqinit, minlev, maxlev, fname]
+
+    rundata.qinit_data.qinit_type = 4
+    rundata.qinit_data.variable_eta_init = True
+    # for qinit perturbations append lines of the form
+    #   [qinitftype, minlev, maxlev, fname]
+    rundata.qinit_data.qinitfiles.append([3,minlevel,minlevel,init_file])
+    # rundata.qinit_data.qinitfiles.append([3,4,minlevel,minlevel,ice_dam])
 
     return rundata
     # end of function setgeo
