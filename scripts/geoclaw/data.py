@@ -429,16 +429,22 @@ class QinitData(clawpack.clawutil.data.ClawData):
 
         # Qinit data
         self.add_attribute('qinit_type',0)
+        self.add_attribute('mqinitfiles',0)
         self.add_attribute('qinitfiles',[])
         self.add_attribute('variable_eta_init',False)
         self.add_attribute('force_dry_list',[])
         self.add_attribute('num_force_dry',0)
 
+
     def write(self,data_source='setrun.py', out_file='qinit.data'):
 
         # Initial perturbation
         self.open_data_file(out_file, data_source)
-        self.data_write('qinit_type')
+        # self.data_write('qinit_type')
+
+        nqinits = len(self.qinitfiles)
+        self.data_write(value=nqinits,alt_name='mqinitfiles')
+        self.data_write()
 
         # Perturbation requested
         if self.qinit_type == 0:
@@ -446,21 +452,29 @@ class QinitData(clawpack.clawutil.data.ClawData):
         else:
             # Check to see if each qinit file is present and then write the data
             for tfile in self.qinitfiles:
-
-                if len(tfile) == 3:
-                    w = '\n  *** WARNING: qinit specs changed in v5.8.0 -- ' + \
-                          'Flag level info now ignored'
+                try:
+                    fname = "'%s'" % os.path.abspath(tfile[-1])
+                except:
+                    print("*** Error: file not found: ",tfile[-1])
+                    w = '\n  *** WARNING: qinit file not found: %s' % tfile[-1]
                     warnings.warn(w, UserWarning)
-                    tfile = [tfile[-1]]  # drop minlevel,maxlevel
-                elif len(tfile) == 1:
-                    pass  # now expect only filename
-                else:
-                    raise ValueError('Unexpected len(tfile) = %i' % len(tfile))
+                self._out_file.write("\n %s \n" % fname)
+                self._out_file.write("%3i %3i %3i %3i \t=: qinitftype, qinit_type, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
+                # if len(tfile) == 3:
+                #     w = '\n  *** WARNING: qinit specs changed in v5.8.0 -- ' + \
+                #           'Flag level info now ignored'
+                #     warnings.warn(w, UserWarning)
+                #     tfile = [tfile[-1]]  # drop minlevel,maxlevel
+                # elif len(tfile) == 1:
+                #     pass  # now expect only filename
+                # else:
+                #     raise ValueError('Unexpected len(tfile) = %i' % len(tfile))
 
-                # if path is relative in setrun, assume it's relative to the
-                # same directory that out_file comes from
-                fname = os.path.abspath(os.path.join(os.path.dirname(out_file),tfile[-1]))
-                self._out_file.write("\n'%s' \n" % fname)
+                # # if path is relative in setrun, assume it's relative to the
+                # # same directory that out_file comes from
+                # fname = os.path.abspath(os.path.join(os.path.dirname(out_file),tfile[-1]))
+                # self._out_file.write("\n'%s' \n" % fname)
+
         # else:
         #     raise ValueError("Invalid qinit_type parameter %s." % self.qinit_type)
 
