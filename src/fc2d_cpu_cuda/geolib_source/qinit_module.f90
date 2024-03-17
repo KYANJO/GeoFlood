@@ -93,8 +93,6 @@ contains
                 call read_qinit(qinit_fname,filetype)
             endif
 
-            
-
             ! If variable_eta_init then function set_eta_init is called
             ! to set initial eta when interpolating onto newly refined patches
             read(unit,*) variable_eta_init
@@ -344,7 +342,7 @@ contains
 
         ! Local
         integer, parameter :: iunit = 19
-        integer :: qinit_size, status, missing, i,j
+        integer :: qinit_size, status, missing, i,j,ios
         double precision :: x,y,z,nodata_value
         logical :: found_file
 
@@ -419,25 +417,44 @@ contains
                 missing = 0
                 select case(abs(filetype))
                     case(2) ! (one value per line if filetype=2)
+                        rewind(iunit)
+                        allocate(qinit(mx*my))
                         do i=1,mx*my
                             read(iunit,*) qinit(i)
-                            if (qinit(i) == nodata_value) then
-                                missing = missing + 1
-                                qinit(i) = qinit_missing
-                            endif
+                            ! if (qinit(i) == nodata_value) then
+                            !     missing = missing + 1
+                            !     qinit(i) = qinit_missing
+                            ! endif
                         enddo
                         close(iunit)
                     case(3) ! (mx values per line if filetype=3)
-                        do j=1,my
-                            read(iunit,*) (qinit((j-1)*mx + i),i=1,mx)
-                            do i=1,mx
-                                if (qinit((j-1)*mx + i) == nodata_value) then
-                                    missing = missing + 1
-                                    qinit((j-1)*mx + i) = qinit_missing
-                                endif
-                            enddo
+                        ! rewind(iunit)
+                        allocate(qinit(mx*my))
+                        do j = 1, my
+                            read(iunit,*,iostat=ios) qinit(j)
+                            ! write(*,*) qinit(j)
+                            if (ios /= 0) then
+                                print *, "Read error on line ", j, " Error code: ", ios
+                                exit  ! or handle the error as appropriate
+                            endif
                         enddo
                         close(iunit)
+                            
+                        ! do j=1,my
+                        !     read(iunit,*) (qinit((j-1)*mx + i),i=1,mx)
+                        !     if (ios /= 0) then
+                        !         print *, "Read error on line ", j, " Error code: ", ios
+                        !         exit  ! or handle the error as appropriate
+                        !     endif
+                            ! do i=1,mx
+                            !     if (qinit((j-1)*mx + i) == nodata_value) then
+                            !         missing = missing + 1
+                            !         ! qinit((j-1)*mx + i) = qinit_missing
+                            !         qinit((j-1)*mx + i) = 9999.0
+                            !     endif
+                            ! enddo
+                        ! enddo
+                        ! close(iunit)
                 end select
             case default
                 print *, 'ERROR:  Unrecognized qinit_type'
