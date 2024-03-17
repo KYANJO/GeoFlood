@@ -467,18 +467,17 @@ class QinitData(clawpack.clawutil.data.ClawData):
                     warnings.warn(w, UserWarning)
                 # self._out_file.write("\n %s \n" % fname)  
                 if len(tfile) < 4:
-                    tfile.append(1)  # default qinit_ftype = 1
-                    tfile = [1] + tfile[:-1] # append at the beging of the list
+                    defualt_qinit_ftype = 1
+                    tfile.append(defualt_qinit_ftype)  
+                    tfile = tfile[-1:] + tfile[:-1]  # append at the beginning of the list
                 else:
                     if tfile[0] > 2:
                         read_in = tfile[0]
                         tfile[0] = 2
                         # convert read_in file to type 2
-                        # get current working directory
                         cwdr = os.getcwd()
                         fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
                         import tools
-                        # print("*** Converting file: ",fname)
                         tools.convert_file_type(fname, fname_new, read_in, tfile[0])
                         fname = fname_new
 
