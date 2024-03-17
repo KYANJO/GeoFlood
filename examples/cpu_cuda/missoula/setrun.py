@@ -82,6 +82,8 @@ buffer_length = 1024
 
 topo_file = "Missoula4Brian/topo/Scenario4a_maxice_except_Okanogan/topo_with_ice.tt3"
 init_file = "Missoula4Brian/topo/lakemissoula/lakemissoula1295.tt3"
+# init_file = "Missoula4Brian/topo/lakemissoula/lakemissoula1295_tt2.asc"
+output_file = 'utput_type1_file.tt1'
 ice_dam   = "Missoula4Brian/topo/lakemissoula/LakeM_1295ascii/icedam1295.asc"
 
 #------------------------------
@@ -572,22 +574,6 @@ def setgeo(rundata):
     topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, topo_file])
 
     # == setqinit.data values ==
-    # rundata.qinit_data.qinit_type = 4
-    # rundata.qinit_data.qinitfiles = []
-    # rundata.qinit_data.variable_eta_init = True
-    # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
-    #   [minlev, maxlev, fname]
-
-    # convert filetype = 3 to 1
-    # qinitfile_eta = 'init_eta.xyz'
-    # tools.convert_file_type(init_file, qinitfile_eta, 3, 1)
-    # tools.convert_file_type(ice_dam, qinitfile_eta, 3, 1)
-    # qinitfile_eta = 'init_eta_ice_dam.xyz'
-    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,qinitfile_eta])
-
-    # for qinit perturbations append lines of the form
-    #   [qinitftype,iqinit, minlev, maxlev, fname]
-
     rundata.qinit_data.qinit_type = 4
     rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations append lines of the form

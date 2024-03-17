@@ -28,6 +28,9 @@ import os
 import numpy
 import clawpack.clawutil.data
 import warnings
+import sys
+
+sys.path.append('../../scripts')
 
 # Radius of earth in meters.
 # For consistency, should always use this value when needed, e.g.
@@ -456,12 +459,31 @@ class QinitData(clawpack.clawutil.data.ClawData):
             for tfile in self.qinitfiles:
                 # ---------------------------------------------------------------------------------
                 try:
-                    fname = "'%s'" % os.path.abspath(tfile[-1])
+                    # fname = "'%s'" % os.path.abspath(tfile[-1])
+                    fname = os.path.abspath(tfile[-1])
                 except:
                     print("*** Error: file not found: ",tfile[-1])
                     w = '\n  *** WARNING: qinit file not found: %s' % tfile[-1]
                     warnings.warn(w, UserWarning)
-                self._out_file.write("\n %s \n" % fname)
+                # self._out_file.write("\n %s \n" % fname)  
+                if len(tfile) < 4:
+                    tfile.append(1)  # default qinit_ftype = 1
+                    tfile = [1] + tfile[:-1] # append at the beging of the list
+                else:
+                    if tfile[0] > 2:
+                        read_in = tfile[0]
+                        tfile[0] = 2
+                        # convert read_in file to type 2
+                        # get current working directory
+                        cwdr = os.getcwd()
+                        fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
+                        import tools
+                        # print("*** Converting file: ",fname)
+                        tools.convert_file_type(fname, fname_new, read_in, tfile[0])
+                        fname = fname_new
+
+                fname = "'%s'" % fname
+                self._out_file.write("\n %s \n" % fname) 
                 self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
                 # ---------------------------------------------------------------------------------
                 # if len(tfile) == 3:
