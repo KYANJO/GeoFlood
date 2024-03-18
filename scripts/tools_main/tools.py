@@ -41,6 +41,108 @@ def read_topo_data(topofile):
 
     return ncols[0],nrows[0],xllcorner[0],yllcorner[0],cellsize[0]
 
+# =================== swap headers ======================================
+def swap_header(fp):
+
+    f    = open(fp, 'r')
+    l    = f.readline()
+    firstline = l.split()[0]
+    print(firstline)
+    if firstline.isdigit(): # check if firstline is a number
+        
+        fnew = open(fp + '_new', 'w')
+
+        # swap the header use a new name for the entry
+        fnew.write("ncols %s\n" % (l.split()[0]))
+
+        l = f.readline()
+        fnew.write("nrows %s\n" % (l.split()[0]))
+
+        l = f.readline()
+        fnew.write("xllcorner %s\n" % (l.split()[0]))
+
+        l = f.readline()
+        fnew.write("yllcorner %s\n" % (l.split()[0]))
+
+        l = f.readline()
+        fnew.write("cellsize %s\n" % (l.split()[0]))
+
+        l = f.readline()
+        fnew.write("NODATA_value %s\n" % (l.split()[0]))
+
+        # write the rest of the file
+        for line in f:
+            fnew.write(line)
+
+        f.close()
+        fnew.close()
+
+        return fnew
+
+    else:
+        fnew = open(fp + '_new', 'w')
+        #  rename headers regardless
+        fnew.write("ncols %s\n" % (l.split()[1]))
+        l = f.readline()
+        fnew.write("nrows %s\n" % (l.split()[1]))
+        l = f.readline()
+        fnew.write("xllcorner %s\n" % (l.split()[1]))
+        l = f.readline()
+        fnew.write("yllcorner %s\n" % (l.split()[1]))
+        l = f.readline()
+        fnew.write("cellsize %s\n" % (l.split()[1]))
+        l = f.readline()
+        fnew.write("NODATA_value %s\n" % (l.split()[1]))
+
+        for line in f:
+            fnew.write(line)
+        fnew.close()
+        f.close()
+        return fnew
+
+# =================== merge dems ======================================
+def merge_dems(dem_paths, output_filename):
+    """
+    Merge multiple DEMs into a single file.
+
+    Parameters
+    ----------
+    dem_paths : list
+        A list of file paths to the DEMs to be merged.
+    output_filename : str
+        The file path to the output file.
+
+    Returns
+    -------
+    None
+    """
+
+    # import the necessary modules
+    import rasterio
+    from rasterio.merge import merge
+
+    # merge the DEMs
+    src_files_to_mosaic = []
+    for fp in dem_paths:
+        swap_header(fp) # swap the header of the DEM if necessary
+        src = rasterio.open(fp + '_new')   # open the new DEM
+        src_files_to_mosaic.append(src)   # append the DEM to the list of DEMs to be merged
+        mosaic, out = merge(src_files_to_mosaic)  # merge the DEMs
+
+    # Write the mosaic to a new ASCII DEM file
+    with rasterio.open(
+            output_filename,
+            'w',
+            driver='AAIGrid',  # This specifies the ASCII Grid format
+            height=mosaic.shape[1],
+            width=mosaic.shape[2],
+            count=1,
+            dtype=mosaic.dtype,
+            crs=src_files_to_mosaic[0].crs,
+            transform=out,
+    ) as out_file:
+        out_file.write(mosaic[0], 1)
+
 
 def convert_file_type(input_file,output_file,input_type,output_type):
     """
@@ -101,9 +203,25 @@ def convert_file_type(input_file,output_file,input_type,output_type):
     if input_type == 2 or input_type == 3 and output_type == 1:
         # write out the data
         f = open(output_file,'w')
+        k = 0
         for j in range(my):
             for i in range(mx):
-                f.write('%f %f %f\n' % (xll+i*dx,yll+j*dy,data[j*mx+i]))
+                # f.write('%f %f %f\n' % (xll+i*dx,yll+j*dy,data[j*mx+i]))
+                f.write('%f %f %f\n' % (xll+i*dx,yll+j*dy,data[k]))
+                k = k + 1
+        f.close()
+    elif input_type == 3 and output_type == 2:
+        # write out the data
+        f = open(output_file,'w')
+        f.write('%d\tncols\n' % mx)
+        f.write('%d\tnrows\n' % my)
+        f.write('%f\txllcorner\n' % xll)
+        f.write('%f\tyllcorner\n' % yll)
+        f.write('%f\tcellsize\n' % dx)
+        f.write('%f\tnodata_value\n' % -9999.0)
+        for idx in range(my*mx):
+            # for i in range(mx):
+            f.write('%f\n' % data[idx])
         f.close()
                
     return output_file
@@ -190,3 +308,5 @@ def region_coords(xll,xur, num_cells,lower,upper):
     figsize = np.array([mx_zoom, my_zoom])   # [1,1]
 
     return region_lower, region_upper, figsize
+
+
