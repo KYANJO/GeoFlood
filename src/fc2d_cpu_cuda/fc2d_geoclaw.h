@@ -104,6 +104,7 @@ struct fc2d_geoclaw_vtable
 
     cudaclaw_cuda_rpn2_t   cuda_rpn2;
     cudaclaw_cuda_rpt2_t   cuda_rpt2;
+    cudaclaw_cuda_src2_t   cuda_src2;
     cudaclaw_cuda_b4step2_t   cuda_b4step2;
     cudaclaw_cuda_speeds_t cuda_speeds;
 

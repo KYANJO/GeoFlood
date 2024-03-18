@@ -61,6 +61,7 @@ SUBROUTINE fc2d_geoclaw_src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
                  gamma = sqrt(q(2,i,j)**2 + q(3,i,j)**2) * g     &
                       * coeff**2 / (q(1,i,j)**(7.d0/3.d0))
                  dgamma = 1.d0 + dt * gamma
+               !   write(*,*) 'dgamma = ', dgamma
                  q(2, i, j) = q(2, i, j) / dgamma
                  q(3, i, j) = q(3, i, j) / dgamma
               endif

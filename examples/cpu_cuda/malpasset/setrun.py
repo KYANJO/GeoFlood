@@ -600,14 +600,21 @@ def setgeo(rundata):
     topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'])
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4
-    rundata.qinit_data.qinitfiles = []
-    rundata.qinit_data.variable_eta_init = True
+    # rundata.qinit_data.qinit_type = 4
+    # # rundata.qinit_data.qinitfiles = []
+    # rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
+
+    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
     
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
     # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_h_5m_cadam.xyz'])
+
+    rundata.qinit_data.qinit_type = 4
+    rundata.qinit_data.variable_eta_init = True
+    # for qinit perturbations append lines of the form
+    #   [qinitftype, minlev, maxlev, fname]
+    rundata.qinit_data.qinitfiles.append([1,minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
 
 
     return rundata

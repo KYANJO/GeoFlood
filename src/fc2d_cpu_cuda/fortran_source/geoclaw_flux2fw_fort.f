@@ -142,7 +142,8 @@ c
 c   # Set fadd for the donor-cell upwind method (Godunov)
       if (ixy.eq.1) mu=2
       if (ixy.eq.2) mu=3
-      do 40 i=1-mbc+1,mx+mbc-1
+c      do 40 i=1-mbc+1,mx+mbc-1
+      do 40 i=2-mbc,mx+mbc-1
          if (coordinate_system.eq.2) then
               if (ixy.eq.1) then
                    dxdc=earth_radius*deg2rad
@@ -167,7 +168,8 @@ c
 c     # compute maximum wave speed for checking Courant number:
       cfl1d = 0.d0
       do 50 mw=1,mwaves
-         do 50 i=1,mx+1
+c         do 50 i=1,mx+1
+         do 50 i = 2-mbc,mx+mbc
 c          # if s>0 use dtdx1d(i) to compute CFL,
 c          # if s<0 use dtdx1d(i-1) to compute CFL:
             cfl1d = dmax1(cfl1d, dtdx1d(i)*s(mw,i),
@@ -185,7 +187,8 @@ c     # apply limiter to fwaves:
      &      call fc2d_geoclaw_limiter(maxm,meqn,mwaves,
      &                                mbc,mx,fwave,s,mthlim)
 c
-      do 120 i = 1, mx+1
+c      do 120 i = 1, mx+1
+      do 120 i = 2-mbc, mx+mbc
 c
 c        # For correction terms below, need average of dtdx in cell
 c        # i-1 and i.  Compute these and overwrite dtdx1d:
@@ -212,7 +215,8 @@ c
 c
        if (method(2).gt.1 .and. method(3).eq.2) then
 c         # incorporate cqxx into amdq and apdq so that it is split also.
-          do 150 i = 1, mx+1
+c          do 150 i = 1, mx+1
+          do 150 i = 2-mbc, mx+mbc-1
              do 150 m=1,meqn
                 amdq(m,i) = amdq(m,i) + cqxx(m,i)
                 apdq(m,i) = apdq(m,i) - cqxx(m,i)
@@ -230,7 +234,8 @@ c     # split the left-going flux difference into down-going and up-going:
      &          amdq,bmasdq,bpasdq)
 c
 c     # modify flux below and above by B^- A^- Delta q and  B^+ A^- Delta q:
-      do 160 i = 1, mx+1
+c      do 160 i = 1, mx+1
+      do 160 i = 2-mbc, mx+mbc
          do 160 m=1,meqn
                gupdate = 0.5d0*dtdx1d(i-1) * bmasdq(m,i)
                gaddm(m,i-1,1) = gaddm(m,i-1,1) - gupdate
@@ -247,7 +252,8 @@ c     # split the right-going flux difference into down-going and up-going:
      &          apdq,bmasdq,bpasdq)
 c
 c     # modify flux below and above by B^- A^+ Delta q and  B^+ A^+ Delta q:
-      do 180 i = 1, mx+1
+c      do 180 i = 1, mx+1
+      do 180 i = 2-mbc, mx+mbc
           do 180 m=1,meqn
                gupdate = 0.5d0*dtdx1d(i-1) * bmasdq(m,i)
                gaddm(m,i,1) = gaddm(m,i,1) - gupdate

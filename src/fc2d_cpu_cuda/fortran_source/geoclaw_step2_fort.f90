@@ -88,39 +88,40 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
 
     ! ==========================================================================
     ! Perform X-Sweeps
-    do j = 0,my+1
+    ! do j = 0,my+1
+    do  j = 2-mbc,my+mbc-1
 
         ! Copy old q into 1d slice
        q1d(:,1-mbc:mx+mbc) = qold(:,1-mbc:mx+mbc,j)
 
        !! FORESTCLAW change to handle cubed sphere
-       IF (j .EQ. 0) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(0) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,1-ibc) = qold(m,ibc,0)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(1) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,mx+ibc) = qold(m,mx-ibc+1,0)
-                ENDDO
-             ENDIF
-          ENDDO
-       ELSE IF (j .EQ. my+1) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(2) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,1-ibc) = qold(m,ibc,my+1)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(3) .EQ. 3) THEN
-                DO ibc = 1,mbc
-                   q1d(m,mx+ibc) = qold(m,mx-ibc+1,my+1)
-                ENDDO
-             ENDIF
-          ENDDO
-       ENDIF
+      !  IF (j .EQ. 0) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(0) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,1-ibc) = qold(m,ibc,0)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(1) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,mx+ibc) = qold(m,mx-ibc+1,0)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ELSE IF (j .EQ. my+1) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(2) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,1-ibc) = qold(m,ibc,my+1)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(3) .EQ. 3) THEN
+      !           DO ibc = 1,mbc
+      !              q1d(m,mx+ibc) = qold(m,mx-ibc+1,my+1)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ENDIF
 
 
         ! Set dtdx slice if a capacity array exists
@@ -146,55 +147,64 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
                                 q1d,dtdx1d,aux1,aux2,aux3, &
                                 faddm,faddp,gaddm,gaddp,cfl1d,rpn2,rpt2)
 
-        cflgrid = max(cflgrid,cfl1d)
+        cflgrid = dmax1(cflgrid,cfl1d)
         ! write(53,*) 'x-sweep: ',cfl1d,cflgrid
 
         ! Update fluxes
-        fm(:,1:mx+1,j) = fm(:,1:mx+1,j) + faddm(:,1:mx+1)
-        fp(:,1:mx+1,j) = fp(:,1:mx+1,j) + faddp(:,1:mx+1)
-        gm(:,1:mx+1,j) = gm(:,1:mx+1,j) + gaddm(:,1:mx+1,1)
-        gp(:,1:mx+1,j) = gp(:,1:mx+1,j) + gaddp(:,1:mx+1,1)
-        gm(:,1:mx+1,j+1) = gm(:,1:mx+1,j+1) + gaddm(:,1:mx+1,2)
-        gp(:,1:mx+1,j+1) = gp(:,1:mx+1,j+1) + gaddp(:,1:mx+1,2)
+        ! fm(:,1:mx+1,j) = fm(:,1:mx+1,j) + faddm(:,1:mx+1)
+        ! fp(:,1:mx+1,j) = fp(:,1:mx+1,j) + faddp(:,1:mx+1)
+        ! gm(:,1:mx+1,j) = gm(:,1:mx+1,j) + gaddm(:,1:mx+1,1)
+        ! gp(:,1:mx+1,j) = gp(:,1:mx+1,j) + gaddp(:,1:mx+1,1)
+        ! gm(:,1:mx+1,j+1) = gm(:,1:mx+1,j+1) + gaddm(:,1:mx+1,2)
+        ! gp(:,1:mx+1,j+1) = gp(:,1:mx+1,j+1) + gaddp(:,1:mx+1,2)
+        
+        fm(:,2-mbc:mx+mbc,j) = fm(:,2-mbc:mx+mbc,j) + faddm(:,2-mbc:mx+mbc)
+        fp(:,2-mbc:mx+mbc,j) = fp(:,2-mbc:mx+mbc,j) + faddp(:,2-mbc:mx+mbc)
+        gm(:,2-mbc:mx+mbc,j) = gm(:,2-mbc:mx+mbc,j) + gaddm(:,2-mbc:mx+mbc,1)
+        gp(:,2-mbc:mx+mbc,j) = gp(:,2-mbc:mx+mbc,j) + gaddp(:,2-mbc:mx+mbc,1)
+        gm(:,2-mbc:mx+mbc,j+1) = gm(:,2-mbc:mx+mbc,j+1) + gaddm(:,2-mbc:mx+mbc,2)
+        gp(:,2-mbc:mx+mbc,j+1) = gp(:,2-mbc:mx+mbc,j+1) + gaddp(:,2-mbc:mx+mbc,2)
+
 
     enddo
 
     ! ============================================================================
     !  y-sweeps
     !
-    do i = 0, mx+1
+    ! do i = 0, mx+1
+    do i = 2-mbc,mx+mbc-1
 
        ! Copy data along a slice into 1d arrays:
        q1d(:,1-mbc:my+mbc) = qold(:,i,1-mbc:my+mbc)
 
        !! FORESTCLAW change to handle cubed sphere
-       IF (i .EQ. 0) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(0) .EQ. 3) THEN
-                DO jbc = 1,mbc
-                   q1d(m,1-jbc) = qold(m,0,jbc)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(2) .EQ. 3) THEN
-                DO jbc = 1,mbc
-                   q1d(m,my+jbc) = qold(m,0,my-jbc+1)
-                ENDDO
-             ENDIF
-          ENDDO
-       ELSE IF (i .EQ. mx+1) THEN
-          DO m = 1,meqn
-             IF (block_corner_count(1) .EQ. 3) THEN
-                DO jbc = 1,mbc
-                   q1d(m,1-jbc) = qold(m,mx+1,jbc)
-                ENDDO
-             ENDIF
-             IF (block_corner_count(3) .EQ. 3) THEN
-                DO jbc= 1,mbc
-                   q1d(m,my+jbc) = qold(m,mx+1,my-jbc+1)
-                ENDDO
-             ENDIF
-          ENDDO
-       ENDIF
+      !  IF (i .EQ. 0) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(0) .EQ. 3) THEN
+      !           DO jbc = 1,mbc
+      !              q1d(m,1-jbc) = qold(m,0,jbc)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(2) .EQ. 3) THEN
+      !           DO jbc = 1,mbc
+      !              q1d(m,my+jbc) = qold(m,0,my-jbc+1)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ELSE IF (i .EQ. mx+1) THEN
+      !     DO m = 1,meqn
+      !        IF (block_corner_count(1) .EQ. 3) THEN
+      !           DO jbc = 1,mbc
+      !              q1d(m,1-jbc) = qold(m,mx+1,jbc)
+      !           ENDDO
+      !        ENDIF
+      !        IF (block_corner_count(3) .EQ. 3) THEN
+      !           DO jbc= 1,mbc
+      !              q1d(m,my+jbc) = qold(m,mx+1,my-jbc+1)
+      !           ENDDO
+      !        ENDIF
+      !     ENDDO
+      !  ENDIF
 
 
         ! Set dt/dy ratio in slice
@@ -220,16 +230,22 @@ SUBROUTINE fc2d_geoclaw_step2(maxm,meqn,maux,mbc,mx,my, &
                                 dtdy1d,aux1,aux2,aux3, &
                                 faddm,faddp,gaddm,gaddp,cfl1d,rpn2,rpt2)
 
-        cflgrid = max(cflgrid,cfl1d)
+        cflgrid = dmax1(cflgrid,cfl1d)
         ! write(53,*) 'y-sweep: ',cfl1d,cflgrid
 
         ! Update fluxes
-        gm(:,i,1:my+1) = gm(:,i,1:my+1) + faddm(:,1:my+1)
-        gp(:,i,1:my+1) = gp(:,i,1:my+1) + faddp(:,1:my+1)
-        fm(:,i,1:my+1) = fm(:,i,1:my+1) + gaddm(:,1:my+1,1)
-        fp(:,i,1:my+1) = fp(:,i,1:my+1) + gaddp(:,1:my+1,1)
-        fm(:,i+1,1:my+1) = fm(:,i+1,1:my+1) + gaddm(:,1:my+1,2)
-        fp(:,i+1,1:my+1) = fp(:,i+1,1:my+1) + gaddp(:,1:my+1,2)
+        ! gm(:,i,1:my+1) = gm(:,i,1:my+1) + faddm(:,1:my+1)
+        ! gp(:,i,1:my+1) = gp(:,i,1:my+1) + faddp(:,1:my+1)
+        ! fm(:,i,1:my+1) = fm(:,i,1:my+1) + gaddm(:,1:my+1,1)
+        ! fp(:,i,1:my+1) = fp(:,i,1:my+1) + gaddp(:,1:my+1,1)
+        ! fm(:,i+1,1:my+1) = fm(:,i+1,1:my+1) + gaddm(:,1:my+1,2)
+        ! fp(:,i+1,1:my+1) = fp(:,i+1,1:my+1) + gaddp(:,1:my+1,2)
+        gm(:,i,2-mbc:my+mbc) = gm (:,i,2-mbc:my+mbc) + faddm(:,2-mbc:my+mbc)
+        gp(:,i,2-mbc:my+mbc) = gp(:,i,2-mbc:my+mbc) + faddp(:,2-mbc:my+mbc)
+        fm(:,i,2-mbc:my+mbc) = fm(:,i,2-mbc:my+mbc) + gaddm(:,2-mbc:my+mbc,1)
+        fp(:,i,2-mbc:my+mbc) = fp(:,i,2-mbc:my+mbc) + gaddp(:,2-mbc:my+mbc,1)
+        fm(:,i+1,2-mbc:my+mbc) = fm(:,i+1,2-mbc:my+mbc) + gaddm(:,2-mbc:my+mbc,2)
+        fp(:,i+1,2-mbc:my+mbc) = fp(:,i+1,2-mbc:my+mbc) + gaddp(:,2-mbc:my+mbc,2)
 
     end do
 

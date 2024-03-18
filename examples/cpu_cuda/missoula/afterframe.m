@@ -11,13 +11,13 @@ fprintf('%20s %12.4e\n','qmin',qmin);
 fprintf('%20s %12.4e\n','qmax',qmax);
 
 % Axes
-ax = 953236.0;
-bx = 959554.0;
-ay = 1832407.25;
-by = 1848572.75;
+ax = 302901.6624167535;
+bx = 1172647.141836348;
+ay = 1111417.5338057536;
+by = 1658032.3788042287;
 
 axis([ax bx ay by])
-daspect([0.38 0.485 0.49])
+daspect([1.667 1.667 1.667])
 set(gca,'xtick',[]);
 set(gca,'YTick',[]);
 
@@ -33,14 +33,14 @@ MaxFrames = 1000;
 if (prt)
 %     hidepatchborders(6);
 % setpatchborderprops('linewidth',0.5);
-    figsize=[2,4];
-    maxlevel = 5;    %  eff. res. = 2^maxlevel
-    mx = 32;
+    figsize=[5,3];
+    maxlevel = 4;    %  eff. res. = 2^maxlevel
+    mx = 16;
     mi = 1;
-    mj = 2;
+    mj = 4;
     maxres = mi*mx*2^maxlevel;
     dpi = maxres/figsize(1)
-    prefix = 'mlp';
+    prefix = 'missoula';
     plot_tikz_fig(Frame,figsize,prefix,dpi)
     % filename = sprintf('mlp_%04d.png',Frame)
     % print('-dpng',filename);

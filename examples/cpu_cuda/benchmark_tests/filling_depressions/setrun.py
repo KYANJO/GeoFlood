@@ -40,10 +40,9 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 48.0              # Total number of hours in simulation     
-    # n_hours = 1.0              # Total number of hours in simulation
+    # n_hours = 48.0              # Total number of hours in simulation     
+    n_hours = 0.5             # Total number of hours in simulation
     
-
     frames_per_minute = 1/5   # (1 frame every 60 minutes)
 
 if output_style == 2:
@@ -81,6 +80,7 @@ earth_radius = 6371220.0
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
 buffer_length = 1024
+regrid_interval = 16
 
 # --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -402,7 +402,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = True
-    geoflooddata.regrid_interval = 3
+    geoflooddata.regrid_interval = regrid_interval
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
@@ -478,7 +478,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
     amrdata.flag2refine_tol = 0.5
-    amrdata.regrid_interval = 3
+    amrdata.regrid_interval = regrid_interval
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0

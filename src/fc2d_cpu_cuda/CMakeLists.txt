@@ -82,6 +82,7 @@ target_sources(cpu_cuda_c PRIVATE
     fc2d_cuda_profiler.cu
     cuda_source/cudaclaw_store_patches.cu
     riemann_source/variables.cu
+    riemann_source/geoflood_src2.cu
     riemann_source/geoflood_rp2.cu
 )
 
