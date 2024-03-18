@@ -428,33 +428,22 @@ contains
                         enddo
                         close(iunit)
                     case(3) ! (mx values per line if filetype=3)
-                        ! rewind(iunit)
+                        rewind(iunit)
                         allocate(qinit(mx*my))
-                        do j = 1, my
-                            read(iunit,*,iostat=ios) qinit(j)
-                            ! write(*,*) qinit(j)
+                        do j=1,my
+                            read(iunit,*) (qinit((j-1)*mx + i),i=1,mx)
                             if (ios /= 0) then
                                 print *, "Read error on line ", j, " Error code: ", ios
                                 exit  ! or handle the error as appropriate
                             endif
+                            do i=1,mx
+                                if (qinit((j-1)*mx + i) == nodata_value) then
+                                    missing = missing + 1
+                                    qinit((j-1)*mx + i) = qinit_missing
+                                endif
+                            enddo
                         enddo
                         close(iunit)
-                            
-                        ! do j=1,my
-                        !     read(iunit,*) (qinit((j-1)*mx + i),i=1,mx)
-                        !     if (ios /= 0) then
-                        !         print *, "Read error on line ", j, " Error code: ", ios
-                        !         exit  ! or handle the error as appropriate
-                        !     endif
-                            ! do i=1,mx
-                            !     if (qinit((j-1)*mx + i) == nodata_value) then
-                            !         missing = missing + 1
-                            !         ! qinit((j-1)*mx + i) = qinit_missing
-                            !         qinit((j-1)*mx + i) = 9999.0
-                            !     endif
-                            ! enddo
-                        ! enddo
-                        ! close(iunit)
                 end select
             case default
                 print *, 'ERROR:  Unrecognized qinit_type'
