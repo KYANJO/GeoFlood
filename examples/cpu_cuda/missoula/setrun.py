@@ -82,8 +82,6 @@ buffer_length = 1024
 
 topo_file = "Missoula4Brian/topo/Scenario4a_maxice_except_Okanogan/topo_with_ice.tt3"
 init_file = "Missoula4Brian/topo/lakemissoula/lakemissoula1295.tt3"
-# init_file = "Missoula4Brian/topo/lakemissoula/lakemissoula1295_tt2.asc"
-output_file = 'utput_type1_file.tt1'
 ice_dam   = "Missoula4Brian/topo/lakemissoula/LakeM_1295ascii/icedam1295.asc"
 
 #------------------------------
@@ -552,7 +550,7 @@ def setgeo(rundata):
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 0.0
+    geo_data.sea_level =-1000.0
     geo_data.dry_tolerance = dry_tolerance
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
@@ -568,7 +566,7 @@ def setgeo(rundata):
 
     # == settopo.data values ==
     topo_data = rundata.topo_data
-    topo_data.topo_missing = 9999.0 # set such that sea-level<topo_missing (to form very high clifs instead of holes)
+    topo_data.topo_missing = -999.0 # set such that sea-level<topo_missing (to form very high clifs instead of holes)
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
     topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, topo_file])
@@ -579,7 +577,7 @@ def setgeo(rundata):
     # for qinit perturbations append lines of the form
     #   [qinitftype, minlev, maxlev, fname]
     rundata.qinit_data.qinitfiles.append([3,minlevel,minlevel,init_file])
-    # rundata.qinit_data.qinitfiles.append([3,4,minlevel,minlevel,ice_dam])
+    rundata.qinit_data.qinitfiles.append([3,minlevel,minlevel,ice_dam])
 
     return rundata
     # end of function setgeo
