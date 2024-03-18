@@ -30,7 +30,8 @@ import clawpack.clawutil.data
 import warnings
 import sys
 
-sys.path.append('../../scripts')
+sys.path.append('../../../scripts')
+from tools_main import tools
 
 # Radius of earth in meters.
 # For consistency, should always use this value when needed, e.g.
@@ -455,9 +456,9 @@ class QinitData(clawpack.clawutil.data.ClawData):
         if self.qinit_type == 0:
             pass
         else:
-            # Check to see if each qinit file is present and then write the data
-            for tfile in self.qinitfiles:
-                # ---------------------------------------------------------------------------------
+            nqinits = len(self.qinitfiles)
+            if nqinits == 1: # only one file
+                tfile  = self.qinitfiles[0]
                 try:
                     # fname = "'%s'" % os.path.abspath(tfile[-1])
                     fname = os.path.abspath(tfile[-1])
@@ -465,7 +466,6 @@ class QinitData(clawpack.clawutil.data.ClawData):
                     print("*** Error: file not found: ",tfile[-1])
                     w = '\n  *** WARNING: qinit file not found: %s' % tfile[-1]
                     warnings.warn(w, UserWarning)
-                # self._out_file.write("\n %s \n" % fname)  
                 if len(tfile) < 4:
                     defualt_qinit_ftype = 1
                     tfile.append(defualt_qinit_ftype)  
@@ -477,33 +477,48 @@ class QinitData(clawpack.clawutil.data.ClawData):
                         # convert read_in file to type 2
                         cwdr = os.getcwd()
                         fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
-                        import tools
                         tools.convert_file_type(fname, fname_new, read_in, tfile[0])
                         fname = fname_new
 
                 fname = "'%s'" % fname
                 self._out_file.write("\n %s \n" % fname) 
                 self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
-                # ---------------------------------------------------------------------------------
-                # if len(tfile) == 3:
-                #     w = '\n  *** WARNING: qinit specs changed in v5.8.0 -- ' + \
-                #           'Flag level info now ignored'
-                #     warnings.warn(w, UserWarning)
-                #     tfile = [tfile[-1]]  # drop minlevel,maxlevel
-                # elif len(tfile) == 1:
-                #     pass  # now expect only filename
-                # else:
-                #     raise ValueError('Unexpected len(tfile) = %i' % len(tfile))
 
-                # # if path is relative in setrun, assume it's relative to the
-                # # same directory that out_file comes from
-                # fname = os.path.abspath(os.path.join(os.path.dirname(out_file),tfile[-1]))
-                # self._out_file.write("\n'%s' \n" % fname)
+            else: # mulptiple files merge them into one file
+                nqinit_type = []
+                dem_paths = []
+                for tfile in self.qinitfiles:
+                    dem_paths.append(tfile[-1])
+                    nqinit_type.append(tfile[0])
+                
+                # chcek if all files are same type
+                if len(set(nqinit_type))!= 1:
+                    raise ValueError('All qinit files must be of the same type')
+                
+                tfile = self.qinitfiles[0]
+                if len(tfile) < 4:
+                    defualt_qinit_ftype = 1
+                    tfile.append(defualt_qinit_ftype)  
+                    tfile = tfile[-1:] + tfile[:-1]  # append at the beginning of the list
+                    fname = fname = os.path.abspath(tfile[-1])
+                else:
+                    cwdr = os.getcwd()
+                    fname_merged = os.path.join(cwdr,tfile[-1][:-4] + '_merged.tt2')
+                    tools.merge_dems(dem_paths, fname_merged) # merge files
+                    if tfile[0] > 2:
+                        read_in = tfile[0]
+                        tfile[0] = 2
+                        # convert read_in file to type 2
+                        fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
+                        tools.convert_file_type(fname_merged, fname_new, read_in, tfile[0])
+                        fname = fname_new
+                        # check if merged file is exists and remove it if
+                        # os.remove(fname_merged)
+                fname = "'%s'" % fname  
+                self._out_file.write("\n %s \n" % fname) 
+                self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
 
-        # else:
-        #     raise ValueError("Invalid qinit_type parameter %s." % self.qinit_type)
-
-
+            
         self.data_write('variable_eta_init')
 
         self.num_force_dry = len(self.force_dry_list)

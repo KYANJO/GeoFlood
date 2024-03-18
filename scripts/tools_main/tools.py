@@ -6,40 +6,43 @@ import os
 
 def read_topo_data(topofile):
 
-    try:
-        f = open(topofile,'r')
+    f = open(topofile,'r')
+    l = f.readline()
+    first_entry = l.split()[0]
+    
+    if first_entry.isdigit():
+        ncols = np.fromstring(l.split()[0].strip(),sep=' ')            
+
         l = f.readline()
-        first_entry = l.split()[0]
-        int(first_entry)
-    except ValueError:
-        print(f"Error: First entry '{first_entry}' in file header is not an integer.")
-        print('File header format not recognized. Please ensure the file has the following format:')
-        print('100         ncols')
-        print('100         nrows')
-        print('0.0         xllcorner')
-        print('0.0         yllcorner')
-        print('1.0         cellsize')
-        print('-9999.0     NODATA_value')
-        print('...')
-        print('And then run again')
-        return
+        nrows = np.fromstring(l.split()[0].strip(),sep=' ')
 
+        l = f.readline()
+        xllcorner = np.fromstring(l.split()[0].strip(),sep=' ')
 
-    ncols = np.fromstring(l.split()[0].strip(),sep=' ')            
+        l = f.readline()
+        yllcorner = np.fromstring(l.split()[0].strip(),sep=' ')
 
-    l = f.readline()
-    nrows = np.fromstring(l.split()[0].strip(),sep=' ')
+        l = f.readline()
+        cellsize = np.fromstring(l.split()[0].strip(),sep=' ')
 
-    l = f.readline()
-    xllcorner = np.fromstring(l.split()[0].strip(),sep=' ')
+        return ncols[0],nrows[0],xllcorner[0],yllcorner[0],cellsize[0]
+    else:
+        ncols = np.fromstring(l.split()[1].strip(),sep=' ')
 
-    l = f.readline()
-    yllcorner = np.fromstring(l.split()[0].strip(),sep=' ')
+        l = f.readline()
+        nrows = np.fromstring(l.split()[1].strip(),sep=' ')
 
-    l = f.readline()
-    cellsize = np.fromstring(l.split()[0].strip(),sep=' ')
+        l = f.readline()
+        xllcorner = np.fromstring(l.split()[1].strip(),sep=' ')
 
-    return ncols[0],nrows[0],xllcorner[0],yllcorner[0],cellsize[0]
+        l = f.readline()
+        yllcorner = np.fromstring(l.split()[1].strip(),sep=' ')
+
+        l = f.readline()
+        cellsize = np.fromstring(l.split()[1].strip(),sep=' ')
+
+        return ncols[0],nrows[0],xllcorner[0],yllcorner[0],cellsize[0]
+
 
 # =================== swap headers ======================================
 def swap_header(fp):
@@ -47,7 +50,7 @@ def swap_header(fp):
     f    = open(fp, 'r')
     l    = f.readline()
     firstline = l.split()[0]
-    print(firstline)
+
     if firstline.isdigit(): # check if firstline is a number
         
         fnew = open(fp + '_new', 'w')
@@ -74,9 +77,8 @@ def swap_header(fp):
         for line in f:
             fnew.write(line)
 
-        f.close()
         fnew.close()
-
+        f.close()
         return fnew
 
     else:
@@ -129,19 +131,37 @@ def merge_dems(dem_paths, output_filename):
         src_files_to_mosaic.append(src)   # append the DEM to the list of DEMs to be merged
         mosaic, out = merge(src_files_to_mosaic)  # merge the DEMs
 
-    # Write the mosaic to a new ASCII DEM file
+    # copy the file meta data to the mosaic
+    out_meta = src.meta.copy()
+    out_meta.update(
+        {'driver': 'GTiff',
+            'height': mosaic.shape[1],
+            'width': mosaic.shape[2],
+            'transform': out,
+            }
+    )
+
+    # write the mosaic to a new GeoTIFF file
+    tif_file = output_filename[:-4] + '.tif'
     with rasterio.open(
-            output_filename,
-            'w',
-            driver='AAIGrid',  # This specifies the ASCII Grid format
-            height=mosaic.shape[1],
-            width=mosaic.shape[2],
-            count=1,
-            dtype=mosaic.dtype,
-            crs=src_files_to_mosaic[0].crs,
-            transform=out,
-    ) as out_file:
-        out_file.write(mosaic[0], 1)
+            tif_file,
+            "w",
+            **out_meta
+    ) as dest:
+        dest.write(mosaic)
+
+    # ==== save the mosaic as a new ASCII DEM file ========================
+    # Construct the gdal_translate command
+    command = [
+        'gdal_translate',
+        '-of', 'AAIGrid',  # Output format
+        tif_file,  # Input TIFF file
+        output_filename  # Output ASCII DEM file
+    ]
+
+    # Execute the command using subprocess
+    import subprocess
+    subprocess.run(command, check=True)
 
 
 def convert_file_type(input_file,output_file,input_type,output_type):
@@ -170,9 +190,7 @@ def convert_file_type(input_file,output_file,input_type,output_type):
         mx = int(mx)
         my = int(my)
         dx = cellsize
-        dy = dx             # grid spacing
-        xhi = xll + mx*dx   
-        yhi = yll + my*dy   
+        dy = dx             # grid spacing  
 
         # read in the remaining data
         if input_type == 2:
