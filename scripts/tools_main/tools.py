@@ -163,6 +163,14 @@ def merge_dems(dem_paths, output_filename):
     import subprocess
     subprocess.run(command, check=True)
 
+    # remove the temporary files with errors
+    for fp in dem_paths:
+        if os.path.isfile(fp + '_new'): os.remove(fp + '_new')
+        if os.path.isfile(fp[:-4] + '_merged.tif'): os.remove(fp[:-4] + '_merged.tif')
+        if os.path.isfile(fp + '.xml'): os.remove(fp + '.xml')
+        if os.path.isfile(fp[:-4] + '_merged.tt2.aux.xml'): os.remove(fp[:-4] + '_merged.tt2.aux.xml')
+            
+
 
 def convert_file_type(input_file,output_file,input_type,output_type):
     """

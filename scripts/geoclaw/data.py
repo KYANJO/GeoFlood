@@ -503,17 +503,20 @@ class QinitData(clawpack.clawutil.data.ClawData):
                     fname = fname = os.path.abspath(tfile[-1])
                 else:
                     cwdr = os.getcwd()
-                    fname_merged = os.path.join(cwdr,tfile[-1][:-4] + '_merged.tt2')
-                    tools.merge_dems(dem_paths, fname_merged) # merge files
-                    if tfile[0] > 2:
-                        read_in = tfile[0]
-                        tfile[0] = 2
-                        # convert read_in file to type 2
-                        fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
-                        tools.convert_file_type(fname_merged, fname_new, read_in, tfile[0])
+                    fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
+                    if os.path.exists(fname_new):
                         fname = fname_new
-                        # check if merged file is exists and remove it if
-                        # os.remove(fname_merged)
+                    else:
+                        fname_merged = os.path.join(cwdr,tfile[-1][:-4] + '_merged.tt2')
+                        tools.merge_dems(dem_paths, fname_merged) # merge files
+                        if tfile[0] > 2:
+                            read_in = tfile[0]
+                            tfile[0] = 2
+                            tools.convert_file_type(fname_merged, fname_new, read_in, tfile[0]) # convert read_in file to type 2
+                            fname = fname_new
+                            # check if merged file is exists and remove it if
+                            if os.path.exists(fname_merged): os.remove(fname_merged)
+                            
                 fname = "'%s'" % fname  
                 self._out_file.write("\n %s \n" % fname) 
                 self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
