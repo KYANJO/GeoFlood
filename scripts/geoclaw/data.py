@@ -506,6 +506,7 @@ class QinitData(clawpack.clawutil.data.ClawData):
                     fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
                     if os.path.exists(fname_new):
                         fname = fname_new
+                        tfile[0] = 2 # convert read_in file to type 2
                     else:
                         fname_merged = os.path.join(cwdr,tfile[-1][:-4] + '_merged.tt2')
                         tools.merge_dems(dem_paths, fname_merged) # merge files
