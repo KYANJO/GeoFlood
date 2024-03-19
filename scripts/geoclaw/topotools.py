@@ -35,10 +35,12 @@ from __future__ import print_function
 import os
 
 import numpy
+import sys
+sys.path.append('../../../scripts')
 
-import clawpack.geoclaw.util as util
-import clawpack.clawutil.data
-import clawpack.geoclaw.data
+import geoclaw.util as util
+import clawutil.data
+import geoclaw.data
 import six
 from six.moves import range
 
