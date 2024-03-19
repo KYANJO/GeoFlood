@@ -26,11 +26,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import numpy
-import clawpack.clawutil.data
 import warnings
 import sys
 
 sys.path.append('../../../scripts')
+import clawutil.data
 from tools_main import tools
 
 # Radius of earth in meters.
@@ -42,7 +42,7 @@ DEG2RAD = numpy.pi / 180.0
 RAD2DEG = 180.0 / numpy.pi
 LAT2METER = Rearth * DEG2RAD
 
-class GeoClawData(clawpack.clawutil.data.ClawData):
+class GeoClawData(clawutil.data.ClawData):
     r"""
     Object containing the basic .
 
@@ -109,7 +109,7 @@ class GeoClawData(clawpack.clawutil.data.ClawData):
 
 
 
-class RefinementData(clawpack.clawutil.data.ClawData):
+class RefinementData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -146,7 +146,7 @@ class RefinementData(clawpack.clawutil.data.ClawData):
 
 
 
-class TopographyData(clawpack.clawutil.data.ClawData):
+class TopographyData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -216,7 +216,7 @@ class TopographyData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-class FixedGridData(clawpack.clawutil.data.ClawData):
+class FixedGridData(clawutil.data.ClawData):
 
     """
     Deprecated, starting in 5.9.0 use FGoutData instead.
@@ -239,7 +239,7 @@ class FixedGridData(clawpack.clawutil.data.ClawData):
             raise AttributeError(msg)
 
 
-class FGoutData(clawpack.clawutil.data.ClawData):
+class FGoutData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -277,7 +277,7 @@ class FGoutData(clawpack.clawutil.data.ClawData):
             fg.write_to_fgout_data(self._out_file)
         self.close_data_file()
 
-class FGmaxData(clawpack.clawutil.data.ClawData):
+class FGmaxData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -333,7 +333,7 @@ class FGmaxData(clawpack.clawutil.data.ClawData):
 
 
 
-class DTopoData(clawpack.clawutil.data.ClawData):
+class DTopoData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -413,7 +413,7 @@ class DTopoData(clawpack.clawutil.data.ClawData):
 
 
 
-class ForceDry(clawpack.clawutil.data.ClawData):
+class ForceDry(clawutil.data.ClawData):
 
     def __init__(self):
         r"""
@@ -425,7 +425,7 @@ class ForceDry(clawpack.clawutil.data.ClawData):
         self.add_attribute('fname','')
 
 
-class QinitData(clawpack.clawutil.data.ClawData):
+class QinitData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -543,7 +543,7 @@ class QinitData(clawpack.clawutil.data.ClawData):
 
 
 # Storm data
-class SurgeData(clawpack.clawutil.data.ClawData):
+class SurgeData(clawutil.data.ClawData):
     r"""Data object describing storm surge related parameters"""
 
     # Provide some mapping between model names and integers
@@ -650,7 +650,7 @@ class SurgeData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-class FrictionData(clawpack.clawutil.data.ClawData):
+class FrictionData(clawutil.data.ClawData):
     r"""Data class representing complex variable friction"""
 
     def __init__(self):
@@ -706,7 +706,7 @@ class FrictionData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-class MultilayerData(clawpack.clawutil.data.ClawData):
+class MultilayerData(clawutil.data.ClawData):
     r"""
     Multilayer SWE data object
     """

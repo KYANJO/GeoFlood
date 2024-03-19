@@ -4,13 +4,14 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
-import os
+import os, sys
 
-import clawpack.clawutil.data
+sys.path.append('../../../scripts')
+import clawutil.data
 import six
 from six.moves import range
 
-class AmrclawInputData(clawpack.clawutil.data.ClawData):
+class AmrclawInputData(clawutil.data.ClawData):
     r"""
     Data object containing AMRClaw input data.
 
@@ -143,7 +144,7 @@ class AmrclawInputData(clawpack.clawutil.data.ClawData):
 
 # ==============================================================================
 #  Region data object
-class RegionData(clawpack.clawutil.data.ClawData):
+class RegionData(clawutil.data.ClawData):
     r""""""
 
     def __init__(self,regions=None,num_dim=None):
@@ -206,7 +207,7 @@ class RegionData(clawpack.clawutil.data.ClawData):
 # ==============================================================================
 #  FlagRegion object (new in v5.7.0)
 
-class FlagRegion(clawpack.clawutil.data.ClawData):
+class FlagRegion(clawutil.data.ClawData):
     
     def __init__(self, num_dim, region=None):
         r"""
@@ -250,7 +251,7 @@ class FlagRegion(clawpack.clawutil.data.ClawData):
         But this isn't really supported yet, since cannot write to 
         flagregions.data.
         """
-        from clawpack.amrclaw import region_tools
+        from amrclaw import region_tools
         
         if fname is None:
             fname = self.spatial_region_file
@@ -263,7 +264,7 @@ class FlagRegion(clawpack.clawutil.data.ClawData):
 # ==============================================================================
 #  FlagRegionData object  (new in v5.7.0)
 
-class FlagRegionData(clawpack.clawutil.data.ClawData):
+class FlagRegionData(clawutil.data.ClawData):
     r"""To replace RegionData, allowing more flexibility."""
 
     def __init__(self,flagregions=None,num_dim=2):
@@ -371,7 +372,7 @@ class FlagRegionData(clawpack.clawutil.data.ClawData):
     
 # ==============================================================================
 #  Gauge data object
-class GaugeData(clawpack.clawutil.data.ClawData):
+class GaugeData(clawutil.data.ClawData):
     r""""""
 
     defaults = {"file_format":"ascii", "display_format":"e15.7",
@@ -581,7 +582,7 @@ class GaugeData(clawpack.clawutil.data.ClawData):
 
 # ==============================================================================
 #  Adjoint data object
-class AdjointData(clawpack.clawutil.data.ClawData):
+class AdjointData(clawutil.data.ClawData):
     r""""""
 
     def __init__(self, use_adjoint=False, num_dim=None):
@@ -619,7 +620,7 @@ class AdjointData(clawpack.clawutil.data.ClawData):
 
     def set_adjoint_files(self):
         import glob
-        from clawpack.pyclaw.fileio.ascii import read_t
+        from pyclaw.fileio.ascii import read_t
 
         self.adjoint_files = []
         if self.use_adjoint:
