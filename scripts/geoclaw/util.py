@@ -21,6 +21,8 @@ from __future__ import print_function
 import io
 import os
 import os.path
+import sys
+sys.path.append('../../../scripts')
 
 import numpy
 from six.moves.urllib.parse import urlencode
@@ -29,7 +31,7 @@ from six.moves.urllib.request import urlopen
 # ==============================================================================
 #  Constants
 # ==============================================================================
-from clawpack.geoclaw.data import Rearth, DEG2RAD, RAD2DEG, LAT2METER
+from geoclaw.data import Rearth, DEG2RAD, RAD2DEG, LAT2METER
 
 NOAA_API_URL = 'https://tidesandcurrents.noaa.gov/api/datagetter'
 

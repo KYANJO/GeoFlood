@@ -9,9 +9,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import sys
+sys.path.append('../../../scripts')
 import collections
 
-from clawpack.geoclaw.data import LAT2METER
+from geoclaw.data import LAT2METER
 
 # Define baseline units so that we can convert to these and then back to
 # requested.

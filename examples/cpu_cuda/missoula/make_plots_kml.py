@@ -8,10 +8,11 @@ function setplot is called to set the plot parameters.
 """
 
 import sys
+sys.path.append('../../../scripts')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image
-from clawpack.geoclaw import topotools
+from geoclaw import topotools
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
 malpasset_loc = "./malpasset_locs.txt"
@@ -29,7 +30,7 @@ def setplot(plotdata):
     """
 
 
-    from clawpack.visclaw import colormaps, geoplot
+    from visclaw import colormaps, geoplot
     from numpy import linspace
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
@@ -41,11 +42,11 @@ def setplot(plotdata):
     #-----------------------------------------
     # Some global kml flags
     #-----------------------------------------
-    plotdata.kml_name = "Malpasset Dam"
+    plotdata.kml_name = "Missoula Flood"
     plotdata.kml_starttime = [1959,12,2,5,14,0]  # Date/time of event in UTC [None]
     plotdata.kml_tz_offset = 1    # Time zone offset (in hours) of event. [None]
 
-    plotdata.kml_index_fname = "MalpassetDam"  # name for .kmz and .kml files ["_GoogleEarth"]
+    plotdata.kml_index_fname = "MissoulaFlood"  # name for .kmz and .kml files ["_GoogleEarth"]
 
     # Set to a URL where KMZ file will be published.
     # plotdata.kml_publish = 'http://math.boisestate.edu/~calhoun/visclaw/GoogleEarth/kmz'
@@ -55,7 +56,7 @@ def setplot(plotdata):
     # plotdata.kml_user_files.append(['malpasset_dam_validate.kml',True])
 
     # Cells used in setrun.py (original)
-    num_cells = [16*5,16*3]
+    num_cells = [32*2,32*1]
     lower = [302901.6624167535,  1111417.5338057536]
     upper = [1172647.141836348, 1658032.3788042287]
 
@@ -65,7 +66,7 @@ def setplot(plotdata):
     # Figure for KML files (large view)
     # This under-resolves the finest level.
     #----------------------------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Malpasset Dam',figno=1)
+    plotfigure = plotdata.new_plotfigure(name='Missoula Flood',figno=1)
     plotfigure.show = True
 
     plotfigure.use_for_kml = True
@@ -90,14 +91,14 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 16
-    mi = 5
-    mj = 3
+    mx = 32
+    mi = 2
+    mj = 1
     minlevel = 1
     maxlevel = 4
     p = 1
-    plotfigure.kml_figsize = [5,3]  #[mx*2**p*mi,mx*2**p*mj]
-    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/3  
+    plotfigure.kml_figsize = [4,2]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2 
 
     # --------------------------------------------------
 
@@ -167,17 +168,17 @@ def setplot(plotdata):
     plotfigure.kml_tile_images = False    # Tile images for faster loading.  Requires GDAL [False]
 
     # Color axis : transparency below 0.1*(cmax-cmin)
-    # cmin = 0
-    # cmax = 5
-    # cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    cmin = 0
+    cmax = 5
+    cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
 
     # # Water
-    # plotaxes = plotfigure.new_plotaxes('kml')
-    # plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    # plotitem.plot_var = geoplot.depth   # Plot height field h.
-    # plotitem.pcolor_cmap = geoplot.googleearth_flooding
-    # plotitem.pcolor_cmin = cmin
-    # plotitem.pcolor_cmax = cmax
+    plotaxes = plotfigure.new_plotaxes('kml')
+    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
+    plotitem.plot_var = geoplot.depth   # Plot height field h.
+    plotitem.pcolor_cmap = geoplot.googleearth_flooding
+    plotitem.pcolor_cmin = cmin
+    plotitem.pcolor_cmax = cmax
 
     # plot point locations 
     # police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)
@@ -262,7 +263,8 @@ def setplot(plotdata):
         t = current_data.t
         gaugeno = current_data.gaugeno
         # locations points
-        guage_labels = police_points + transformer_points + gauge_points
+        # guage_labels = police_points + transformer_points + gauge_points
+        guage_labels = ['g1','g2','g3','g4','g5','g6','g7','g8']
         for n,pt in enumerate(guage_labels):
             if gaugeno == n:
                 title(pt)
@@ -302,5 +304,5 @@ def setplot(plotdata):
     return plotdata
 
 if __name__=="__main__":
-    from clawpack.visclaw.plotclaw import plotclaw
+    from visclaw.plotclaw import plotclaw
     plotclaw(outdir='.',setplot=setplot,plotdir='_plots',format='forestclaw')    
