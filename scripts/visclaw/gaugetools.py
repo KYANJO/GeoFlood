@@ -12,9 +12,11 @@ import warnings
 
 import numpy as np
 
-import clawpack.clawutil.data as clawdata
+sys.path.append('../../../scripts')
 
-from clawpack.visclaw.frametools import set_show
+import clawutil.data as clawdata
+
+from visclaw.frametools import set_show
 from six.moves import range
 
 plotter = 'matplotlib'
@@ -445,7 +447,7 @@ def read_setgauges(outdir):
     """
 
     try:
-        import clawpack.amrclaw.data as amrclaw
+        import amrclaw.data as amrclaw
     except ImportError as e:
         print("You must have AMRClaw installed to plot gauges.")
         print("continuing...")
@@ -564,9 +566,9 @@ def printgauges(plotdata=None, verbose=True):
     """
 
     import glob
-    from clawpack.visclaw.data import ClawPlotData
+    from visclaw.data import ClawPlotData
 
-    from clawpack.visclaw import plotpages
+    from visclaw import plotpages
 
 
     if 'matplotlib' not in sys.modules:
@@ -804,7 +806,7 @@ def compare_gauges(outdir1, outdir2, gaugenos='all', q_components='all',
     Returns True if everything matches to tolerance *tol*, else False.
     """
 
-    from clawpack.visclaw.data import ClawPlotData
+    from visclaw.data import ClawPlotData
     from matplotlib import pyplot as plt
     
     if gaugenos == 'all':

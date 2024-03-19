@@ -8,10 +8,11 @@ function setplot is called to set the plot parameters.
 """
 
 import sys
+sys.path.append('../../../scripts')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image
-from clawpack.geoclaw import topotools
+from geoclaw import topotools
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
 malpasset_loc = "./malpasset_locs.txt"
@@ -29,7 +30,7 @@ def setplot(plotdata):
     """
 
 
-    from clawpack.visclaw import colormaps, geoplot
+    from visclaw import colormaps, geoplot
     from numpy import linspace
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
@@ -303,5 +304,5 @@ def setplot(plotdata):
     return plotdata
 
 if __name__=="__main__":
-    from clawpack.visclaw.plotclaw import plotclaw
+    from visclaw.plotclaw import plotclaw
     plotclaw(outdir='.',setplot=setplot,plotdir='_plots',format='forestclaw')    
