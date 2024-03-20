@@ -27,7 +27,7 @@ from geoclaw.topotools import Topography
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1e-4 # Initial time step
+initial_dt = 1e-8 # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -38,7 +38,7 @@ if output_style == 1:
 
     n_hours = 120             # Total number of hours in simulation     
     
-    frames_per_minute = 1/30   # (1 frame every 30 mins)
+    frames_per_minute = 1/60   # (1 frame every 30 mins)
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -52,14 +52,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 16*2 # Number of x grids per block
-my = 16*2 # Number of y grids per block
+mx = 32 # Number of x grids per block
+my = 32 # Number of y grids per block
 
 mi = 2 # Number of x grids per block  <-- mx = mi*mx 
-mj = 1  # Number of y grids per block   <-- my = mj*my 
+mj = 1 # Number of y grids per block   <-- my = mj*my 
 
-minlevel = 1 
-maxlevel = 4 #resolution based on levels
+minlevel = 2 
+maxlevel = 5 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
