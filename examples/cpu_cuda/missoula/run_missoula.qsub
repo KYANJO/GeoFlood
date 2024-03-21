@@ -1,0 +1,15 @@
+#!/bin/bash
+###
+###
+#SBATCH --time=167:30:00
+#SBATCH -n 48
+#SBATCH -N 1
+#SBATCH --job-name=missoula_flood
+#SBATCH --output=out_00048.o%j
+#SBATCH --gres=gpu:1
+#SBATCH -p gpu # queue (partition) -- defq, eduq, gpuq, shortq
+
+module load slurm
+
+# Execute the program
+mpirun -np 48 ./missoula_cpucuda -F geoflood.ini 

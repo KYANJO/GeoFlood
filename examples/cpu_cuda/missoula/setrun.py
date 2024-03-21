@@ -36,7 +36,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 120             # Total number of hours in simulation     
+    n_hours = 72             # Total number of hours in simulation     
     
     frames_per_minute = 1/60   # (1 frame every 30 mins)
 
@@ -391,8 +391,8 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
-    geoflooddata.output = True
-    geoflooddata.output_gauges = True
+    geoflooddata.output = False
+    geoflooddata.output_gauges = False
 
 
     # Block dimensions for non-square domains
@@ -402,7 +402,7 @@ def setrun(claw_pkg='geoclaw'):
      # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = True
+    geoflooddata.tikz_out = False
     geoflooddata.tikz_figsize = "4 2"
     geoflooddata.tikz_plot_prefix = "missoula"
     geoflooddata.tikz_plot_suffix = "png"

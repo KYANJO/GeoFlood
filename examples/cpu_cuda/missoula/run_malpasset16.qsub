@@ -1,0 +1,16 @@
+#!/bin/bash
+###
+#SBATCH --time=167:30:00
+#SBATCH -n 16 # # MPI processes per node
+#SBATCH -N 1 # total number of nodes to run on
+#SBATCH --job-name=missoula_flood
+#SBATCH --output=gflood_00016.o%j
+#SBATCH --gres=gpu:1 # max 0f 1 on Borah
+#SBATCH -p gpu # queue (partition)
+
+
+
+module load slurm
+
+
+mpirun -np 16 ./missoula_cpucuda -F geoflood.ini 
