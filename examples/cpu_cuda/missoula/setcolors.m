@@ -76,25 +76,33 @@ function setcolors(p,x,y,z,q)
 
     % Load DEM data
     % filename = 'Missoula4Brian/topo/Scenario4a_maxice_except_Okanogan/topo_with_ice.tt3'; 
-    filename = 'results_2_5_2a/resampled.asc'
+    filename = 'results_2_5_2a/resampled.asc';
 
     % plot topography
     [Z,tmin,tmax] = plot_topo(x,y,filename);
 
     % q colormap
-    mymap = [ 127 255 0 
-    0 128 0 
-    255 255 0
-    255 165 9
-    255 0 0
-    255 192 203
-    255 0 255]/255;
+    % mymap = [ 15  127  230 
+    % 15  127  230 
+    % 15  127  230
+    % 15  127  230
+    % 15  127  230
+    % 15  127  230
+    % 15  127  230]/255;
+
+    mymap = [0 0 0.3
+        0 0 0.4
+        0 0 0.5
+         0 0 0.6
+         0 0 0.8 
+         0 0 1.0];
 
     pos = linspace(0, 1, size(mymap, 1));
     
     % Create a q-grained colormap using interpolation
     
     q_mymap = interp1(pos, mymap, fine_pos);
+     % q_mymap = flipud(parula(Ncm));
 
     % q_mymap = createcolormap(Ncm,mymap(1,:),mymap(2,:),mymap(3,:),mymap(4,:),mymap(5,:), ...
     %     mymap(6,:),mymap(7,:));
@@ -112,18 +120,29 @@ function setcolors(p,x,y,z,q)
     
     % Map nan values to brown (land)
     % cnew = [[153,76,0]/255; cm];
-    terrain = [102 205 170
-        255 255 0
-        0 128 0
-        255 165 0
-        139 0 0
-        165 42 42
-        128 128 128
-        255 250 250]/255;
-    alpha = 0.0;
-    terrain  = (1-alpha)*terrain + alpha;
-    pos_t = linspace(0,1,size(terrain,1));
-    t_map = interp1(pos_t,terrain,fine_pos);
+    % terrain = [102 205 170
+    %     255 255 0
+    %     0 128 0
+    %     255 165 0
+    %     139 0 0
+    %     165 42 42
+    %     128 128 128
+    %     255 250 250]/255;
+    % terrain = [161 160 160
+    %     110 110 110
+    %     101 101 101
+    %     161 161 161
+    %     161 161 161
+    %     161 161 161
+    %     161 161 161
+    %     161 161 161]/255;
+    % 
+    % 
+    % alpha = 0.0;
+    % terrain  = (1-alpha)*terrain + alpha;
+    % pos_t = linspace(0,1,size(terrain,1));
+    % t_map = interp1(pos_t,terrain,fine_pos);
+    t_map = [[181 181 181]/255; flipud(gray(Ncm))];
   
     % t_map = createcolormap(Ncm,terrain(1,:),terrain(2,:),terrain(3,:),terrain(4,:),terrain(5,:), ...
     %     terrain(6,:),terrain(7,:),terrain(8,:)); % 256x3 array
