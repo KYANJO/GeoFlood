@@ -84,6 +84,7 @@ target_sources(cpu_cuda_c PRIVATE
     riemann_source/variables.cu
     riemann_source/geoflood_src2.cu
     riemann_source/geoflood_rp2.cu
+    riemann_source/geoflood_b4step2.cu
 )
 
 target_link_libraries(cpu_cuda_c PUBLIC FORESTCLAW::FORESTCLAW FORESTCLAW::CLAWPATCH CUDA::nvToolsExt)

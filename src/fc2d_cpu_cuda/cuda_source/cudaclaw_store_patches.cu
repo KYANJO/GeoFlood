@@ -45,7 +45,8 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
     int n = iter % cuclaw_opt->buffer_len;
     flux_array[n] = *fluxes;
 #if 1
-    if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
+    // if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
+    if (cuclaw_opt->src_term > 0)
     {
         patch_array[n] = this_patch;
         patchno_array[n] = this_patch_idx;

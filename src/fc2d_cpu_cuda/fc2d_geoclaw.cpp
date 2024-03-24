@@ -573,6 +573,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     size_t size, bytes;
     double maxcfl;
 
+#if 0
     /* ------------------------------- Call b4step2 ----------------------------------- */
     if (geoclaw_vt->b4step2 != NULL)
     {
@@ -580,6 +581,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
         fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
     }
+#endif
 
     /* -------------------------------- Main update ----------------------------------- */
     fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
@@ -1215,12 +1217,13 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     geoclaw_vt->setaux           = FC2D_GEOCLAW_SETAUX;
     geoclaw_vt->qinit            = FC2D_GEOCLAW_QINIT;
     geoclaw_vt->bc2              = FC2D_GEOCLAW_BC2;
-    geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
+    // geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     geoclaw_vt->src2             = FC2D_GEOCLAW_SRC2;
 
     if (user_opt->cuda == 0){
         geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
         geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
+        geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     }else{
         cudaflood_assign_rpn2(&geoclaw_vt->cuda_rpn2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpn2 != NULL);
@@ -1228,8 +1231,13 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
         cudaflood_assign_rpt2(&geoclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpt2 != NULL);
 
-        cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
-        FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
+        cudaflood_assign_b4step2(&geoclaw_vt->cuda_b4step2);
+        FCLAW_ASSERT(geoclaw_vt->cuda_b4step2 != NULL);
+
+        // cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
+        // FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
+
+        geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     }
  
     gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;

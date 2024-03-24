@@ -51,12 +51,13 @@ struct cudaclaw_fluxes;
 // #include <fclaw2d_include_all.h>
 
 /* ------------------------------ Typdefs for CUDA device functions --------------------*/
+typedef void (*cudaclaw_cuda_b4step2_t)(double drytol, double q[]);
 
-typedef void (*cudaclaw_cuda_b4step2_t)(int mbc, int mx, int my, int meqn, double q[],
-                                        double xlower, double ylower, 
-                                        double dx, double dy, 
-                                        double time, double dt, int maux, 
-                                        double aux[], int i, int j);
+// typedef void (*cudaclaw_cuda_b4step2_t)(int mbc, int mx, int my, int meqn, double q[],
+//                                         double xlower, double ylower, 
+//                                         double dx, double dy, 
+//                                         double time, double dt, int maux, 
+//                                         double aux[], int i, int j);
 
 typedef void (*cudaclaw_cuda_rpn2_t)(int idir, int meqn, int mwaves, int maux,
                                      double ql[], double qr[], 
@@ -118,6 +119,9 @@ void cudaflood_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
 
 /* Source term assign functions */
 void cudaflood_assign_src2(cudaclaw_cuda_src2_t *src2);
+
+/* b4step2 term assign functions */
+void cudaflood_assign_b4step2(cudaclaw_cuda_b4step2_t *b4step2);
 
 /* Needed to fetch variables for the Riemann solvers*/
 void setprob_cuda(); 
