@@ -115,7 +115,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     // Synchronize to ensure all threads see the initialized values
     __syncthreads();
-#if 1
+#if 0
      /* ---------------------------- b4step2 -------------------------------- */
     if (b4step2 != NULL)
     {
@@ -142,7 +142,24 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 qr[mq] = qold[I_q];  
             }         
 
-            b4step2(dry_tol, qr);
+            // if (qr[0] < dry_tol)
+            // {
+            //     qr[0] = fmax(qr[0], 0.0);
+            //     qr[1] = 0.0;
+            //     qr[2] = 0.0;
+            // }
+
+            // b4step2(dry_tol, qr);
+            
+            qr[0] = fmax(qr[0], 0.0); // Ensure q[0] is not negative, applies unconditionally
+
+            // Calculate condition once and reuse, avoiding branching
+            double condition = (qr[0] < dry_tol);
+
+            // Set q[1] and q[2] to 0 if condition is true (q[0] < drytol), otherwise leave them unchanged
+            qr[1] *= (1.0 - condition);
+            qr[2] *= (1.0 - condition);
+
 
             for(int mq = 0; mq < meqn; mq++)
             {

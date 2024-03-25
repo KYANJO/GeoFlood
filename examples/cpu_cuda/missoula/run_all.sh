@@ -30,14 +30,14 @@ EOF
 
 # Loop over the desired MPI tasks
 # cuda
-for n in 1 2 4 8 16 32; do
+for n in 32 16 8 4 2 1; do
   generate_and_submit $n true
 done
 
 # sleep 0.5
 
 #cpu
-for n in 1 2 4 8 16 32; do
+for n in 32 16 8 4 2 1; do
   generate_and_submit $n false
 done
 
