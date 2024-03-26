@@ -1223,6 +1223,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     if (user_opt->cuda == 0){
         geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
         geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
+        // geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     }else{
         cudaflood_assign_rpn2(&geoclaw_vt->cuda_rpn2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpn2 != NULL);
@@ -1230,8 +1231,9 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
         cudaflood_assign_rpt2(&geoclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpt2 != NULL);
 
-        cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
-        FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
+        /* b4step2 done with in the flux2.cu*/
+        // cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
+        // FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
     }
  
     gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;

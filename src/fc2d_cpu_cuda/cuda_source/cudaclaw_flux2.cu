@@ -116,6 +116,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     // Synchronize to ensure all threads see the initialized values
     __syncthreads();
 
+    /* ---------------------------- b4step2 -------------------------------- */
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     {
         int ix = thread_index % ifaces_x;
@@ -206,27 +207,17 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         {
             int I_q = I + mq*zs;
             qr[mq] = qold[I_q];                       /* Right */
-        }
-
-        for(int m = 0; m < maux; m++)
-        {
-            int I_aux = I + m*zs;
-            auxr[m] = aux[I_aux];
-        }               
-
-        
-        for(int mq = 0; mq < meqn; mq++)
-        {
-            int I_q = I + mq*zs;
             ql[mq] = qold[I_q - 1];    /* Left  */
         }
 
         for(int m = 0; m < maux; m++)
         {
             int I_aux = I + m*zs;
+            auxr[m] = aux[I_aux];
             auxl[m] = aux[I_aux - 1];
         }               
 
+        
         rpn2(0, meqn, mwaves, maux, ql, qr, auxl, auxr, wave, s, amdq, apdq, dry_tol, mcapa);
 
         // double maxfl_update_x = (ix > 0 && ix <= mx + 1) ? 1.0 : 0.0;
@@ -326,25 +317,16 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         {
             int I_q = I + mq*zs;
             qr[mq] = qold[I_q];        /* Right */
-        }
-
-        for(int m = 0; m < maux; m++)
-        {
-            int I_aux = I + m*zs;
-            auxr[m] = aux[I_aux];
-        }               
-
-        for(int mq = 0; mq < meqn; mq++)
-        {
-            int I_q = I + mq*zs;
             qd[mq] = qold[I_q - ys];   /* Down  */  
         }
 
         for(int m = 0; m < maux; m++)
         {
             int I_aux = I + m*zs;
+            auxr[m] = aux[I_aux];
             auxd[m] = aux[I_aux - ys];
         }               
+
 
         rpn2(1, meqn, mwaves, maux, qd, qr, auxd, auxr, wave, s, bmdq, bpdq, dry_tol, mcapa);
 
