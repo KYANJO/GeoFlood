@@ -573,6 +573,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     size_t size, bytes;
     double maxcfl;
 
+#if 0 /*being called in flux2.cu*/
     /* ------------------------------- Call b4step2 ----------------------------------- */
     if (geoclaw_vt->b4step2 != NULL)
     {
@@ -580,6 +581,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
         fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
     }
+#endif
 
     /* -------------------------------- Main update ----------------------------------- */
     fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  

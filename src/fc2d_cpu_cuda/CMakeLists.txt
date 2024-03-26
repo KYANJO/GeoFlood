@@ -36,6 +36,7 @@ add_library(cpu_cuda_f OBJECT
     fortran_source/geoclaw_setaux_fort.f90 
     fortran_source/geoclaw_src2_fort.f90 
     fortran_source/extract_dt.f90
+    fortran_source/topointegral_geo.f
     fortran_source/geoclaw_b4step2_fort.f90 
     fortran_source/geoclaw_qinit_fort.f90 
     fclaw2d_source/fc2d_geoclaw_copy_fort.f 
@@ -79,6 +80,7 @@ target_sources(cpu_cuda_c PRIVATE
     cuda_source/cudaclaw_limiters.cu
     cuda_source/cudaclaw_allocate.cu
     cuda_source/cudaclaw_flux2.cu
+    # cuda_source/cudaflood_flux2.cu
     fc2d_cuda_profiler.cu
     cuda_source/cudaclaw_store_patches.cu
     riemann_source/variables.cu

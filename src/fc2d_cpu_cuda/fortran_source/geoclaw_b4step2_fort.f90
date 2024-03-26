@@ -61,18 +61,18 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
 
     !! Determine if time is in dtopo interval.  If so, we need to update the 
     !! aux array.  
-    t_in_dtopo_interval = fc2d_geoclaw_check_dtopotime(t, tau)
+    ! t_in_dtopo_interval = fc2d_geoclaw_check_dtopotime(t, tau)
 
 
-    if (t_in_dtopo_interval) then
-        ! topo arrays might have been updated by dtopo more recently than
-        ! aux arrays were set unless at least 1 step taken on all levels
-        aux(1,:,:) = NEEDS_TO_BE_SET ! new system checks this val before setting
-        is_ghost = 0
-        nghost = mbc    !! won't be used, if is_ghost = 0
-        mint = 2*mbc    !! not used
-        CALL fc2d_geoclaw_setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux,is_ghost,nghost,mint)
-    endif
+    ! if (t_in_dtopo_interval) then
+    !     ! topo arrays might have been updated by dtopo more recently than
+    !     ! aux arrays were set unless at least 1 step taken on all levels
+    !     aux(1,:,:) = NEEDS_TO_BE_SET ! new system checks this val before setting
+    !     is_ghost = 0
+    !     nghost = mbc    !! won't be used, if is_ghost = 0
+    !     mint = 2*mbc    !! not used
+    !     CALL fc2d_geoclaw_setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux,is_ghost,nghost,mint)
+    ! endif
 
 END SUBROUTINE fc2d_geoclaw_b4step2
     
