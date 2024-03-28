@@ -704,72 +704,74 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         huRstar = uRstar*hRstar;
 
         /* left state depth and momentum updates */
-        k = 0;
-        for (int mw = 0; mw < mwaves; mw++) {
-            double multiplier = lambda[mw] < 0.0 ? 1.0 : 0.0;
-            // hLstar += multiplier * beta[mw] * r[0][mw];
-            // huLstar += multiplier * beta[mw] * r[1][mw];
+        // k = 0;
+        // for (int mw = 0; mw < mwaves; mw++) {
+        //     double multiplier = lambda[mw] < 0.0 ? 1.0 : 0.0;
+        //     // hLstar += multiplier * beta[mw] * r[0][mw];
+        //     // huLstar += multiplier * beta[mw] * r[1][mw];
 
-            hLstar  += multiplier * beta[mw] * r[k]; k++;
-            huLstar += multiplier * beta[mw] * r[k]; k=k+2;
-        }
-        
-        // for (mw=0; mw < mwaves; mw++)
-        // {
-        //     if (lambda[mw] < 0.0)
-        //     {
-        //        hLstar = hLstar + beta[mw]*r[0][mw];
-        //        huLstar = huLstar + beta[mw]*r[1][mw];
-        //     }
+        //     hLstar  += multiplier * beta[mw] * r[k]; k++;
+        //     huLstar += multiplier * beta[mw] * r[k]; k=k+2;
         // }
+        
+        k=0;
+        for (mw=0; mw < mwaves; mw++)
+        {
+            if (lambda[mw] < 0.0)
+            {
+               hLstar = hLstar + beta[mw]*r[k]; k++;
+               huLstar = huLstar + beta[mw]*r[k]; k=k+2;
+            }
+        }
 
         /* right state depth and momentum updates */
-        k = 0;
-        for (int mw = mwaves - 1; mw >= 0; mw--) {
-            double multiplier = lambda[mw] > 0.0 ? 1.0 : 0.0;
-            // hRstar -= multiplier * beta[mw] * r[0][mw];
-            // huRstar -= multiplier * beta[mw] * r[1][mw];
+        // k = 0;
+        // for (int mw = mwaves - 1; mw >= 0; mw--) {
+        //     double multiplier = lambda[mw] > 0.0 ? 1.0 : 0.0;
+        //     // hRstar -= multiplier * beta[mw] * r[0][mw];
+        //     // huRstar -= multiplier * beta[mw] * r[1][mw];
 
-            hRstar  -= multiplier * beta[mw] * r[k]; k++;
-            huRstar -= multiplier * beta[mw] * r[k]; k=k+2;
-        }
-    
-        // for (mw = mwaves-1; mw >= 0; mw--)
-        // {
-        //     if (lambda[mw] > 0.0)
-        //     { 
-        //         hRstar = hRstar - beta[mw]*r[0][mw];
-        //         huRstar = huRstar - beta[mw]*r[1][mw];
-        //     }
+        //     hRstar  -= multiplier * beta[mw] * r[k]; k++;
+        //     huRstar -= multiplier * beta[mw] * r[k]; k=k+2;
         // }
+    
+        k = 0;
+        for (mw = mwaves-1; mw >= 0; mw--)
+        {
+            if (lambda[mw] > 0.0)
+            { 
+                hRstar = hRstar - beta[mw]*r[k]; k++;;
+                huRstar = huRstar - beta[mw]*r[k]; k=k+2;
+            }
+        }
 
         /* left state velocity update */
-        hLstar = fmax(hLstar, 0.0); // Ensure hLstar is non-negative
-        uLstar = hLstar > drytol ? huLstar / hLstar : 0.0; // Update uLstar: set to huLstar/hLstar if hLstar > drytol, else to 0.0
+        // hLstar = fmax(hLstar, 0.0); // Ensure hLstar is non-negative
+        // uLstar = hLstar > drytol ? huLstar / hLstar : 0.0; // Update uLstar: set to huLstar/hLstar if hLstar > drytol, else to 0.0
 
-        // if (hLstar > drytol) 
-        // {
-        //     uLstar = huLstar/hLstar;
-        // }
-        // else  /* dry state */
-        // {
-        //     hLstar = fmax(hLstar,0.0);
-        //     uLstar = 0.0;
-        // }
+        if (hLstar > drytol) 
+        {
+            uLstar = huLstar/hLstar;
+        }
+        else  /* dry state */
+        {
+            hLstar = fmax(hLstar,0.0);
+            uLstar = 0.0;
+        }
 
         /* right state velocity update */
-        hRstar = fmax(hRstar, 0.0); // Ensure hRstar is non-negative
-        uRstar = hRstar > drytol ? huRstar / hRstar : 0.0; // // Update uRstar: set to huRstar/hRstar if hRstar > drytol, else to 0.0
+        // hRstar = fmax(hRstar, 0.0); // Ensure hRstar is non-negative
+        // uRstar = hRstar > drytol ? huRstar / hRstar : 0.0; // // Update uRstar: set to huRstar/hRstar if hRstar > drytol, else to 0.0
 
-        // if (hRstar > drytol) 
-        // {
-        //     uRstar = huRstar/hRstar;
-        // }
-        // else /* dry state */
-        // {
-        //     hRstar = fmax(hRstar,0.0);
-        //     uRstar = 0.0;
-        // }
+        if (hRstar > drytol) 
+        {
+            uRstar = huRstar/hRstar;
+        }
+        else /* dry state */
+        {
+            hRstar = fmax(hRstar,0.0);
+            uRstar = 0.0;
+        }
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
@@ -881,34 +883,34 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
             }
 
             *hm = h0;
-            sqrtgh2 = sqrt(s_grav * *hm);
-            sqrtgh1 = sqrt(s_grav * (hL > hR ? hL : hR));
-
-             /* These two equations are extracted from Eqn (13.55) in the FVMHP book */
-            *s1m =  hL > hR ? (uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2) : (uR - 2.0 * sqrtgh1 + sqrtgh2);
-            *s2m =  hL > hR ? (uL + 2.0 * sqrtgh1 - sqrtgh2) : (uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2);
-
-            *rare1 =  hL > hR;
-            *rare2 = !(*rare1);
-
             // sqrtgh2 = sqrt(s_grav * *hm);
-            // if (hL > hR) {
-            //     sqrtgh1 = sqrt(s_grav * hL);
-            //     /* Eqn (13.55) in the FVMHP book */
-            //     // um = uL + 2.0 * sqrtgh1 - 2.0 * sqrtgh2;
-            //     *s1m = uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2;
-            //     *s2m = uL + 2.0 * sqrtgh1 - sqrtgh2;
+            // sqrtgh1 = sqrt(s_grav * (hL > hR ? hL : hR));
 
-            //     *rare1 = true;
-            //     *rare2 = false;
-            // } else {
-            //     sqrtgh1 = sqrt(s_grav * hR);
-            //     // um = uR - 2.0 * sqrtgh1 + 2.0 * sqrtgh2;
-            //     *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
-            //     *s2m = uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2;
-            //     *rare1 = false;
-            //     *rare2 = true;
-            // }
+            //  /* These two equations are extracted from Eqn (13.55) in the FVMHP book */
+            // *s1m =  hL > hR ? (uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2) : (uR - 2.0 * sqrtgh1 + sqrtgh2);
+            // *s2m =  hL > hR ? (uL + 2.0 * sqrtgh1 - sqrtgh2) : (uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2);
+
+            // *rare1 =  hL > hR;
+            // *rare2 = !(*rare1);
+
+            sqrtgh2 = sqrt(s_grav * *hm);
+            if (hL > hR) {
+                sqrtgh1 = sqrt(s_grav * hL);
+                /* Eqn (13.55) in the FVMHP book */
+                // um = uL + 2.0 * sqrtgh1 - 2.0 * sqrtgh2;
+                *s1m = uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2;
+                *s2m = uL + 2.0 * sqrtgh1 - sqrtgh2;
+
+                *rare1 = true;
+                *rare2 = false;
+            } else {
+                sqrtgh1 = sqrt(s_grav * hR);
+                // um = uR - 2.0 * sqrtgh1 + 2.0 * sqrtgh2;
+                *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
+                *s2m = uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2;
+                *rare1 = false;
+                *rare2 = true;
+            }
         }
     }
 } /* End of riemanntype function */
