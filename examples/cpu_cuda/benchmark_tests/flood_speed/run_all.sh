@@ -4,7 +4,7 @@
 generate_and_submit_cuda() {
   MPI_NUM_TASKS=$1
   USER_CUDA=$2  # Capture the second argument as USER_CUDA
-  JOB_NAME="dam_break$MPI_NUM_TASKS"
+  JOB_NAME="flood_speed$MPI_NUM_TASKS"
   OUTPUT_NAME="gflood${MPI_NUM_TASKS}"
 
   # Creating a temporary run script for the current number of MPI tasks
@@ -20,7 +20,7 @@ generate_and_submit_cuda() {
 #SBATCH -p gpu # Queue (partition)
 module load slurm
 module load mpi
-mpirun -np ${MPI_NUM_TASKS} ./dam_break_cpucuda -F geoflood.ini --user:cuda=${USER_CUDA}
+mpirun -np ${MPI_NUM_TASKS} ./flood_speed_cpucuda -F geoflood.ini --user:cuda=${USER_CUDA}
 EOF
 
   # Submit the job
@@ -39,7 +39,7 @@ sleep 10
 generate_and_submit_cpu() {
   MPI_NUM_TASKS=$1
   USER_CUDA=$2  # Capture the second argument as USER_CUDA
-  JOB_NAME="dam_break$MPI_NUM_TASKS"
+  JOB_NAME="flood_speed$MPI_NUM_TASKS"
   OUTPUT_NAME="gflood${MPI_NUM_TASKS}"
 
   # Creating a temporary run script for the current number of MPI tasks
@@ -55,7 +55,7 @@ generate_and_submit_cpu() {
 #SBATCH -p bsudfq # Queue (partition)
 module load slurm
 module load mpi
-mpirun -np ${MPI_NUM_TASKS} ./dam_break_cpucuda -F geoflood.ini --user:cuda=${USER_CUDA}
+mpirun -np ${MPI_NUM_TASKS} ./flood_speed_cpucuda -F geoflood.ini --user:cuda=${USER_CUDA}
 EOF
 
   # Submit the job

@@ -40,8 +40,8 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    # n_hours = 48.0              # Total number of hours in simulation     
-    n_hours = 0.5             # Total number of hours in simulation
+    n_hours = 48.0              # Total number of hours in simulation     
+    # n_hours = 0.5             # Total number of hours in simulation
     
     frames_per_minute = 1/5   # (1 frame every 60 minutes)
 
@@ -62,8 +62,8 @@ my = 50
 mi = 4  # Number of x grids per block  <-- mx = mi*mx = 5*20 = 100
 mj = 4  # Number of y grids per block   <-- my = mj*my = 5*20 = 100
 
-minlevel = 0 
-maxlevel = 1 #resolution based on levels
+minlevel = 1 
+maxlevel = 3 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -420,7 +420,7 @@ def setrun(claw_pkg='geoclaw'):
      # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = True
+    geoflooddata.tikz_out = False
     geoflooddata.tikz_figsize = "4 4"
     geoflooddata.tikz_plot_prefix = "filling"
     geoflooddata.tikz_plot_suffix = "png"
