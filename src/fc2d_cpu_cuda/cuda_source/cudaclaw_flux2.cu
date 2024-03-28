@@ -248,7 +248,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 //     printf("ix = %d, iy = %d, maxcfl_0 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdx_),s[mw]);
                 // }
 
-                maxcfl = max(maxcfl,fabs(s[mw])*dtdx_);
+                maxcfl = fmax(maxcfl,fabs(s[mw])*dtdx_);
                 // maxcfl = max(maxcfl, maxfl_update_x * fabs(s[mw] * dtdx_));
 
                 if (order[0] == 2)
@@ -359,7 +359,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 //     printf("ix = %d, iy = %d, maxcfl_1 = %f, s = %f\n",ix,iy,fabs(s[mw]*dtdy_),s[mw]);
                 // }
 
-                maxcfl = max(maxcfl,fabs(s[mw])*dtdy_);
+                maxcfl = fmax(maxcfl,fabs(s[mw])*dtdy_);
                 // maxcfl = max(maxcfl, maxfl_update_y * fabs(s[mw] * dtdy_));
                 if (order[0] == 2)
                 {                    
