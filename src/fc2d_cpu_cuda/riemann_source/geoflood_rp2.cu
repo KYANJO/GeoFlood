@@ -194,8 +194,8 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         sL = uL - sqrt(s_grav*hL); // 1 wave speed of left state
         sR = uR + sqrt(s_grav*hR); // 2 wave speed of right state
 
-        uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hL) + sqrt(s_grav*hR)); // Roe average
-        chat = sqrt(0.5*s_grav*(hL+hR)); // Roe average
+        uhat = (sqrt(s_grav*hL)*uL + sqrt(s_grav*hR)*uR)/(sqrt(s_grav*hR) + sqrt(s_grav*hL)); // Roe average
+        chat = sqrt(s_grav*0.5*(hR + hL)); // Roe average
         sRoe1 = uhat - chat; // Roe wave speed 1 wave
         sRoe2 = uhat + chat; // Roe wave speed 2 wave
 
@@ -208,36 +208,73 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,drytol,idir);
 
         // eliminate ghost fluxes for wall    
-        fw[0] *= wall[0];
-        fw[mu] *= wall[0];
-        fw[mv] *= wall[0];
-        sw[0] *= wall[0];
+        // fw[0] *= wall[0];
+        // fw[mu] *= wall[0];
+        // fw[mv] *= wall[0];
+        // sw[0] *= wall[0];
 
-        fw[mwaves + 0] *= wall[1];
-        fw[mu + mwaves] *= wall[1];
-        fw[mv + mwaves] *= wall[1];
-        sw[mu] *= wall[mu];
+        // fw[mwaves + 0] *= wall[1];
+        // fw[mu + mwaves] *= wall[1];
+        // fw[mv + mwaves] *= wall[1];
+        // sw[mu] *= wall[mu];
 
-        fw[2*mwaves + 0] *= wall[2];
-        fw[2*mwaves + mu] *= wall[2];
-        fw[2*mwaves + mv] *= wall[2];
-        sw[mv] *= wall[mv];
+        // fw[2*mwaves + 0] *= wall[2];
+        // fw[2*mwaves + mu] *= wall[2];
+        // fw[2*mwaves + mv] *= wall[2];
+        // sw[mv] *= wall[mv];
+
+        /*eliminate ghost fluxes for wall and instantly update fwave and corresponding speeds*/
+        int k = 0, mk = 0;
+        for (mw = 0; mw < mwaves; mw++){
+            /*eliminate ghost fluxes for wall*/
+            sw[k]  *= wall[k];        /*then update speed*/  //s[k] = sw[k];
+            fw[mk] *= wall[k];  mk++; /*then update fwave*/  //fwave[mk] = fw[mk]; mk++;
+            fw[mk] *= wall[k];  mk++; /*then update fwave*/  //fwave[mk] = fw[mk]; mk++;
+            fw[mk] *= wall[k];  mk++; /*then update fwave*/  //fwave[mk] = fw[mk]; mk++;
+            k++;
+        }
+
 
         /* update fwave and corresponding speeds */
         fwave[0] = fw[0];
-        fwave[mu] = fw[mu];
-        fwave[mv] = fw[mv];
+        fwave[mu] = fw[1];
+        fwave[mv] = fw[2];
         s[0] = sw[0];
 
-        fwave[mwaves + 0] = fw[mwaves + 0];
-        fwave[mu + mwaves] = fw[mu + mwaves];
-        fwave[mv + mwaves] = fw[mv + mwaves];
-        s[mu] = sw[mu];
+        fwave[mwaves + 0] = fw[3];
+        fwave[mu + mwaves] = fw[4];
+        fwave[mv + mwaves] = fw[5];
+        s[1] = sw[1];
        
-        fwave[2*mwaves + 0] = fw[2*mwaves + 0];
-        fwave[2*mwaves + mu] = fw[2*mwaves + mu];
-        fwave[2*mwaves + mv] = fw[2*mwaves + mv];
-        s[mv] = sw[mv];
+        fwave[2*mwaves + 0] = fw[6];
+        fwave[2*mwaves + mu] = fw[7];
+        fwave[2*mwaves + mv] = fw[8];
+        s[2] = sw[2];
+
+        // fwave[0] = fw[0];
+        // fwave[mu] = fw[mu];
+        // fwave[mv] = fw[mv];
+        // s[0] = sw[0];
+
+        // fwave[mwaves + 0] = fw[mwaves + 0];
+        // fwave[mu + mwaves] = fw[mu + mwaves];
+        // fwave[mv + mwaves] = fw[mv + mwaves];
+        // s[1] = sw[1];
+       
+        // fwave[2*mwaves + 0] = fw[2*mwaves + 0];
+        // fwave[2*mwaves + mu] = fw[2*mwaves + mu];
+        // fwave[2*mwaves + mv] = fw[2*mwaves + mv];
+        // s[2] = sw[2];
+
+        // int k = 0, mk = 0;
+        // for (mw = 0; mw < mwaves; mw++){
+        //     s[k] = sw[k];
+        //     fwave[mk] = fw[mk]; mk++;
+        //     fwave[mk] = fw[mk]; mk++;
+        //     fwave[mk] = fw[mk]; mk++;
+        //     k++;
+        // }
+
        
     }
 
@@ -881,29 +918,44 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
-    fw[0] = beta[0]*r[1][0];
-    fw[mu] = beta[0]*r[2][0];
-    fw[mv] = beta[0]*r[1][0];
-    sw[0] = lambda[0];
+    // fw[0] = beta[0]*r[1][0];
+    // fw[mu] = beta[0]*r[2][0];
+    // fw[mv] = beta[0]*r[1][0];
+    // sw[0] = lambda[0];
 
-    fw[mwaves + 0] = beta[1]*r[1][1];
-    fw[mwaves + mu] = beta[1]*r[2][1];
-    fw[mwaves + mv] = beta[1]*r[1][1];
-    sw[1] = lambda[1];
+    // fw[mwaves + 0] = beta[1]*r[1][1];
+    // fw[mwaves + mu] = beta[1]*r[2][1];
+    // fw[mwaves + mv] = beta[1]*r[1][1];
+    // sw[1] = lambda[1];
 
-    fw[2*mwaves + 0] = beta[2]*r[1][2];
-    fw[2*mwaves + mu] = beta[2]*r[2][2];
-    fw[2*mwaves + mv] = beta[2]*r[1][2];
-    sw[2] = lambda[2];
+    // fw[2*mwaves + 0] = beta[2]*r[1][2];
+    // fw[2*mwaves + mu] = beta[2]*r[2][2];
+    // fw[2*mwaves + mv] = beta[2]*r[1][2];
+    // sw[2] = lambda[2];
+
+    k = 0;
+    for(int mw=0; mw<mwaves; mw++) {
+        sw[mw] = lambda[mw];
+        fw[k]  = beta[mw] * r[1][mw]; k++;
+        fw[k]  = beta[mw] * r[2][mw]; k++;
+        fw[k]  = beta[mw] * r[1][mw]; k++;
+    }
 
     // find transverse components (ie huv jumps)
-    fw[mv] *= vL;
-    fw[2*mwaves + mv] *= vR;
-    fw[mwaves + mv] = 0.0;
+    // fw[mv] *= vL;
+    // fw[2*mwaves + mv] *= vR;
+    // fw[mwaves + mv] = 0.0;
+    fw[2] *= vL;
+    fw[8] *= vR;
+    fw[5] = 0.0;
+
+    // hustar_interface = hL*uL + fw[0];
+    // int indexToUpdate = hustar_interface <= 0.0 ? mv : 2 * mwaves + mv;
+    // fw[indexToUpdate] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2 * mwaves + mv]);
 
     hustar_interface = hL*uL + fw[0];
-    int indexToUpdate = hustar_interface <= 0.0 ? mv : 2 * mwaves + mv;
-    fw[indexToUpdate] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2 * mwaves + mv]);
+    int indexToUpdate = hustar_interface <= 0.0 ? 2 : 8;
+    fw[indexToUpdate] += (hR * uR * vR - hL * uL * vL - fw[2] - fw[8]);
 
     // hustar_interface = hL*uL + fw[0];
     // if (hustar_interface <= 0.0) {
