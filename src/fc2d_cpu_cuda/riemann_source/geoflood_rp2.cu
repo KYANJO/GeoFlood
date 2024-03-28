@@ -207,75 +207,32 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         /* === solve Riemann problem === */
         riemann_aug_JCP(meqn,mwaves,hL,hR,huL,huR,hvL,hvR,bL,bR,uL,uR,vL,vR,phiL,phiR,sE1,sE2,sw,fw,drytol,idir);
 
-        // eliminate ghost fluxes for wall    
-        // fw[0] *= wall[0];
-        // fw[mu] *= wall[0];
-        // fw[mv] *= wall[0];
-        // sw[0] *= wall[0];
-
-        // fw[mwaves + 0] *= wall[1];
-        // fw[mu + mwaves] *= wall[1];
-        // fw[mv + mwaves] *= wall[1];
-        // sw[mu] *= wall[mu];
-
-        // fw[2*mwaves + 0] *= wall[2];
-        // fw[2*mwaves + mu] *= wall[2];
-        // fw[2*mwaves + mv] *= wall[2];
-        // sw[mv] *= wall[mv];
-
-        /*eliminate ghost fluxes for wall and instantly update fwave and corresponding speeds*/
-        int k = 0, mk = 0;
+        /*eliminate ghost fluxes for wall */
+        int mk = 0;
         for (mw = 0; mw < mwaves; mw++){
             /*eliminate ghost fluxes for wall*/
-            sw[k]  *= wall[k];        /*then update speed*/  //s[k] = sw[k];
-            fw[mk] *= wall[k];  mk++; /*then update fwave*/  //fwave[mk] = fw[mk]; mk++;
-            fw[mk] *= wall[k];  mk++; /*then update fwave*/  //fwave[mk] = fw[mk]; mk++;
-            fw[mk] *= wall[k];  mk++; /*then update fwave*/  //fwave[mk] = fw[mk]; mk++;
-            k++;
+            sw[mw] *= wall[mw];         
+            fw[mk] *= wall[mw];  mk++; 
+            fw[mk] *= wall[mw];  mk++; 
+            fw[mk] *= wall[mw];  mk++; 
         }
 
-
         /* update fwave and corresponding speeds */
-        fwave[0] = fw[0];
+        fwave[0]  = fw[0];
         fwave[mu] = fw[1];
         fwave[mv] = fw[2];
         s[0] = sw[0];
 
-        fwave[mwaves + 0] = fw[3];
-        fwave[mu + mwaves] = fw[4];
-        fwave[mv + mwaves] = fw[5];
+        fwave[mwaves + 0]  = fw[3];
+        fwave[mwaves + mu] = fw[4];
+        fwave[mwaves + mv] = fw[5];
         s[1] = sw[1];
        
-        fwave[2*mwaves + 0] = fw[6];
+        fwave[2*mwaves + 0]  = fw[6];
         fwave[2*mwaves + mu] = fw[7];
         fwave[2*mwaves + mv] = fw[8];
         s[2] = sw[2];
 
-        // fwave[0] = fw[0];
-        // fwave[mu] = fw[mu];
-        // fwave[mv] = fw[mv];
-        // s[0] = sw[0];
-
-        // fwave[mwaves + 0] = fw[mwaves + 0];
-        // fwave[mu + mwaves] = fw[mu + mwaves];
-        // fwave[mv + mwaves] = fw[mv + mwaves];
-        // s[1] = sw[1];
-       
-        // fwave[2*mwaves + 0] = fw[2*mwaves + 0];
-        // fwave[2*mwaves + mu] = fw[2*mwaves + mu];
-        // fwave[2*mwaves + mv] = fw[2*mwaves + mv];
-        // s[2] = sw[2];
-
-        // int k = 0, mk = 0;
-        // for (mw = 0; mw < mwaves; mw++){
-        //     s[k] = sw[k];
-        //     fwave[mk] = fw[mk]; mk++;
-        //     fwave[mk] = fw[mk]; mk++;
-        //     fwave[mk] = fw[mk]; mk++;
-        //     k++;
-        // }
-
-       
     }
 
     // label30: // (similar to 30 continue in Fortran)
@@ -301,35 +258,16 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     apdq[0] = 0.0;
     apdq[1] = 0.0;
     apdq[2] = 0.0;
-    for (int idx = 0; idx < mwaves * 3; idx++) {
-        double s_val = s[idx / 3];
-        double fwave_val = fwave[idx];
-    
-        double pos_weight = s_val > 0.0;
-        double neg_weight = s_val < 0.0;
-        double zero_weight = 1.0 - pos_weight - neg_weight; // 1 if s_val == 0, 0 otherwise
+    for (mw = 0; mw < mwaves * 3; mw++) {
+
+        double pos_weight = s[mw / 3] > 0.0;
+        double neg_weight = s[mw / 3] < 0.0;
+        double zero_weight = 1.0 - pos_weight - neg_weight; // 1 if s[mw / 3]; == 0, 0 otherwise
     
         // Update amdq and apdq based on the weights
-        amdq[idx % 3] += (neg_weight + 0.5 * zero_weight) * fwave_val;
-        apdq[idx % 3] += (pos_weight + 0.5 * zero_weight) * fwave_val;
+        amdq[mw % 3] += (neg_weight + 0.5 * zero_weight) * fwave[mw];
+        apdq[mw % 3] += (pos_weight + 0.5 * zero_weight) * fwave[mw];
     }
-    
-    
-
-
-    // for (int idx = 0; idx < mwaves*3; idx++) {
-    //     if (s[idx/3] < 0.0) { 
-    //         amdq[idx%3] += fwave[idx];  
-    //     } else if (s[idx/3] > 0.0) {
-    //         apdq[idx%3] += fwave[idx]; 
-    //     } else {
-    //         amdq[idx%3] += 0.5 * fwave[idx];  
-    //         apdq[idx%3] += 0.5 * fwave[idx]; 
-    //     }
-    // }
-   
-
-
 
 }
 
@@ -362,14 +300,11 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     double deg2rad = d_geofloodVars.deg2rad;
 
     int mw, mu, mv;
-    double s[3], beta[3];
-    double r[3][3];
+    double s[3], beta[3], r[9];
+    // double r[3][3];
     double h, u, v;
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
-
-    //  double pi = 4.0*atan(1.0);
-    // double deg2rad = pi/180.0;
 
     mu = 1+idir;
     mv = 2-idir;
@@ -388,141 +323,109 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
   
     if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
     
-    // if (h > drytol) {  
-        /* Compute velocities in relevant cell, and other quantities */
-        int k = imp * maux; 
 
-        // fluctuations being split is either left-going or right-going
-        u = (imp == 0 ? ql[mu] : qr[mu]) / h;
-        v = (imp == 0 ? ql[mv] : qr[mv]) / h;
+    /* Compute velocities in relevant cell, and other quantities */
+    int k = imp * maux; 
 
-        eta = h + aux2[k];
-        topo1 = aux1[k];
-        topo3 = aux3[k];
+    // fluctuations being split is either left-going or right-going
+    u = (imp == 0 ? ql[mu] : qr[mu]) / h;
+    v = (imp == 0 ? ql[mv] : qr[mv]) / h;
 
-               // int kv = 1 - idir;
-        // if (imp == 0) {
-        //     // fluctuations being split is left-going
-        //     u = ql[mu] / h;
-        //     v = ql[mv] / h;
-        //     // eta = h + aux2[0];
-        //     // topo1 = aux1[0];
-        //     // topo3 = aux3[0];
-        //     int k = imp*maux + 0;
-        //     eta = h + aux2[k];
-        //     topo1 = aux1[k];
-        //     topo3 = aux3[k];
-        // } else {
-        //     // fluctuations being split is right-going
-        //     u = qr[mu] / h;
-        //     v = qr[mv] / h;
-        //     // eta = h + aux2[0];
-        //     // topo1 = aux1[0];
-        //     // topo3 = aux3[0];
-        //     int k = imp*maux + 0;
-        //     eta = h + aux2[k];
-        //     topo1 = aux1[k];
-        //     topo3 = aux3[k];
-        // }
+    eta = h + aux2[k];
+    topo1 = aux1[k];
+    topo3 = aux3[k];
 
-        /* Check if cell that transverse wave go into are both too high: */
-        if (eta < fmin(topo1, topo3)) return; 
-        // if (eta >= fmin(topo1, topo3)) {
-
-            /* Check if cell that transverse waves go into are both to high, if so,
-            do the splitting (no dry cells), and compute necessary quantities */
-            if (coordinate_system == 2) {
-                // On the sphere
-                if (idir == 1) {
-                    dxdcp = earth_radius * deg2rad;
-                    dxdcm = dxdcp;
-                } else {
-                    
-                    int k = imp * maux + 2;
-                    dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
-                    dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
-
-                    // if (imp == 0) {
-                    //     // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
-                    //     // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
-                    //     int k = imp*maux + 2;
-                    //     dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
-                    //     dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
-                    // } else {
-                    //     // dxdcp = earth_radius * cos(aux3[2]) * deg2rad;
-                    //     // dxdcm = earth_radius * cos(aux1[2]) * deg2rad;
-                    //     int k = imp*maux + 2;
-                    //     dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
-                    //     dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
-                    // }
-                }
-            } else {
-                // Cartesian
-                dxdcp = 1.0;
-                dxdcm = 1.0;
-            }
-
-            /* Compute some speeds necessary for the Jacobian 
-            - Computing upgoing, downgoing waves either in cell on left (if imp==0)
-                or on the right (if imp==1) 
-            - To achieve this we use q values in cells above and below, however these
-                aren't available (only in aux values)
-            */
-            s[0] = v - sqrt(s_grav * h);
-            s[1] = v;
-            s[2] = v + sqrt(s_grav * h);
-
-            /* Determine asdq decomposition (beta) */
-            delf1 = asdq[0];
-            delf2 = asdq[mu];
-            delf3 = asdq[mv];
-
-            beta[0] = ((s[2]*delf1) - delf3) / (s[2] - s[0]);
-            beta[1] = (-u*delf1) + delf2;
-            beta[2] = (delf3 - (s[0]*delf1)) / (s[2] - s[0]);
-
-            /* set-up eigenvectors */
-            r[0][0] = 1.0;
-            r[1][0] = u;
-            r[2][0] = s[0];
-
-            r[0][1] = 0.0;
-            r[1][1] = 1.0;
-            r[2][1] = 0.0;
-
-            r[0][2] = 1.0;
-            r[1][2] = u;
-            r[2][2] = s[2];
-
-            /* Compute transverse fluctuations */
-            for (int mw = 0; mw < 3; mw++) {
-                // Compute condition flags
-                double left_going_flag = (s[mw] < 0.0) && (eta >= topo1);
-                double right_going_flag = (s[mw] > 0.0) && (eta >= topo3);
+    /* Check if cell that transverse wave go into are both too high: */
+    if (eta < fmin(topo1, topo3)) return; 
+   
+    /* Check if cell that transverse waves go into are both to high, if so,
+    do the splitting (no dry cells), and compute necessary quantities */
+    if (coordinate_system == 2) {
+        // On the sphere
+        if (idir == 1) {
+            dxdcp = earth_radius * deg2rad;
+            dxdcm = dxdcp;
+        } else {
             
-                // Update bmasdq and bpasdq based on conditions
-                bmasdq[0] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[0][mw];
-                bmasdq[mu] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[1][mw];
-                bmasdq[mv] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[2][mw];
-            
-                bpasdq[0] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[0][mw];
-                bpasdq[mu] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[1][mw];
-                bpasdq[mv] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[2][mw];
-            }
-            
-            // for (mw = 0; mw < 3; mw++) {
-            //     if ((s[mw] < 0.0) && (eta >= topo1)) {
-            //         bmasdq[0] += dxdcm * s[mw]*beta[mw]*r[0][mw];
-            //         bmasdq[mu] += dxdcm * s[mw]*beta[mw]*r[1][mw];
-            //         bmasdq[mv] += dxdcm * s[mw]*beta[mw]*r[2][mw];
-            //     } else if ((s[mw] > 0.0) && (eta >= topo3)) {
-            //         bpasdq[0] += dxdcp * s[mw]*beta[mw]*r[0][mw];
-            //         bpasdq[mu] += dxdcp * s[mw]*beta[mw]*r[1][mw];
-            //         bpasdq[mv] += dxdcp * s[mw]*beta[mw]*r[2][mw];
-            //     }
-            // }
-        // }
-    // }
+            int k = imp * maux + 2;
+            dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
+            dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
+        }
+    } else {
+        // Cartesian
+        dxdcp = 1.0;
+        dxdcm = 1.0;
+    }
+
+    /* Compute some speeds necessary for the Jacobian 
+    - Computing upgoing, downgoing waves either in cell on left (if imp==0)
+        or on the right (if imp==1) 
+    - To achieve this we use q values in cells above and below, however these
+        aren't available (only in aux values)
+    */
+    s[0] = v - sqrt(s_grav * h);
+    s[1] = v;
+    s[2] = v + sqrt(s_grav * h);
+
+    /* Determine asdq decomposition (beta) */
+    delf1 = asdq[0];
+    delf2 = asdq[mu];
+    delf3 = asdq[mv];
+
+    beta[0] = ((s[2]*delf1) - delf3) / (s[2] - s[0]);
+    beta[1] = (-u*delf1) + delf2;
+    beta[2] = (delf3 - (s[0]*delf1)) / (s[2] - s[0]);
+
+    /* set-up eigenvectors */
+    r[0] = 1.0;
+    r[1] = u;
+    r[2] = s[0];
+
+    r[3] = 0.0;
+    r[4] = 1.0;
+    r[5] = 0.0;
+
+    r[6] = 1.0;
+    r[7] = u;
+    r[8] = s[2];
+
+    // r[0][0] = 1.0;
+    // r[1][0] = u;
+    // r[2][0] = s[0];
+
+    // r[0][1] = 0.0;
+    // r[1][1] = 1.0;
+    // r[2][1] = 0.0;
+
+    // r[0][2] = 1.0;
+    // r[1][2] = u;
+    // r[2][2] = s[2];
+
+    /* Compute transverse fluctuations */
+    int km = 0, kp = 0;
+    for (int mw = 0; mw < 3; mw++) {
+        // Compute condition flags
+        double left_going_flag = (s[mw] < 0.0) && (eta >= topo1);
+        double right_going_flag = (s[mw] > 0.0) && (eta >= topo3);
+    
+        // Update bmasdq and bpasdq based on conditions
+        bmasdq[0]  += left_going_flag * dxdcm * s[mw] * beta[mw] * r[km]; km++;
+        bmasdq[mu] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[km]; km++;
+        bmasdq[mv] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[km]; km++;
+    
+        bpasdq[0]  += right_going_flag * dxdcp * s[mw] * beta[mw] * r[kp]; kp++;
+        bpasdq[mu] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[kp]; kp++;
+        bpasdq[mv] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[kp]; kp++;
+
+        // bmasdq[0]  += left_going_flag * dxdcm * s[mw] * beta[mw] * r[0][mw];
+        // bmasdq[mu] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[1][mw];
+        // bmasdq[mv] += left_going_flag * dxdcm * s[mw] * beta[mw] * r[2][mw];
+    
+        // bpasdq[0]  += right_going_flag * dxdcp * s[mw] * beta[mw] * r[0][mw];
+        // bpasdq[mu] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[1][mw];
+        // bpasdq[mv] += right_going_flag * dxdcp * s[mw] * beta[mw] * r[2][mw];
+    }
+    
 }
 
 
@@ -558,7 +461,8 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     /* Local variables */
     // double A[9], r[9], lambda[3], del[3], beta[3];
     double lambda[3], beta[3],del[3];
-    double A[3][3], r[3][3];
+    // double A[3][3], r[3][3];
+    double A[9], r[9];
     double delh, delhu, delphi, delb, delnorm;
     double rare1st, rare2st, sdelta, raremin, raremax;
     double criticaltol, convergencetol;
@@ -570,9 +474,6 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double det1, det2, det3, determinant;
     bool rare1, rare2, rarecorrector, rarecorrectortest, sonic;
     int mw, k, iter;
-
-    int mu = 1+idir;
-    int mv = 2-idir;
 
     /* determine del vectors */
     delh = hR - hL;
@@ -633,24 +534,26 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     }
 
     /* determining modified eigen vectors */
+    k = 0;
     for (mw = 0; mw < mwaves; mw++) {   
-        // r[mw] = 1.0; 
-        // r[mw + mwaves] = lambda[mw]; 
-        // r[mw + 2*mwaves] = pow(lambda[mw],2.0);
-        r[0][mw] = 1.0;
-        r[1][mw] = lambda[mw];
-        r[2][mw] = pow(lambda[mw],2.0);
+        r[k] = 1.0; k++;
+        r[k] = lambda[mw]; k++;
+        r[k] = pow(lambda[mw],2.0); k++;
+       
+        // r[0][mw] = 1.0;
+        // r[1][mw] = lambda[mw];
+        // r[2][mw] = pow(lambda[mw],2.0);
     }
 
     /* no strong rarefaction wave */
     if (!rarecorrector) {
         lambda[1]= 0.5*(lambda[0] + lambda[2]);
-        // r[mwaves] = 0.0; // r[0,1]
-        // r[mwaves + mu] = 0.0; // r[1,1]
-        // r[mwaves + mv] = 1.0; // r[2,1]
-        r[0][1] = 0.0;
-        r[1][1] = 0.0;
-        r[2][1] = 1.0;
+        r[3] = 0.0;
+        r[4] = 0.0;
+        r[5] = 1.0;
+        // r[0][1] = 0.0;
+        // r[1][1] = 0.0;
+        // r[2][1] = 1.0;
     }
 
     /* === Determine the steady state wave === */
@@ -680,17 +583,18 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
             huLstar = uLstar*hLstar;
             huRstar = uRstar*hRstar;
             lambda[1] = 0.5*(lambda[0] + lambda[2]);
-            // r[mwaves] = 0.0; // r[0,1]
-            // r[mwaves + mu] = 0.0; // r[1,1]
-            // r[mwaves + mv] = 1.0; // r[2,1]
-            r[0][1] = 0.0;
-            r[1][1] = 0.0;
-            r[2][1] = 1.0;
+            r[3] = 0.0;
+            r[4] = 0.0;
+            r[5] = 1.0;
+
+            // r[0][1] = 0.0;
+            // r[1][1] = 0.0;
+            // r[2][1] = 1.0;
         }
 
         /* For any two states; Q_i and Q_i-1, eigen values of SWE must satify: lambda(q_i)*lambda(q_i-1) = u^2 -gh, writing this conditon as a function of Q_i and Q_i-1, u and h become averages in lambda(q_i)*lambda(q_i-1) = u^2 -gh and these averages are denoted by bar and tilde. */
         hbar = fmax(0.5 * (hLstar + hRstar), 0.0);
-        s1s2bar = 0.25 * pow((uLstar + uRstar),2) - (s_grav * hbar);
+        s1s2bar = 0.25 * pow((uLstar + uRstar),2.0) - (s_grav * hbar);
         s1s2tilde = fmax(0.0, uLstar * uRstar) - (s_grav * hbar);
 
         /* Based on the above conditon, smooth staedy state over slopping bathymetry cannot have a sonic point. Therefore, for regions with monotonically varying bathymetry, steady-state flow is either entirely subsonic (-u^2 +gh > 0) or entirely supersonic. */
@@ -704,33 +608,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
                 ((uL + sqrt(s_grav * hL)) * (uR + sqrt(s_grav * hR)) < 0.0) ||
                 ((uL - sqrt(s_grav * hL)) * (uR - sqrt(s_grav * hR)) < 0.0);
 
-        // sonic = false;
-        // if (fabs(s1s2bar) <= criticaltol) {
-        //     sonic = true;
-        // } else if (s1s2bar * s1s2tilde <= criticaltol * criticaltol) {
-        //     sonic = true;
-        // } else if (s1s2bar * sE1 * sE2 <= criticaltol * criticaltol) {
-        //     sonic = true;
-        // } else if (fmin(fabs(sE1), fabs(sE2)) < criticaltol_2) {
-        //     sonic = true;
-        // } else if (sE1 < criticaltol_2 && s1m > -criticaltol_2) {
-        //     sonic = true;
-        // } else if (sE2 > -criticaltol_2 && s2m < criticaltol_2) {
-        //     sonic = true;
-        // } else if ((uL + sqrt(s_grav * hL)) * (uR + sqrt(s_grav * hR)) < 0.0) {
-        //     sonic = true;
-        // } else if ((uL - sqrt(s_grav * hL)) * (uR - sqrt(s_grav * hR)) < 0.0) {
-        //     sonic = true;
-        // }
-
         /* find jump in h, deldelh */
         deldelh = sonic ? -delb : delb * s_grav * hbar / s1s2bar;
-        // if (sonic) {
-        //     deldelh = -delb;
-        // } else {
-        //     deldelh = delb * s_grav * hbar / s1s2bar;
-        // }
-
+    
         /* find bounds in case of critical state resonance, or negative states */
         // Calculate condition flags as 0 or 1
         double condition1 = (sE1 < -criticaltol) && (sE2 > criticaltol);
@@ -749,25 +629,8 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         deldelh = fmin(deldelh, condition1 * update1_min + condition2 * update2_min + condition3 * update3_min + (!condition1 && !condition2 && !condition3) * deldelh);
         deldelh = fmax(deldelh, condition1 * update1_max + condition2 * update2_max + condition3 * update3_max + (!condition1 && !condition2 && !condition3) * deldelh);
 
-        // if (sE1 < -criticaltol && sE2 > criticaltol) {
-        //     deldelh = fmin(deldelh, hstarHLL * (sE2 - sE1) / sE2);
-        //     deldelh = fmax(deldelh, hstarHLL * (sE2 - sE1) / sE1);
-        // } else if (sE1 >= criticaltol) {
-        //     deldelh = fmin(deldelh, hstarHLL * (sE2 - sE1) / sE1);
-        //     deldelh = fmax(deldelh, -hL);
-        // } else if (sE2 <= -criticaltol) {
-        //     deldelh = fmin(deldelh, hR);
-        //     deldelh = fmax(deldelh, hstarHLL * (sE2 - sE1) / sE2);
-        // }
-
         /* find jump in phi, ddphi */
         deldelphi = -delb * s_grav * hbar * (sonic ? 1.0 : s1s2tilde / s1s2bar);
-
-        // if (sonic) {
-        //     deldelphi = -s_grav * hbar * delb;
-        // } else {
-        //     deldelphi = -delb * s_grav * hbar * s1s2tilde / s1s2bar;
-        // }
 
         /* find bounds in case of critical state resonance, or negative states */
         deldelphi = fmin(deldelphi, s_grav * fmax(-hLstar * delb, -hRstar * delb));
@@ -780,63 +643,47 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
         /* Determine coefficients beta(k) using crammer's rule
           first determine the determinant of the eigenvector matrix */
-        det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
-        det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
-        det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
+        // det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
+        // det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
+        // det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
+        det1 = r[0]*(r[4]*r[8] - r[7]*r[5]);
+        det2 = r[3]*(r[1]*r[8] - r[7]*r[2]);
+        det3 = r[6]*(r[1]*r[5] - r[4]*r[2]);
         determinant = det1 - det2 + det3;
 
         /* solve for beta(k) */
-        // for(k=0; k < 3; k++)
-        // {   
-        //     for(mw=0; mw < 3; mw++)
-        //     {
-        //         A[0][mw] = r[0][mw];
-        //         A[1][mw] = r[1][mw];
-        //         A[2][mw] = r[2][mw];
-        //     }
-        //     A[0][k] = del[0];
-        //     A[1][k] = del[1];
-        //     A[2][k] = del[2];
-        //     det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
-        //     det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
-        //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
-        //     beta[k] = (det1 - det2 + det3)/determinant;
-        // }
-        // for(k=0; k < 3; k++) {
-        //     // Copying entire matrix r to A for each k, with kth column replaced by del vector
-        //     for(mw=0; mw < 3; mw++) { // Notice this loop is now for the entire matrix, not nested
-        //         A[0][mw] = (mw == k) ? del[0] : r[0][mw];
-        //         A[1][mw] = (mw == k) ? del[1] : r[1][mw];
-        //         A[2][mw] = (mw == k) ? del[2] : r[2][mw];
-        //     }
-        
-        //     // Determinant calculations and beta update remains same
-        //     det1 = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]);
-        //     det2 = A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]);
-        //     det3 = A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
-        //     beta[k] = (det1 - det2 + det3)/determinant;
-        // }        
+        int kk = 0;
         for (int k = 0; k < 3; k++) {
             // Copy the entire matrix r into A for each iteration
-            A[0][0] = r[0][0];
-            A[0][1] = r[0][1];
-            A[0][2] = r[0][2];
-            A[1][0] = r[1][0];
-            A[1][1] = r[1][1];
-            A[1][2] = r[1][2];
-            A[2][0] = r[2][0];
-            A[2][1] = r[2][1];
-            A[2][2] = r[2][2];
+            // A[0][0] = r[0][0];
+            // A[0][1] = r[0][1];
+            // A[0][2] = r[0][2];
+            // A[1][0] = r[1][0];
+            // A[1][1] = r[1][1];
+            // A[1][2] = r[1][2];
+            // A[2][0] = r[2][0];
+            // A[2][1] = r[2][1];
+            // A[2][2] = r[2][2];
+
+            A[0] = r[0]; A[1] = r[1]; A[2] = r[2];
+            A[3] = r[3]; A[4] = r[4]; A[5] = r[5];
+            A[6] = r[6]; A[7] = r[7]; A[8] = r[8];
         
             // Modify the k-th column of A
-            A[0][k] = del[0];
-            A[1][k] = del[1];
-            A[2][k] = del[2];
+            // A[0][k] = del[0];
+            // A[1][k] = del[1];
+            // A[2][k] = del[2];
+            A[kk] = del[0]; kk++;
+            A[kk] = del[1]; kk++;
+            A[kk] = del[2]; kk++;
         
             // Calculate the determinant components
-            double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
-            double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
-            double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+            // double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
+            // double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
+            // double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+            det1 = A[0]* (A[4]*A[8] - A[7]*A[5]);
+            det2 = A[3]* (A[1]*A[8] - A[7]*A[2]);
+            det3 = A[6]* (A[1]*A[5] - A[4]*A[2]);
         
             // Compute the final value for this iteration
             beta[k] = (det1 - det2 + det3) / determinant;
@@ -857,10 +704,14 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         huRstar = uRstar*hRstar;
 
         /* left state depth and momentum updates */
+        k = 0;
         for (int mw = 0; mw < mwaves; mw++) {
             double multiplier = lambda[mw] < 0.0 ? 1.0 : 0.0;
-            hLstar += multiplier * beta[mw] * r[0][mw];
-            huLstar += multiplier * beta[mw] * r[1][mw];
+            // hLstar += multiplier * beta[mw] * r[0][mw];
+            // huLstar += multiplier * beta[mw] * r[1][mw];
+
+            hLstar  += multiplier * beta[mw] * r[k]; k++;
+            huLstar += multiplier * beta[mw] * r[k]; k=k+2;
         }
         
         // for (mw=0; mw < mwaves; mw++)
@@ -873,10 +724,14 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         // }
 
         /* right state depth and momentum updates */
+        k = 0;
         for (int mw = mwaves - 1; mw >= 0; mw--) {
             double multiplier = lambda[mw] > 0.0 ? 1.0 : 0.0;
-            hRstar -= multiplier * beta[mw] * r[0][mw];
-            huRstar -= multiplier * beta[mw] * r[1][mw];
+            // hRstar -= multiplier * beta[mw] * r[0][mw];
+            // huRstar -= multiplier * beta[mw] * r[1][mw];
+
+            hRstar  -= multiplier * beta[mw] * r[k]; k++;
+            huRstar -= multiplier * beta[mw] * r[k]; k=k+2;
         }
     
         // for (mw = mwaves-1; mw >= 0; mw--)
@@ -918,40 +773,23 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
-    // fw[0] = beta[0]*r[1][0];
-    // fw[mu] = beta[0]*r[2][0];
-    // fw[mv] = beta[0]*r[1][0];
-    // sw[0] = lambda[0];
-
-    // fw[mwaves + 0] = beta[1]*r[1][1];
-    // fw[mwaves + mu] = beta[1]*r[2][1];
-    // fw[mwaves + mv] = beta[1]*r[1][1];
-    // sw[1] = lambda[1];
-
-    // fw[2*mwaves + 0] = beta[2]*r[1][2];
-    // fw[2*mwaves + mu] = beta[2]*r[2][2];
-    // fw[2*mwaves + mv] = beta[2]*r[1][2];
-    // sw[2] = lambda[2];
-
-    k = 0;
+    k = 0; int kr = 1;
     for(int mw=0; mw<mwaves; mw++) {
         sw[mw] = lambda[mw];
-        fw[k]  = beta[mw] * r[1][mw]; k++;
-        fw[k]  = beta[mw] * r[2][mw]; k++;
-        fw[k]  = beta[mw] * r[1][mw]; k++;
+        // fw[k]  = beta[mw] * r[1][mw]; k++;
+        // fw[k]  = beta[mw] * r[2][mw]; k++;
+        // fw[k]  = beta[mw] * r[1][mw]; k++;
+
+        fw[k] = beta[mw] * r[kr]; k++;  
+        fw[k] = beta[mw] * r[kr+1]; k++; 
+        fw[k] = beta[mw] * r[kr]; k++; 
+        kr += mwaves; 
     }
 
     // find transverse components (ie huv jumps)
-    // fw[mv] *= vL;
-    // fw[2*mwaves + mv] *= vR;
-    // fw[mwaves + mv] = 0.0;
     fw[2] *= vL;
     fw[8] *= vR;
     fw[5] = 0.0;
-
-    // hustar_interface = hL*uL + fw[0];
-    // int indexToUpdate = hustar_interface <= 0.0 ? mv : 2 * mwaves + mv;
-    // fw[indexToUpdate] += (hR * uR * vR - hL * uL * vL - fw[mv] - fw[2 * mwaves + mv]);
 
     hustar_interface = hL*uL + fw[0];
     int indexToUpdate = hustar_interface <= 0.0 ? 2 : 8;
