@@ -613,12 +613,12 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         size = (total < patch_buffer_len) ? total : patch_buffer_len;
         bytes = size*sizeof(cudaclaw_fluxes_t);
         
-        if (cuclaw_opt->src_term > 0)
-        {
-            patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
-            patch_data->patchno_array = FCLAW_ALLOC(int,size);
-            patch_data->blockno_array = FCLAW_ALLOC(int,size);
-        }
+        // if (cuclaw_opt->src_term > 0)
+        // {
+        //     patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
+        //     patch_data->patchno_array = FCLAW_ALLOC(int,size);
+        //     patch_data->blockno_array = FCLAW_ALLOC(int,size);
+        // }
  
         patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,size); // Is it bytes or size?
         // buffer_data->user = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes);
@@ -656,26 +656,27 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     
     /* -------------------------------- Source term ----------------------------------- */
     // Check if we have stored all the patches in the buffer
-   
+ #if 0  
     if (((iter+1) % patch_buffer_len == 0) || ((iter+1) == total))
     {
         if (cuclaw_opt->src_term > 0)
         {   
             FCLAW_ASSERT(geoclaw_vt->src2 != NULL);
             // iterate over patches in buffer and call src2 to update them
-#if 1
+
             for (int i = 0; i < (total); i++)
             {
                 geoclaw_src2(glob,patch_data->patch_array[i],
                               patch_data->blockno_array[i],
                               patch_data->patchno_array[i],t,dt);
             }
-#endif
+// #endif
             FCLAW_FREE(patch_data->patch_array);
             FCLAW_FREE(patch_data->patchno_array);
             FCLAW_FREE(patch_data->blockno_array);
         }
-    }   
+    }  
+#endif 
    
     if (iter == total-1)
     {
@@ -1232,8 +1233,8 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
         FCLAW_ASSERT(geoclaw_vt->cuda_rpt2 != NULL);
 
         /* b4step2 done with in the flux2.cu*/
-        // cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
-        // FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
+        cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
+        FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
     }
  
     gauges_vt->set_gauge_data     = geoclaw_read_gauges_data_default;

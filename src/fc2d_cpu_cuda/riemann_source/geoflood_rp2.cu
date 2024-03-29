@@ -64,7 +64,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     double hstar, hstartest, dxdc;
     double s1m, s2m;
     bool rare1, rare2;
-    int mw, mu, mv;
+    // int mw, mu, mv;
 
     /* === Initializing === */
     /* inform of a bad riemann problem from the start */
@@ -73,7 +73,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     // }
 
     /* initialize Riemann problem for grid interface */
-    for (mw = 0; mw < mwaves; mw++){
+    for (int mw = 0; mw < mwaves; mw++){
         s[mw] = 0.0;
         fwave[mw] = 0.0;
         fwave[mw + mwaves] = 0.0;
@@ -81,8 +81,8 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     }
 
     /* set normal direction */
-    mu = 1+idir;
-    mv = 2-idir;
+    int mu = 1+idir;
+    int mv = 2-idir;
 
     /* zero (small) negative values if they exist */
 
@@ -133,11 +133,11 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
             vL = hvL / hL;
             phiL = 0.5 * s_grav * (hL * hL) + (huL * huL) / hL;
         } else {
-            hL = 0.0;
+            hL  = 0.0;
             huL = 0.0;
             hvL = 0.0;
-            uL = 0.0;
-            vL = 0.0;
+            uL  = 0.0;
+            vL  = 0.0;
             phiL = 0.0;
         }
 
@@ -209,7 +209,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
 
         /*eliminate ghost fluxes for wall */
         int mk = 0;
-        for (mw = 0; mw < mwaves; mw++){
+        for (int mw = 0; mw < mwaves; mw++){
             /*eliminate ghost fluxes for wall*/
             sw[mw] *= wall[mw];         
             fw[mk] *= wall[mw];  mk++; 
@@ -258,7 +258,7 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     apdq[0] = 0.0;
     apdq[1] = 0.0;
     apdq[2] = 0.0;
-    for (mw = 0; mw < mwaves * 3; mw++) {
+    for (int mw = 0; mw < mwaves * 3; mw++) {
 
         double pos_weight = s[mw / 3] > 0.0;
         double neg_weight = s[mw / 3] < 0.0;
@@ -299,15 +299,15 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     int coordinate_system = d_geofloodVars.coordinate_system;
     double deg2rad = d_geofloodVars.deg2rad;
 
-    int mw, mu, mv;
+    // int mw, mu, mv;
     double s[3], beta[3], r[9];
     // double r[3][3];
     double h, u, v;
     double delf1, delf2, delf3;
     double dxdcm, dxdcp, topo1, topo3, eta;
 
-    mu = 1+idir;
-    mv = 2-idir;
+    int mu = 1+idir;
+    int mv = 2-idir;
 
     /* intialize  all components to 0*/
     bmasdq[0] = 0.0;
@@ -473,7 +473,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     double s1m, s2m, hm;
     double det1, det2, det3, determinant;
     bool rare1, rare2, rarecorrector, rarecorrectortest, sonic;
-    int mw, k, iter;
+    // int mw, k, iter;
 
     /* determine del vectors */
     delh = hR - hL;
@@ -534,11 +534,11 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     }
 
     /* determining modified eigen vectors */
-    k = 0;
-    for (mw = 0; mw < mwaves; mw++) {   
+    int k = 0;
+    for (int mw = 0; mw < mwaves; mw++) {   
         r[k] = 1.0; k++;
         r[k] = lambda[mw]; k++;
-        r[k] = pow(lambda[mw],2.0); k++;
+        r[k] = lambda[mw]*lambda[mw]; k++;
        
         // r[0][mw] = 1.0;
         // r[1][mw] = lambda[mw];
@@ -572,7 +572,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
     /* iterate to better find the steady state wave */
     convergencetol = 1e-6;
-    for (iter=1; iter <= maxiter; iter++) {
+    for (int iter=1; iter <= maxiter; iter++) {
         /* determine steady state wave (this will be subtracted from the delta vectors */
         if (fmin(hLstar,hRstar) < drytol && rarecorrector) {
             rarecorrector = false;
@@ -594,7 +594,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
         /* For any two states; Q_i and Q_i-1, eigen values of SWE must satify: lambda(q_i)*lambda(q_i-1) = u^2 -gh, writing this conditon as a function of Q_i and Q_i-1, u and h become averages in lambda(q_i)*lambda(q_i-1) = u^2 -gh and these averages are denoted by bar and tilde. */
         hbar = fmax(0.5 * (hLstar + hRstar), 0.0);
-        s1s2bar = 0.25 * pow((uLstar + uRstar),2.0) - (s_grav * hbar);
+        s1s2bar = 0.25 * (uLstar + uRstar)*(uLstar + uRstar) - (s_grav * hbar);
         s1s2tilde = fmax(0.0, uLstar * uRstar) - (s_grav * hbar);
 
         /* Based on the above conditon, smooth staedy state over slopping bathymetry cannot have a sonic point. Therefore, for regions with monotonically varying bathymetry, steady-state flow is either entirely subsonic (-u^2 +gh > 0) or entirely supersonic. */
@@ -691,9 +691,12 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         
 
         /* exit if things aren't changing */
-        if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) break;
+        // if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) break;
+        if (fabs(del[0]*del[0] + del[2]*del[2] - delnorm) < convergencetol) break;
+        // if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) return;
 
-        delnorm = pow(del[0],2)+pow(del[2],2.0); /* update delnorm */
+
+        delnorm = del[0]*del[0] + del[2]*del[2]; /* update delnorm */
 
         /* find new states qLstar and qRstar on either side of interface */
         hLstar = hL;
@@ -714,8 +717,8 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         //     huLstar += multiplier * beta[mw] * r[k]; k=k+2;
         // }
         
-        k=0;
-        for (mw=0; mw < mwaves; mw++)
+        int k=0;
+        for (int mw=0; mw < mwaves; mw++)
         {
             if (lambda[mw] < 0.0)
             {
@@ -735,13 +738,13 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         //     huRstar -= multiplier * beta[mw] * r[k]; k=k+2;
         // }
     
-        k = 0;
-        for (mw = mwaves-1; mw >= 0; mw--)
+        int kw = 0;
+        for (int mw = mwaves-1; mw >= 0; mw--)
         {
             if (lambda[mw] > 0.0)
             { 
-                hRstar = hRstar - beta[mw]*r[k]; k++;;
-                huRstar = huRstar - beta[mw]*r[k]; k=k+2;
+                hRstar = hRstar - beta[mw]*r[kw]; kw++;;
+                huRstar = huRstar - beta[mw]*r[kw]; kw=kw+2;
             }
         }
 
@@ -775,16 +778,16 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
     } /* end of  iteration on the Riemann problem*/
 
     /* === determine the fwaves and speeds=== */
-    k = 0; int kr = 1;
+    int kf = 0; int kr = 1;
     for(int mw=0; mw<mwaves; mw++) {
         sw[mw] = lambda[mw];
         // fw[k]  = beta[mw] * r[1][mw]; k++;
         // fw[k]  = beta[mw] * r[2][mw]; k++;
         // fw[k]  = beta[mw] * r[1][mw]; k++;
 
-        fw[k] = beta[mw] * r[kr]; k++;  
-        fw[k] = beta[mw] * r[kr+1]; k++; 
-        fw[k] = beta[mw] * r[kr]; k++; 
+        fw[kf] = beta[mw] * r[kr]; kf++;  
+        fw[kf] = beta[mw] * r[kr+1]; kf++; 
+        fw[kf] = beta[mw] * r[kr]; kf++; 
         kr += mwaves; 
     }
 
@@ -846,7 +849,8 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
 
         if (F_min > 0.0){  // 2-rarefactions
             /* Eqn (13.56) in the FVMHP book */
-            *hm = (1.0 / (16.0 * s_grav)) * pow(fmax(0.0, -delu + 2.0 * (sqrt(s_grav * hL) + sqrt(s_grav * hR))), 2);
+            double hm_flag = fmax(0.0, -delu + 2.0 * (sqrt(s_grav * hL) + sqrt(s_grav * hR)));
+            *hm = (1.0 / (16.0 * s_grav)) * hm_flag * hm_flag;
             // um = copysign(1.0, *hm) * (uL + 2.0 * (sqrt(s_grav * hL) - sqrt(s_grav * *hm)));
             *s1m = uL + 2.0 * sqrt(s_grav * hL) - 3.0 * sqrt(s_grav * *hm);
             *s2m = uR - 2.0 * sqrt(s_grav * hR) + 3.0 * sqrt(s_grav * *hm);
@@ -863,7 +867,7 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
                 F0 = delu + (h0 - hL) * gL + (h0 - hR) * gR;
                 dfdh = gL - s_grav * (h0 - hL) / (4.0 * h0 * h0 * gL) + gR - s_grav * (h0 - hR) / (4.0 * h0 * h0 * gR);
                 slope = 2.0 * sqrt(h0) * dfdh;
-                h0 = pow(sqrt(h0) - F0 / slope, 2);
+                h0 = (sqrt(h0) - (F0 / slope))*(sqrt(h0) - (F0 / slope));
             }
             *hm = h0;
             /* u1m and u2m are Eqns (13.19) and (13.20) in the FVMHP book */
