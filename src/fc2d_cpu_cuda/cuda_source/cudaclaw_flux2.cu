@@ -141,8 +141,10 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         
         // qr[0] = fmax(qr[0], 0.0); // Ensure q[0] is not negative, applies unconditionally
 
-        // // Calculate condition once and reuse, avoiding branching
+        // Calculate condition once and reuse, avoiding branching
         // double condition = (qr[0] < dry_tol);
+
+        // qr[0] = fmax(qr[0], 0.0);
 
         // // Set q[1] and q[2] to 0 if condition is true (q[0] < drytol), otherwise leave them unchanged
         // qr[1] *= (1.0 - condition);
@@ -1182,39 +1184,40 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
         }        
         //__syncthreads();
-// #if 0
-    // if (src2 != NULL && src_term > 0)
-    // {
-    //     // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
-    //     double *const qr = start;          /* meqn   */
-    //     for(int mq = 0; mq < meqn; mq++)
-    //     {
-    //         int I_q = I + mq*zs;
-    //         qr[mq] = qold[I_q];  
-    //     }
-    //     double *const auxr   = qr + meqn;         /* maux        */
-    //     for(int m = 0; m < maux; m++)
-    //     {
-    //         /* In case aux is already set */
-    //         int I_aux = I + m*zs;
-    //         auxr[m] = aux[I_aux];
-    //     }    
+#if 1
+    if (src2 != NULL && src_term > 0)
+    {
+        // printf("ix = %d, iy = %d, I = %d\n",ix,iy,I);
+        double *const qr = start;          /* meqn   */
+        for(int mq = 0; mq < meqn; mq++)
+        {
+            int I_q = I + mq*zs;
+            qr[mq] = qold[I_q];  
+        }
+        double *const auxr   = qr + meqn;         /* maux        */
+        // for(int m = 0; m < maux; m++)
+        // {
+        //     /* In case aux is already set */
+        //     int I_aux = I + m*zs;
+        //     auxr[m] = aux[I_aux];
+        // }    
 
-    //     // First cell in non-ghost cells should be (1,1)
-    //     int i = ix+1;  
-    //     int j = iy+1;
-    //     src2(meqn,maux,xlower,ylower,dx,dy,qr,auxr,t,dt,i,j);
+        // First cell in non-ghost cells should be (1,1)
+        int i = ix+1;  
+        int j = iy+1;
+        src2(meqn,maux,xlower,ylower,dx,dy,qr,auxr,t,dt,i,j);
 
-    //     for(int mq = 0; mq < meqn; mq++)
-    //     {
-    //         int I_q = I + mq*zs;
-    //         qold[I_q] = qr[mq];  
-    //     }
+        for(int mq = 0; mq < meqn; mq++)
+        {
+            int I_q = I + mq*zs;
+            qold[I_q] = qr[mq];  
+        }
+    }
     // }
-// }
+#endif
     }
 
-#if 0  
+#if 0
     // __syncthreads();
 
     // if (src2 != NULL && src_term > 0)
