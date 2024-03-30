@@ -738,13 +738,13 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         //     huRstar -= multiplier * beta[mw] * r[k]; k=k+2;
         // }
     
-        int kw = 0;
+        int kw = 6;
         for (int mw = mwaves-1; mw >= 0; mw--)
         {
             if (lambda[mw] > 0.0)
             { 
                 hRstar = hRstar - beta[mw]*r[kw]; kw++;;
-                huRstar = huRstar - beta[mw]*r[kw]; kw=kw+2;
+                huRstar = huRstar - beta[mw]*r[kw]; kw=kw-(mwaves+1); /*kw = kw-4*/
             }
         }
 
@@ -785,9 +785,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         // fw[k]  = beta[mw] * r[2][mw]; k++;
         // fw[k]  = beta[mw] * r[1][mw]; k++;
 
-        fw[kf] = beta[mw] * r[kr]; kf++;  
+        fw[kf] = beta[mw] * r[kr];   kf++;  
         fw[kf] = beta[mw] * r[kr+1]; kf++; 
-        fw[kf] = beta[mw] * r[kr]; kf++; 
+        fw[kf] = beta[mw] * r[kr];   kf++; 
         kr += mwaves; 
     }
 
@@ -798,7 +798,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
     hustar_interface = hL*uL + fw[0];
     int indexToUpdate = hustar_interface <= 0.0 ? 2 : 8;
-    fw[indexToUpdate] += (hR * uR * vR - hL * uL * vL - fw[2] - fw[8]);
+    fw[indexToUpdate] += ((hR * uR * vR) - (hL * uL * vL) - fw[2] - fw[8]);
 
     // hustar_interface = hL*uL + fw[0];
     // if (hustar_interface <= 0.0) {
@@ -839,21 +839,21 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
     
         /* Either hR or hL is almost zero, so the expression below corresponds
            to either Eqn. (54a) or Eqn. (54b) in the JCP paper */
-        *s1m = uR + uL - 2.0 * sqrt(s_grav * hR) + 2.0 * sqrt(s_grav * hL);
-        *s2m = uR + uL - 2.0 * sqrt(s_grav * hR) + 2.0 * sqrt(s_grav * hL); 
+        *s1m = uR + uL - (2.0 * sqrt(s_grav * hR)) + (2.0 * sqrt(s_grav * hL));
+        *s2m = uR + uL - (2.0 * sqrt(s_grav * hR)) + (2.0 * sqrt(s_grav * hL)); 
         *rare1 = (hL <= 0.0) ? false : true;
         *rare2 = !(*rare1);
     } else {
-        F_min = delu + 2.0 * (sqrt(s_grav * h_min) - sqrt(s_grav * h_max));
-        F_max = delu + (h_max - h_min) * sqrt(0.5 * s_grav * (h_max + h_min) / (h_max * h_min));
+        F_min = delu + (2.0 * (sqrt(s_grav * h_min) - sqrt(s_grav * h_max)));
+        F_max = delu + (h_max - h_min) * (sqrt(0.5 * s_grav * (h_max + h_min) / (h_max * h_min)));
 
         if (F_min > 0.0){  // 2-rarefactions
             /* Eqn (13.56) in the FVMHP book */
-            double hm_flag = fmax(0.0, -delu + 2.0 * (sqrt(s_grav * hL) + sqrt(s_grav * hR)));
-            *hm = (1.0 / (16.0 * s_grav)) * hm_flag * hm_flag;
+            double hm_flag = fmax(0.0, -delu + (2.0 * (sqrt(s_grav * hL) + sqrt(s_grav * hR))));
+            *hm = (1.0 / (16.0 * s_grav)) * (hm_flag * hm_flag);
             // um = copysign(1.0, *hm) * (uL + 2.0 * (sqrt(s_grav * hL) - sqrt(s_grav * *hm)));
-            *s1m = uL + 2.0 * sqrt(s_grav * hL) - 3.0 * sqrt(s_grav * *hm);
-            *s2m = uR - 2.0 * sqrt(s_grav * hR) + 3.0 * sqrt(s_grav * *hm);
+            *s1m = uL + (2.0 * sqrt(s_grav * hL)) - (3.0 * sqrt(s_grav * *hm));
+            *s2m = uR - (2.0 * sqrt(s_grav * hR)) + (3.0 * sqrt(s_grav * *hm));
             *rare1 = true;
             *rare2 = true;
         } else if (F_max <= 0.0) { // 2-shocks
@@ -862,17 +862,19 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
             /* Root finding using a Newton iteration on sqrt(h) */
             h0 = h_max;
             for (iter = 1; iter <= maxiter; iter++) {
-                gL = sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / hL));
-                gR = sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / hR));
+                gL = sqrt(0.5 * s_grav * ((1.0 / h0) + (1.0 / hL)));
+                gR = sqrt(0.5 * s_grav * ((1.0 / h0) + (1.0 / hR)));
                 F0 = delu + (h0 - hL) * gL + (h0 - hR) * gR;
-                dfdh = gL - s_grav * (h0 - hL) / (4.0 * h0 * h0 * gL) + gR - s_grav * (h0 - hR) / (4.0 * h0 * h0 * gR);
+                dfdh = gL - ((s_grav * (h0 - hL)) / (4.0 * (h0 * h0) * gL)) 
+                       + gR - ((s_grav * (h0 - hR)) / (4.0 * (h0 * h0) * gR));
                 slope = 2.0 * sqrt(h0) * dfdh;
-                h0 = (sqrt(h0) - (F0 / slope))*(sqrt(h0) - (F0 / slope));
+                h0 = (sqrt(h0) - (F0 / slope));
+                h0 = h0*h0;
             }
             *hm = h0;
             /* u1m and u2m are Eqns (13.19) and (13.20) in the FVMHP book */
-            u1m = uL - (*hm - hL) * sqrt(0.5 * s_grav * (1.0 / *hm + 1.0 / hL));
-            u2m = uR + (*hm - hR) * sqrt(0.5 * s_grav * (1.0 / *hm + 1.0 / hR));
+            u1m = uL - (*hm - hL) * sqrt(0.5 * s_grav * ((1.0 / *hm) + (1.0 / hL)));
+            u2m = uR + (*hm - hR) * sqrt(0.5 * s_grav * ((1.0 / *hm) + (1.0 / hR)));
             // um = 0.5 * (u1m + u2m);
             *s1m = u1m - sqrt(s_grav * *hm);
             *s2m = u2m + sqrt(s_grav * *hm);
@@ -881,9 +883,10 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
         } else { // 1-shock or 1-rarefaction
             h0 = h_min;
             for (iter = 1; iter <= maxiter; iter++) {
-                F0 = delu + 2.0 * (sqrt(s_grav * h0) - sqrt(s_grav * h_max)) + (h0 - h_min) * sqrt(0.5 * s_grav * (1.0 / h0 + 1.0 / h_min));
+                F0 = delu + 2.0 * (sqrt(s_grav * h0) - sqrt(s_grav * h_max)) 
+                    + (h0 - h_min) * sqrt(0.5 * s_grav * ((1.0 / h0) + (1.0 / h_min)));
                 slope = (F_max - F0) / (h_max - h_min);
-                h0 = h0 - F0 / slope;
+                h0 = h0 - (F0 / slope);
             }
 
             *hm = h0;
@@ -904,16 +907,15 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
                 // um = uL + 2.0 * sqrtgh1 - 2.0 * sqrtgh2;
                 *s1m = uL + 2.0 * sqrtgh1 - 3.0 * sqrtgh2;
                 *s2m = uL + 2.0 * sqrtgh1 - sqrtgh2;
-
                 *rare1 = true;
                 *rare2 = false;
             } else {
                 sqrtgh1 = sqrt(s_grav * hR);
                 // um = uR - 2.0 * sqrtgh1 + 2.0 * sqrtgh2;
-                *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
                 *s2m = uR - 2.0 * sqrtgh1 + 3.0 * sqrtgh2;
-                *rare1 = false;
+                *s1m = uR - 2.0 * sqrtgh1 + sqrtgh2;
                 *rare2 = true;
+                *rare1 = false;
             }
         }
     }

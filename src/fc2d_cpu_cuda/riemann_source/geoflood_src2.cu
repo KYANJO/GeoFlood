@@ -66,7 +66,7 @@ __device__ void cuda_flood_src2(int meqn, int maux, double xlower, double ylower
 
                 // Apply friction source term
                 // double gamma =  sqrt(pow(qr[1],2) + pow(qr[2],2))* d_geofloodVars.gravity * pow(coeff,2) / (pow(qr[0],7.0/3.0));
-                double gamma = sqrt(qr[1]*qr[1] + qr[2]*qr[2]) * (d_geofloodVars.gravity 
+                double gamma = sqrt((qr[1]*qr[1]) + (qr[2]*qr[2])) * (d_geofloodVars.gravity 
                                 * (coeff * coeff)) / pow(qr[0], 7.0/3.0);
                 double dgamma = 1.0 + (dt * gamma);
                 // printf("dgamma: %f\n", dgamma);
