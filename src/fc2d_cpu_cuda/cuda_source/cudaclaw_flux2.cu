@@ -554,28 +554,28 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     if (order[1] == 0)
     {
 
-        // goto FINAL_UPDATE; /* No transverse propagation; Update the solution and exit */
+        goto FINAL_UPDATE; /* No transverse propagation; Update the solution and exit */
         // /* No transverse propagation; Update the solution and exit */
-        for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
-        {
-            int ix = thread_index % mx;
-            int iy = thread_index/mx;
+        // for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
+        // {
+        //     int ix = thread_index % mx;
+        //     int iy = thread_index/mx;
 
-            int iadd = mbc;  // Only update interior cells
-            int I = (iy + iadd)*ys + (ix + iadd);
+        //     int iadd = mbc;  // Only update interior cells
+        //     int I = (iy + iadd)*ys + (ix + iadd);
 
-            int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
-            double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        //     int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
+        //     double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        //     double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
 
-            for(int mq = 0; mq < meqn; mq++)
-            {
-                int I_q = I + mq*zs;
-                qold[I_q] = qold[I_q] - dtdx_ * (fm[I_q + 1] - fp[I_q])
-                                    - dtdy_ * (gm[I_q + ys] - gp[I_q]);
-            }        
-        }
-        return;
+        //     for(int mq = 0; mq < meqn; mq++)
+        //     {
+        //         int I_q = I + mq*zs;
+        //         qold[I_q] = qold[I_q] - dtdx_ * (fm[I_q + 1] - fp[I_q])
+        //                             - dtdy_ * (gm[I_q + ys] - gp[I_q]);
+        //     }        
+        // }
+        // return;
     }
 
 
@@ -1161,7 +1161,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     /* ------------------------------- Final update ----------------------------------- */
-// FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
+FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
 
     for(int thread_index = threadIdx.x; thread_index < mx*my; thread_index += blockDim.x)
     {
