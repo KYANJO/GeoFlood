@@ -94,8 +94,8 @@ def setplot(plotdata):
     mx = 32
     mi = 2
     mj = 1
-    minlevel = 1
-    maxlevel = 4
+    minlevel = 2
+    maxlevel = 5
     p = 1
     plotfigure.kml_figsize = [4,2]  #[mx*2**p*mi,mx*2**p*mj]
     plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2 
@@ -115,7 +115,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmap = geoplot.googleearth_flooding
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
-    # plotitem.amr_celledges_show = [0,0,0]
+    plotitem.amr_celledges_show = [0,0, 0]
     plotitem.patchedges_show = True      # Show patch edges
 
     def kml_colorbar(filename):
