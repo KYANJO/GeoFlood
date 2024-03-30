@@ -27,7 +27,7 @@ from geoclaw.topotools import Topography
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1e-4 # Initial time step
+initial_dt = 1e-8 # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -58,8 +58,8 @@ my = 16*2 # Number of y grids per block
 mi = 2 # Number of x grids per block  <-- mx = mi*mx 
 mj = 1  # Number of y grids per block   <-- my = mj*my 
 
-minlevel = 1 
-maxlevel = 4 #resolution based on levels
+minlevel = 2 
+maxlevel = 5 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -566,7 +566,7 @@ def setgeo(rundata):
 
     # == settopo.data values ==
     topo_data = rundata.topo_data
-    topo_data.topo_missing = -999.0 # set such that sea-level<topo_missing (to form very high clifs instead of holes)
+    topo_data.topo_missing = 9999.0 # set such that sea-level<topo_missing (to form very high clifs instead of holes)
     # for topography, append lines of the form
     #    [topotype, minlevel, maxlevel, t1, t2, fname]
     topo_data.topofiles.append([3, minlevel, minlevel, 0, 1e10, topo_file])
