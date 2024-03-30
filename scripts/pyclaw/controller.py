@@ -14,6 +14,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import logging
 import sys
+
+sys.path.append('../../../scripts')
 import os
 import copy
 
@@ -31,7 +33,7 @@ class Controller(object):
     
     :Examples:
 
-        >>> import clawpack.pyclaw as pyclaw
+        >>> import pyclaw as pyclaw
         >>> x = pyclaw.Dimension(0.,1.,100,name='x')
         >>> domain = pyclaw.Domain((x))
         >>> state = pyclaw.State(domain,3,2)
@@ -238,8 +240,8 @@ class Controller(object):
 
     # ========== Plotting methods ============================================
     def set_plotdata(self):
-        from clawpack.visclaw import data
-        from clawpack.visclaw import frametools
+        from visclaw import data
+        from visclaw import frametools
         plotdata = data.ClawPlotData()
         plotdata.setplot = self.setplot
         self.plotdata = frametools.call_setplot(self.setplot,plotdata)
@@ -257,7 +259,7 @@ class Controller(object):
 
         if frame is not None:
             frameno = self.frames.index(frame)
-            from clawpack.visclaw import frametools
+            from visclaw import frametools
             frametools.plot_frame(frame, self.plotdata, frameno=frameno)
 
     def plot(self):
@@ -266,7 +268,7 @@ class Controller(object):
             print("No frames to plot.  Did you forget to run, or to set keep_copy=True?")
             return
 
-        from clawpack.visclaw import iplot
+        from visclaw import iplot
 
         if self.plotdata is None:
             self.set_plotdata()
@@ -455,17 +457,17 @@ class OutputController(object):
     @file_format.setter
     def file_format(self, value):
         if value.lower() == 'petsc':
-            self._io_module = __import__("clawpack.petclaw.fileio.petsc",
-                                         fromlist=["clawpack.petclaw.fileio"])
+            self._io_module = __import__("petclaw.fileio.petsc",
+                                         fromlist=["petclaw.fileio"])
             self._file_format = value
         elif value.lower()[:6] == 'binary':
             # could be 'binary64' or 'binary32'
-            self._io_module = __import__("clawpack.pyclaw.fileio.binary",
-                                         fromlist=['clawpack.pyclaw.fileio'])
+            self._io_module = __import__("pyclaw.fileio.binary",
+                                         fromlist=['pyclaw.fileio'])
             self._file_format = value
         else:
-            self._io_module = __import__("clawpack.pyclaw.fileio.%s" % value,
-                                         fromlist=['clawpack.pyclaw.fileio'])
+            self._io_module = __import__("pyclaw.fileio.%s" % value,
+                                         fromlist=['pyclaw.fileio'])
             self._file_format = value
 
 

@@ -12,6 +12,8 @@ import glob
 import time
 import types
 
+sys.path.append('../../../scripts')
+
 import six
 from six.moves import input
 # "reload" is only available from a module in Python 3.
@@ -21,15 +23,15 @@ if sys.version_info[0] >= 3:
     else:
         from imp import reload
 
-import clawpack.clawutil.data as clawdata
-from clawpack.visclaw.data import ClawPlotData
-from clawpack.visclaw import setplot_default
-from clawpack.pyclaw import Solution
+import clawutil.data as clawdata
+from visclaw.data import ClawPlotData
+from visclaw import setplot_default
+from pyclaw import Solution
 
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import ma
-from clawpack.visclaw import colormaps
+from visclaw import colormaps
 from matplotlib.colors import Normalize
 
 
@@ -1145,7 +1147,7 @@ def printframes(plotdata=None, verbose=True):
 
     If plotdata.setplot is a function then this function will be used.
     """
-    from clawpack.visclaw import plotpages
+    from visclaw import plotpages
 
     if 'matplotlib' not in sys.modules:
         print('*** Error: matplotlib not found, no plots will be done')

@@ -31,7 +31,7 @@ __device__ void cuda_flood_src2(int meqn, int maux, double xlower, double ylower
     double depth_tolerance = 1.0e-30;
     
     // ------------- Friction source term -----------------
-    if (d_geofloodVars.friction_forcing)
+    // if (d_geofloodVars.friction_forcing)
     {
         // Extract approximate momentum
         if (qr[0] < depth_tolerance)
@@ -45,26 +45,30 @@ __device__ void cuda_flood_src2(int meqn, int maux, double xlower, double ylower
             double coeff;
             if (qr[0] <= d_geofloodVars.friction_depth)
             {
-                if (!(d_geofloodVars.variable_friction))
-                {
+                // if (!(d_geofloodVars.variable_friction))
+                // {
                     // for (int nman = num_manning - 1; nman >= 0; nman--) 
-                    {
+                    // {
                         // if (auxr[0] < manning_break[nman])
-                        if (auxr[0] < d_geofloodVars.manning_break)
-                        {
+                        // if (auxr[0] < d_geofloodVars.manning_break)
+                        // {
                             // coeff = manning_coefficient[nman];
-                            coeff = d_geofloodVars.manning_coefficent;
-                        }
-                    }
-                }
-                else
-                {
-                    coeff = auxr[d_geofloodVars.friction_index];
-                }
+                            // coeff = d_geofloodVars.manning_coefficent;
+                        // }
+                    // }
+                // }
+                // else
+                // {
+                //     coeff = auxr[d_geofloodVars.friction_index];
+                // }
+
+                coeff = d_geofloodVars.manning_coefficent;
 
                 // Apply friction source term
-                double gamma =  sqrt(pow(qr[1],2) + pow(qr[2],2))* d_geofloodVars.gravity * pow(coeff,2) / (pow(qr[0],7/3));
-                double dgamma = 1.0 + dt * gamma;
+                // double gamma =  sqrt(pow(qr[1],2) + pow(qr[2],2))* d_geofloodVars.gravity * pow(coeff,2) / (pow(qr[0],7.0/3.0));
+                double gamma = sqrt(qr[1]*qr[1] + qr[2]*qr[2]) * (d_geofloodVars.gravity 
+                                * (coeff * coeff)) / pow(qr[0], 7.0/3.0);
+                double dgamma = 1.0 + (dt * gamma);
                 // printf("dgamma: %f\n", dgamma);
                 qr[1] = qr[1] / dgamma;
                 qr[2] = qr[2] / dgamma;

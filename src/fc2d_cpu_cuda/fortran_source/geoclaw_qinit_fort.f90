@@ -32,7 +32,7 @@ SUBROUTINE fc2d_geoclaw_qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     xhigher = xlower + (mx-0.5)*dx
     yhigher = ylower + (my-0.5)*dy
 
-    ! ! Add perturbation to initial conditions
+    ! Add perturbation to initial conditions
     if (qinit_type > 0) then
         call add_perturbation(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     endif

@@ -6,6 +6,8 @@ Module containing all Pyclaw solution objects
 
 
 from __future__ import absolute_import
+import sys
+sys.path.append('../../../scripts')
 import six
 class State(object):
     r"""
@@ -120,7 +122,7 @@ class State(object):
 
     # ========== Class Methods ===============================================
     def __init__(self,geom,num_eqn,num_aux=0):
-        from clawpack.pyclaw import geometry
+        from pyclaw import geometry
         if isinstance(geom,geometry.Patch):
             self.patch = geom
         elif isinstance(geom,geometry.Domain):

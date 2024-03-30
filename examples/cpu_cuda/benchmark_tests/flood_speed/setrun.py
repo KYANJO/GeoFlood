@@ -40,7 +40,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 0.5            # Total number of hours in simulation     
+    n_hours = 6.0            # Total number of hours in simulation     
     
     frames_per_minute = 1/30   # (1 frame every 30 mins)
 
@@ -64,7 +64,7 @@ mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
 mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
-maxlevel = 2 #resolution based on levels
+maxlevel = 3 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------

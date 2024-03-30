@@ -9,6 +9,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, time, string, glob
 import sys
+
+sys.path.append('../../../scripts')
 from functools import wraps
 
 # increase resolution for images in animations:
@@ -25,8 +27,8 @@ from matplotlib import pyplot as plt
 import six
 from six.moves import range
 
-from clawpack.visclaw import gaugetools
-from clawpack.visclaw import animation_tools
+from visclaw import gaugetools
+from visclaw import animation_tools
 
 # Clawpack logo... not used on plot pages currently.
 clawdir = os.getenv('CLAW')
@@ -604,7 +606,7 @@ def plotclaw2kml(plotdata):
     import zipfile
     import shutil
     from copy import deepcopy
-    from clawpack.geoclaw import kmltools
+    from geoclaw import kmltools
 
     if plotdata.format is 'forestclaw':
         level_base = 0
@@ -2792,8 +2794,8 @@ def plotclaw_driver(plotdata, verbose=False, format='ascii'):
     """
 
     import glob, sys, os
-    from clawpack.visclaw.data import ClawPlotData
-    from clawpack.visclaw import frametools, gaugetools, plotpages
+    from visclaw.data import ClawPlotData
+    from visclaw import frametools, gaugetools, plotpages
 
     # doing plots in parallel?
     _parallel = plotdata.parallel and (plotdata.num_procs > 1)

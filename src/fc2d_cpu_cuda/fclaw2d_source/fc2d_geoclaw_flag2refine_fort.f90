@@ -50,20 +50,20 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
           fc2d_geoclaw_flag2refine = 0 ! default is not to flag
 
            ! check to see if refinement is forced in any topo domain
-           DO m=1,mtopofiles
-                IF (level .lt. 1 .and. &
-                    t.ge.tlowtopo(m) .and. t.le.thitopo(m)) THEN
-                    xlow = xlowtopo(m)
-                    xhi = xhitopo(m)
-                    ylow = ylowtopo(m)
-                    yhi = yhitopo(m)
-                    IF (x2.gt.xlow.and.x1.lt.xhi.and. &
-                        y2.gt.ylow.and.y1.lt.yhi) THEN
-                        fc2d_geoclaw_flag2refine = 1
-                        cycle x_loop !# flagged, so no need to check anything else
-                    ENDIF
-                ENDIF
-            ENDDO
+!           DO m=1,mtopofiles
+!                IF (level .lt. 1 .and. &
+!                    t.ge.tlowtopo(m) .and. t.le.thitopo(m)) THEN
+!                    xlow = xlowtopo(m)
+!                    xhi = xhitopo(m)
+!                    ylow = ylowtopo(m)
+!                    yhi = yhitopo(m)
+!                    IF (x2.gt.xlow.and.x1.lt.xhi.and. &
+!                        y2.gt.ylow.and.y1.lt.yhi) THEN
+!                        fc2d_geoclaw_flag2refine = 1
+!                        cycle x_loop !# flagged, so no need to check anything else
+!                    ENDIF
+!                ENDIF
+!            ENDDO
 
               ! check to see IF refinement is forced in any other region
             DO m=1,mregions
@@ -81,16 +81,16 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx1,my1, meqn,maux,qvec, auxv
                 ENDIF
             ENDDO
 
-            DO m = 1,qinit_type
-                if (abs(t) == 0.0d0) then
-                    ! check if we are in the region where initial perturbation is specified and need to force refinement
-                    if (level < 1 .and. x2 > x_low_qinit .and. x1 < x_hi_qinit .and. &
-                        y2 > y_low_qinit .and. y1 < y_hi_qinit) then
-                        fc2d_geoclaw_flag2refine = 1
-                        cycle x_loop
-                    endif
-                endif
-            ENDDO
+!            DO m = 1,qinit_type
+!                if (abs(t) == 0.0d0) then
+!                    ! check if we are in the region where initial perturbation is specified and need to force refinement
+!                    if (level < 1 .and. x2 > x_low_qinit .and. x1 < x_hi_qinit .and. &
+!                        y2 > y_low_qinit .and. y1 < y_hi_qinit) then
+!                        fc2d_geoclaw_flag2refine = 1
+!                        cycle x_loop
+!                    endif
+!                endif
+!            ENDDO
 
             IF (allowflag(x,y,t,level)) THEN
                 

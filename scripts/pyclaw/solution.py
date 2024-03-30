@@ -11,6 +11,10 @@ import logging
 
 from .geometry import Patch, Dimension, Domain
 
+import sys
+
+sys.path.append('../../../scripts')
+
 # ============================================================================
 #  Solution Class
 # ============================================================================
@@ -341,7 +345,7 @@ class Solution(object):
          - (bool) - True if read was successful, False otherwise
         """
 
-        from clawpack.pyclaw.fileio.ascii import read_t
+        from pyclaw.fileio.ascii import read_t
         
         [t,num_eqn,nstates,num_aux,num_dim,num_ghost,file_format2] = \
              read_t(frame,path,file_prefix=file_prefix)
@@ -366,35 +370,35 @@ class Solution(object):
     def get_read_func(self, file_format):
         if file_format[:6] == 'binary':
             # could be 'binary64' or 'binary32'
-            import clawpack.pyclaw.fileio.binary
-            return clawpack.pyclaw.fileio.binary.read
+            import pyclaw.fileio.binary
+            return pyclaw.fileio.binary.read
         elif file_format == 'ascii':
-            import clawpack.pyclaw.fileio.ascii
-            return clawpack.pyclaw.fileio.ascii.read
+            import pyclaw.fileio.ascii
+            return pyclaw.fileio.ascii.read
         elif file_format in ('hdf','hdf5'):
-            import clawpack.pyclaw.fileio.hdf5
-            return clawpack.pyclaw.fileio.hdf5.read
+            import pyclaw.fileio.hdf5
+            return pyclaw.fileio.hdf5.read
         elif file_format == 'petsc':
-            import clawpack.petclaw.fileio
-            return clawpack.petclaw.fileio.petsc.read
+            import petclaw.fileio
+            return petclaw.fileio.petsc.read
         elif file_format == 'forestclaw':
-            import clawpack.forestclaw.fileio.ascii
-            return clawpack.forestclaw.fileio.ascii.read
+            import forestclaw.fileio.ascii
+            return forestclaw.fileio.ascii.read
         else:
             raise ValueError("File format %s not supported." % file_format)
 
 
     def get_write_func(self, file_format):
         if file_format == "forestclaw":
-            import clawpack.forestclaw.fileio.ascii
-            return clawpack.forestclaw.fileio.ascii.write
+            import forestclaw.fileio.ascii
+            return forestclaw.fileio.ascii.write
         elif file_format == "vtk":
-            import clawpack.pyclaw.fileio.claw_vtk
-            return clawpack.pyclaw.fileio.claw_vtk.write
+            import pyclaw.fileio.claw_vtk
+            return pyclaw.fileio.claw_vtk.write
         else:
             try:
                 import importlib
-                return importlib.import_module("clawpack.pyclaw.fileio.%s"
+                return importlib.import_module("pyclaw.fileio.%s"
                                                % file_format).write
             except:
                 raise ValueError("File format %s not found." % file_format)

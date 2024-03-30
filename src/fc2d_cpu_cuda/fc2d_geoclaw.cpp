@@ -573,6 +573,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     size_t size, bytes;
     double maxcfl;
 
+#if 0 /*being called in flux2.cu*/
     /* ------------------------------- Call b4step2 ----------------------------------- */
     if (geoclaw_vt->b4step2 != NULL)
     {
@@ -580,6 +581,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
         fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
     }
+#endif
 
     /* -------------------------------- Main update ----------------------------------- */
     fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
@@ -611,12 +613,12 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         size = (total < patch_buffer_len) ? total : patch_buffer_len;
         bytes = size*sizeof(cudaclaw_fluxes_t);
         
-        if (cuclaw_opt->src_term > 0)
-        {
-            patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
-            patch_data->patchno_array = FCLAW_ALLOC(int,size);
-            patch_data->blockno_array = FCLAW_ALLOC(int,size);
-        }
+        // if (cuclaw_opt->src_term > 0)
+        // {
+        //     patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
+        //     patch_data->patchno_array = FCLAW_ALLOC(int,size);
+        //     patch_data->blockno_array = FCLAW_ALLOC(int,size);
+        // }
  
         patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,size); // Is it bytes or size?
         // buffer_data->user = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes);
@@ -654,26 +656,27 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     
     /* -------------------------------- Source term ----------------------------------- */
     // Check if we have stored all the patches in the buffer
-   
+ #if 0  
     if (((iter+1) % patch_buffer_len == 0) || ((iter+1) == total))
     {
         if (cuclaw_opt->src_term > 0)
         {   
             FCLAW_ASSERT(geoclaw_vt->src2 != NULL);
             // iterate over patches in buffer and call src2 to update them
-#if 1
+
             for (int i = 0; i < (total); i++)
             {
                 geoclaw_src2(glob,patch_data->patch_array[i],
                               patch_data->blockno_array[i],
                               patch_data->patchno_array[i],t,dt);
             }
-#endif
+// #endif
             FCLAW_FREE(patch_data->patch_array);
             FCLAW_FREE(patch_data->patchno_array);
             FCLAW_FREE(patch_data->blockno_array);
         }
-    }   
+    }  
+#endif 
    
     if (iter == total-1)
     {
@@ -1221,6 +1224,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
     if (user_opt->cuda == 0){
         geoclaw_vt->rpn2             = FC2D_GEOCLAW_RPN2;
         geoclaw_vt->rpt2             = FC2D_GEOCLAW_RPT2;
+        // geoclaw_vt->b4step2          = FC2D_GEOCLAW_B4STEP2;
     }else{
         cudaflood_assign_rpn2(&geoclaw_vt->cuda_rpn2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpn2 != NULL);
@@ -1228,6 +1232,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
         cudaflood_assign_rpt2(&geoclaw_vt->cuda_rpt2);
         FCLAW_ASSERT(geoclaw_vt->cuda_rpt2 != NULL);
 
+        /* b4step2 done with in the flux2.cu*/
         cudaflood_assign_src2(&geoclaw_vt->cuda_src2);
         FCLAW_ASSERT(geoclaw_vt->cuda_src2 != NULL);
     }
