@@ -646,9 +646,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         // det1 = r[0][0]*(r[1][1]*r[2][2] - r[1][2]*r[2][1]);
         // det2 = r[0][1]*(r[1][0]*r[2][2] - r[1][2]*r[2][0]);
         // det3 = r[0][2]*(r[1][0]*r[2][1] - r[1][1]*r[2][0]);
-        det1 = r[0]*(r[4]*r[8] - r[7]*r[5]);
-        det2 = r[3]*(r[1]*r[8] - r[7]*r[2]);
-        det3 = r[6]*(r[1]*r[5] - r[4]*r[2]);
+        det1 = r[0]*((r[4]*r[8])- (r[7]*r[5]));
+        det2 = r[3]*((r[1]*r[8]) - (r[7]*r[2]));
+        det3 = r[6]*((r[1]*r[5]) - (r[4]*r[2]));
         determinant = det1 - det2 + det3;
 
         /* solve for beta(k) */
@@ -681,9 +681,9 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
             // double det1 = A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]);
             // double det2 = A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]);
             // double det3 = A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
-            det1 = A[0]* (A[4]*A[8] - A[7]*A[5]);
-            det2 = A[3]* (A[1]*A[8] - A[7]*A[2]);
-            det3 = A[6]* (A[1]*A[5] - A[4]*A[2]);
+            det1 = A[0]* ((A[4]*A[8]) - (A[7]*A[5]));
+            det2 = A[3]* ((A[1]*A[8]) - (A[7]*A[2]));
+            det3 = A[6]* ((A[1]*A[5]) - (A[4]*A[2]));
         
             // Compute the final value for this iteration
             beta[k] = (det1 - det2 + det3) / determinant;
@@ -691,18 +691,15 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         
 
         /* exit if things aren't changing */
-        // if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) break;
-        if (fabs(del[0]*del[0] + del[2]*del[2] - delnorm) < convergencetol) break;
-        // if (fabs(pow(del[0],2)+pow(del[2],2.0) - delnorm) < convergencetol) return;
+        if (fabs((del[0]*del[0]) + (del[2]*del[2]) - delnorm) < convergencetol) break;
 
-
-        delnorm = del[0]*del[0] + del[2]*del[2]; /* update delnorm */
+        delnorm = (del[0]*del[0]) + (del[2]*del[2]); /* update delnorm */
 
         /* find new states qLstar and qRstar on either side of interface */
-        hLstar = hL;
-        hRstar = hR;
-        uLstar = uL;
-        uRstar = uR;
+        hLstar  = hL;
+        hRstar  = hR;
+        uLstar  = uL;
+        uRstar  = uR;
         huLstar = uLstar*hLstar;
         huRstar = uRstar*hRstar;
 
@@ -722,7 +719,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         {
             if (lambda[mw] < 0.0)
             {
-               hLstar = hLstar + beta[mw]*r[k]; k++;
+               hLstar  = hLstar + beta[mw]*r[k]; k++;
                huLstar = huLstar + beta[mw]*r[k]; k=k+2;
             }
         }
@@ -743,7 +740,7 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
         {
             if (lambda[mw] > 0.0)
             { 
-                hRstar = hRstar - beta[mw]*r[kw]; kw++;;
+                hRstar  = hRstar  - beta[mw]*r[kw]; kw++;;
                 huRstar = huRstar - beta[mw]*r[kw]; kw=kw-(mwaves+1); /*kw = kw-4*/
             }
         }
