@@ -705,45 +705,47 @@ __device__ void riemann_aug_JCP(int meqn, int mwaves, double hL,
 
         /* left state depth and momentum updates */
         // k = 0;
-        // for (int mw = 0; mw < mwaves; mw++) {
-        //     double multiplier = lambda[mw] < 0.0 ? 1.0 : 0.0;
-        //     // hLstar += multiplier * beta[mw] * r[0][mw];
-        //     // huLstar += multiplier * beta[mw] * r[1][mw];
+        for (int mw = 0; mw < mwaves; mw++) {
+            double multiplier = lambda[mw] < 0.0 ? 1.0 : 0.0;
+            // hLstar += multiplier * beta[mw] * r[0][mw];
+            // huLstar += multiplier * beta[mw] * r[1][mw];
 
-        //     hLstar  += multiplier * beta[mw] * r[k]; k++;
-        //     huLstar += multiplier * beta[mw] * r[k]; k=k+2;
-        // }
-        
-        int k=0;
-        for (int mw=0; mw < mwaves; mw++)
-        {
-            if (lambda[mw] < 0.0)
-            {
-               hLstar  = hLstar + beta[mw]*r[k]; k++;
-               huLstar = huLstar + beta[mw]*r[k]; k=k+2;
-            }
+            hLstar  += multiplier * beta[mw] * r[mwaves*mw]; //k++;
+            huLstar += multiplier * beta[mw] * r[mwaves*mw+1]; //k=k+2;
+
         }
+        
+        // int k=0;
+        // for (int mw=0; mw < mwaves; mw++)
+        // {
+        //     if (lambda[mw] < 0.0)
+        //     {
+        //        hLstar = hLstar + beta[mw]*r[k]; k++;
+        //        huLstar = huLstar + beta[mw]*r[k]; k=k+2;
+        //     }
+        // }
 
         /* right state depth and momentum updates */
         // k = 0;
-        // for (int mw = mwaves - 1; mw >= 0; mw--) {
-        //     double multiplier = lambda[mw] > 0.0 ? 1.0 : 0.0;
-        //     // hRstar -= multiplier * beta[mw] * r[0][mw];
-        //     // huRstar -= multiplier * beta[mw] * r[1][mw];
+        for (int mw = mwaves - 1; mw >= 0; mw--) {
+            double multiplier = lambda[mw] > 0.0 ? 1.0 : 0.0;
+            // hRstar -= multiplier * beta[mw] * r[0][mw];
+            // huRstar -= multiplier * beta[mw] * r[1][mw];
 
-        //     hRstar  -= multiplier * beta[mw] * r[k]; k++;
-        //     huRstar -= multiplier * beta[mw] * r[k]; k=k+2;
-        // }
-    
-        int kw = 6;
-        for (int mw = mwaves-1; mw >= 0; mw--)
-        {
-            if (lambda[mw] > 0.0)
-            { 
-                hRstar  = hRstar  - beta[mw]*r[kw]; kw++;;
-                huRstar = huRstar - beta[mw]*r[kw]; kw=kw-(mwaves+1); /*kw = kw-4*/
-            }
+            hRstar  -= multiplier * beta[mw] * r[mwaves*mw]; //k++;
+            huRstar -= multiplier * beta[mw] * r[mwaves*mw + 1]; //k=k+2;
+
         }
+    
+        // int kw = 0;
+        // for (int mw = mwaves-1; mw >= 0; mw--)
+        // {
+        //     if (lambda[mw] > 0.0)
+        //     { 
+        //         hRstar = hRstar - beta[mw]*r[kw]; kw++;;
+        //         huRstar = huRstar - beta[mw]*r[kw]; kw=kw+2;
+        //     }
+        // }
 
         /* left state velocity update */
         // hLstar = fmax(hLstar, 0.0); // Ensure hLstar is non-negative
