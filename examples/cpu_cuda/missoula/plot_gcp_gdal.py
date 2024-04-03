@@ -39,16 +39,22 @@ def gcp_gdal(gcp_points, image_in):
     for i in range(len(gcp_list)):
         gcp_ += (gcp_list[i]) + " "  # append the gcp points to the string
 
+    # === use the latest gdal multi-threading ===
+    os.environ['GDAL_NUM_THREADS'] = 'ALL_CPUS'  # Use all the CPUs available
+
     # === create a georeferenced image using GDAL ===
     image_gcp = image_in[:-4] + "_gcp.tif" # create a new image name
-    os.system("gdal_translate" + gcp_ + "-of GTiff "+" "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
+    # os.system("gdal_translate" + gcp_ + "-of GTiff "+"  "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
+
+    # add titling and cubic spline to gdal_translate
+    os.system("gdal_translate" + gcp_ + "-of GTiff -co TILED=YES -r cubicspline" +" "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
 
     os.system("gdalinfo" + " " + image_gcp) # check for the GCPs now in our new file with gdalinfo
 
     image_projected = image_in[:-4] + ".tif" # create a new image name
-    os.system("gdalwarp -tps -r near -t_srs EPSG:4326 -overwrite -co COMPRESS=JPEG -co JPEG_QUALITY=50 -co TILED=YES" +" "+ image_gcp +" "+ image_projected) # reprojecting the image to EPSG:4326, compressing, and Tiling it using gdalwarp
+    os.system("gdalwarp -tps -r near -t_srs EPSG:4326 -overwrite -co COMPRESS=JPEG -co JPEG_QUALITY=80 -co TILED=YES -r cubicspline" +" "+ image_gcp +" "+ image_projected) # reprojecting the image to EPSG:4326, compressing, and Tiling it using gdalwarp
 
-    os.system("gdaladdo --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR  --config JPEG_QUALITY_OVERVIEW 50 -r average " +" " + image_projected +" "+ "2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536") # create overviews for the image using gdaladdo (low resolution images)
+    os.system("gdaladdo -r cubicspline --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR  --config JPEG_QUALITY_OVERVIEW 80 -r average " +" " + image_projected +" "+ "2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536") # create overviews for the image using gdaladdo (low resolution images)
 
     image_out = image_in[:-4] + ".png" # create a new image name
     os.system("mv " +" "+ image_projected +" "+ image_out) # rename the image
@@ -83,7 +89,7 @@ def read_locations_data(malpasset_loc):
         y.append(data[2])
     # police = [range(17),x[:17], y[:17]]
     # transformers = [range(17,20),x[17:20], y[17:20]]
-    gauges = [range(8),x[:], y[:]]
+    gauges = [range(len(data)),x[:], y[:]]
     
     # return police, transformers, gauges
         
@@ -294,10 +300,10 @@ west = '302901.6624167535'
 # east_r = '-112.23'
 # west_r = '-124.49'
 
-north_r = '49.4226251386103215'
-south_r = '43.9783666036962941'
-east_r = '-111.9070522328439949'
-west_r = '-124.3263305531250467'
+north_r = '49.2719168731880401'
+south_r = '43.5784795033133250'
+east_r = '-112.0246578773416672'
+west_r = '-124.2823584684368825'
 
 # === guages locations latlong (approximate) ===
 gauge_lat = [44.508383,44.508383,44.508383,44.508383,44.508383,44.508383,44.508383,44.508383]
