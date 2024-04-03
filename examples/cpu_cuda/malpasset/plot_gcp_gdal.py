@@ -39,16 +39,22 @@ def gcp_gdal(gcp_points, image_in):
     for i in range(len(gcp_list)):
         gcp_ += (gcp_list[i]) + " "  # append the gcp points to the string
 
+    # === use the latest gdal multi-threading ===
+    os.environ['GDAL_NUM_THREADS'] = 'ALL_CPUS'  # Use all the CPUs available
+
     # === create a georeferenced image using GDAL ===
     image_gcp = image_in[:-4] + "_gcp.tif" # create a new image name
-    os.system("gdal_translate" + gcp_ + "-of GTiff "+" "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
+    # os.system("gdal_translate" + gcp_ + "-of GTiff "+"  "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
+
+    # add titling and cubic spline to gdal_translate
+    os.system("gdal_translate" + gcp_ + "-of GTiff -co TILED=YES -r cubicspline" +" "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
 
     os.system("gdalinfo" + " " + image_gcp) # check for the GCPs now in our new file with gdalinfo
 
     image_projected = image_in[:-4] + ".tif" # create a new image name
-    os.system("gdalwarp -tps -r near -t_srs EPSG:4326 -overwrite -co COMPRESS=JPEG -co JPEG_QUALITY=50 -co TILED=YES" +" "+ image_gcp +" "+ image_projected) # reprojecting the image to EPSG:4326, compressing, and Tiling it using gdalwarp
+    os.system("gdalwarp -tps -r near -t_srs EPSG:4326 -overwrite -co COMPRESS=JPEG -co JPEG_QUALITY=80 -co TILED=YES -r cubicspline" +" "+ image_gcp +" "+ image_projected) # reprojecting the image to EPSG:4326, compressing, and Tiling it using gdalwarp
 
-    os.system("gdaladdo --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR  --config JPEG_QUALITY_OVERVIEW 50 -r average " +" " + image_projected +" "+ "2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536") # create overviews for the image using gdaladdo (low resolution images)
+    os.system("gdaladdo -r cubicspline --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR  --config JPEG_QUALITY_OVERVIEW 80 -r average " +" " + image_projected +" "+ "2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536") # create overviews for the image using gdaladdo (low resolution images)
 
     image_out = image_in[:-4] + ".png" # create a new image name
     os.system("mv " +" "+ image_projected +" "+ image_out) # rename the image
@@ -102,7 +108,7 @@ def replace_latlonbox(north,south,east,west,north_e,south_e,east_e,west_e,north_
     This function replaces the latlon box in the kml file with the new latlon box
     """
     domain_box = [north,south,east,west]
-    domain_box_i = [north,south,east_i,west_i] #for simpilicity
+    domain_box_i = [north_i,south_i,east_i,west_i] #for simpilicity
     domain_boxe = [north_e,south_e,east_e,west_e]
     domain_search = [domain_box,domain_box_i,domain_boxe]
     domain_box_replace = [north_r,south_r,east_r,west_r]
