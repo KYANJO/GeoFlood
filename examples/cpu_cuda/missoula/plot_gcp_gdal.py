@@ -300,10 +300,10 @@ west = '302901.6624167535'
 # east_r = '-112.23'
 # west_r = '-124.49'
 
-north_r = '49.2719168731880401'
-south_r = '43.5784795033133250'
-east_r = '-112.0246578773416672'
-west_r = '-124.2823584684368825'
+north_r = '50.9834534285535810'
+south_r = '43.1974005538929973'
+east_r = '-112.0458918647948821'
+west_r = '-124.8585786379917693'
 
 # === guages locations latlong (approximate) ===
 gauge_lat = [44.508383,44.508383,44.508383,44.508383,44.508383,44.508383,44.508383,44.508383]
@@ -317,7 +317,7 @@ coordinates = [cordinates_i,coordinates_f]
 
 # === locate data files ===
 malpasset_loc = "../../../missoula_locs.txt"   # Police, transformer and guage data
-gcp_points = "../../../../missoula_gcp.points" # locate the gcp points file from the frame folders
+gcp_points = "../../../../missoula_gcp_final.points" # locate the gcp points file from the frame folders
 
 # make one fuction argument
 func_arg = [gcp_points,coordinates,malpasset_loc,gauge_lat_long]
