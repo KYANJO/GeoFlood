@@ -32,6 +32,7 @@ tan = [0.9,0.8,0.2];
 tan = [0.8,0.5,0.2];
 brown = [0.9,0.8,0.2];
 gray8 = [0.8,0.8,0.8];
+cyan = '#00FFFF'
 
 transparent = [0.0, 0.0, 0.0,0.0]
 blue_a = [0.0,0.0,1.0,1.0];
@@ -68,6 +69,10 @@ TSUNAMI_MAX_AMPLITUDE = 0.6
 googleearth_lightblue = colormaps.make_colormap({-TSUNAMI_MAX_AMPLITUDE:blue_a,
                                                  0.0:lightblue,
                                                  TSUNAMI_MAX_AMPLITUDE:red_a})
+
+cyan_colormap = colormaps.make_colormap({-1:light_green_a,
+                                            -0.2:light_blue,
+                                            1.0:cyan})
 
 googleearth_darkblue = colormaps.make_colormap({-TSUNAMI_MAX_AMPLITUDE:blue_a,
                                                 0.0:biscay,
