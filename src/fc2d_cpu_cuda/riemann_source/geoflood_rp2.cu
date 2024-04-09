@@ -86,21 +86,32 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
 
     /* zero (small) negative values if they exist */
 
-    if (qr[0] < 0.0) {
-        qr[0] = 0.0;
-        qr[1] = 0.0;
-        qr[2] = 0.0;
-    }
+    // if (qr[0] < 0.0) {
+    //     qr[0] = 0.0;
+    //     qr[1] = 0.0;
+    //     qr[2] = 0.0;
+    // }
 
-    // right state
-    if (ql[0] < 0.0) {
-        ql[0] = 0.0;
-        ql[1] = 0.0;
-        ql[2] = 0.0;
-    }
+    // // right state
+    // if (ql[0] < 0.0) {
+    //     ql[0] = 0.0;
+    //     ql[1] = 0.0;
+    //     ql[2] = 0.0;
+    // }
 
+    double isNegativeR = (qr[0] < 0.0);
+    qr[0] *= (1.0-isNegativeR);
+    qr[1] *= (1.0-isNegativeR);
+    qr[2] *= (1.0-isNegativeR);
 
-    if (ql[0] > drytol || qr[0] > drytol) {
+    // left state
+    double isNegativeL = (ql[0] < 0.0);
+    ql[0] *= (1.0-isNegativeL);
+    ql[1] *= (1.0-isNegativeL);
+    ql[2] *= (1.0-isNegativeL);
+
+    if (ql[0] > drytol || qr[0] > drytol) 
+    {
         /* Riemann problem variables */
         hL = ql[0];
         hR = qr[0];
@@ -112,34 +123,52 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
         hvL = ql[mv];
         hvR = qr[mv];
 
+        // For the right boundary
+        double isWetR = hR > drytol; // 1.0 if true (wet), 0.0 if false (dry)
+        hR *= isWetR;
+        huR *= isWetR;
+        hvR *= isWetR;
+        uR = huR / (hR + (1.0 - isWetR)); // Avoid division by zero when hR is reset to 0.0
+        vR = hvR / (hR + (1.0 - isWetR));
+        phiR = isWetR * (0.5 * s_grav * (hR * hR) + (huR * huR) / (hR + (1.0 - isWetR))); // Only calculated if wet
 
-        // Check for wet/dry left boundary
-        if (hR > drytol) {
-            uR = huR / hR;
-            vR = hvR / hR;
-            phiR = 0.5 * s_grav * (hR * hR) + (huR * huR) / hR;
-        } else {
-            hR = 0.0;
-            huR = 0.0;
-            hvR = 0.0;
-            uR = 0.0;
-            vR = 0.0;
-            phiR = 0.0;
-        }
+        // For the left boundary
+        double isWetL = hL > drytol; // 1.0 if true (wet), 0.0 if false (dry)
+        hL *= isWetL;
+        huL *= isWetL;
+        hvL *= isWetL;
+        uL = huL / (hL + (1.0 - isWetL)); // Avoid division by zero when hL is reset to 0.0
+        vL = hvL / (hL + (1.0 - isWetL));
+        phiL = isWetL * (0.5 * s_grav * (hL * hL) + (huL * huL) / (hL + (1.0 - isWetL))); // Only calculated if wet
 
-        // Check for wet/dry right boundary
-        if (hL > drytol) {
-            uL = huL / hL;
-            vL = hvL / hL;
-            phiL = 0.5 * s_grav * (hL * hL) + (huL * huL) / hL;
-        } else {
-            hL  = 0.0;
-            huL = 0.0;
-            hvL = 0.0;
-            uL  = 0.0;
-            vL  = 0.0;
-            phiL = 0.0;
-        }
+
+        // // Check for wet/dry left boundary
+        // if (hR > drytol) {
+        //     uR = huR / hR;
+        //     vR = hvR / hR;
+        //     phiR = 0.5 * s_grav * (hR * hR) + (huR * huR) / hR;
+        // } else {
+        //     hR = 0.0;
+        //     huR = 0.0;
+        //     hvR = 0.0;
+        //     uR = 0.0;
+        //     vR = 0.0;
+        //     phiR = 0.0;
+        // }
+
+        // // Check for wet/dry right boundary
+        // if (hL > drytol) {
+        //     uL = huL / hL;
+        //     vL = hvL / hL;
+        //     phiL = 0.5 * s_grav * (hL * hL) + (huL * huL) / hL;
+        // } else {
+        //     hL  = 0.0;
+        //     huL = 0.0;
+        //     hvL = 0.0;
+        //     uL  = 0.0;
+        //     vL  = 0.0;
+        //     phiL = 0.0;
+        // }
 
         /* left and right surfaces depth inrelation to topography */
         wall[0] = 1.0;
@@ -867,7 +896,8 @@ __device__ void riemanntype(double hL, double hR, double uL, double uR, double *
                 F0 = delu + (h0 - hL) * gL + (h0 - hR) * gR;
                 dfdh = gL - s_grav * (h0 - hL) / (4.0 * h0 * h0 * gL) + gR - s_grav * (h0 - hR) / (4.0 * h0 * h0 * gR);
                 slope = 2.0 * sqrt(h0) * dfdh;
-                h0 = (sqrt(h0) - (F0 / slope))*(sqrt(h0) - (F0 / slope));
+                // h0 = (sqrt(h0) - (F0 / slope))*(sqrt(h0) - (F0 / slope));
+                h0 = pow(sqrt(h0) - F0 / slope, 2);
             }
             *hm = h0;
             /* u1m and u2m are Eqns (13.19) and (13.20) in the FVMHP book */
