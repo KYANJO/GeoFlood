@@ -39,16 +39,22 @@ def gcp_gdal(gcp_points, image_in):
     for i in range(len(gcp_list)):
         gcp_ += (gcp_list[i]) + " "  # append the gcp points to the string
 
+    # === use the latest gdal multi-threading ===
+    os.environ['GDAL_NUM_THREADS'] = 'ALL_CPUS'  # Use all the CPUs available
+
     # === create a georeferenced image using GDAL ===
     image_gcp = image_in[:-4] + "_gcp.tif" # create a new image name
-    os.system("gdal_translate" + gcp_ + "-of GTiff "+" "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
+    # os.system("gdal_translate" + gcp_ + "-of GTiff "+"  "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
+
+    # add titling and cubic spline to gdal_translate
+    os.system("gdal_translate" + gcp_ + "-of GTiff -co TILED=YES -r cubicspline" +" "+ image_in +" "+ image_gcp) # create a new GeoTiff image using gdal_translate
 
     os.system("gdalinfo" + " " + image_gcp) # check for the GCPs now in our new file with gdalinfo
 
     image_projected = image_in[:-4] + ".tif" # create a new image name
-    os.system("gdalwarp -tps -r near -t_srs EPSG:4326 -overwrite -co COMPRESS=JPEG -co JPEG_QUALITY=50 -co TILED=YES" +" "+ image_gcp +" "+ image_projected) # reprojecting the image to EPSG:4326, compressing, and Tiling it using gdalwarp
+    os.system("gdalwarp -tps -r near -t_srs EPSG:4326 -overwrite -co COMPRESS=JPEG -co JPEG_QUALITY=80 -co TILED=YES -r cubicspline" +" "+ image_gcp +" "+ image_projected) # reprojecting the image to EPSG:4326, compressing, and Tiling it using gdalwarp
 
-    os.system("gdaladdo --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR  --config JPEG_QUALITY_OVERVIEW 50 -r average " +" " + image_projected +" "+ "2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536") # create overviews for the image using gdaladdo (low resolution images)
+    os.system("gdaladdo -r cubicspline --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR  --config JPEG_QUALITY_OVERVIEW 80 -r average " +" " + image_projected +" "+ "2 4 8 16 32 64 128 256 512 1024 2048 4096 8192 16384 32768 65536") # create overviews for the image using gdaladdo (low resolution images)
 
     image_out = image_in[:-4] + ".png" # create a new image name
     os.system("mv " +" "+ image_projected +" "+ image_out) # rename the image
@@ -66,7 +72,7 @@ def range_kml(y1,y2,x1,x2):
 
 def read_locations_data(malpasset_loc):
     """
-    This function reads in the locations of the police stations, transformers, and gauges from a file
+    This function reads in the locations of the gauges from a file
     """
     with open (malpasset_loc, "r") as myfile:
         data = myfile.read().splitlines()
@@ -81,11 +87,13 @@ def read_locations_data(malpasset_loc):
     for data in data2:
         x.append(data[1])
         y.append(data[2])
-    police = [range(17),x[:17], y[:17]]
-    transformers = [range(17,20),x[17:20], y[17:20]]
-    gauges = [range(6,15),x[20:29], y[20:29]]
+    # police = [range(17),x[:17], y[:17]]
+    # transformers = [range(17,20),x[17:20], y[17:20]]
+    gauges = [range(len(data)),x[:], y[:]]
     
-    return police, transformers, gauges
+    # return police, transformers, gauges
+        
+    return gauges
 
 def exp_int(north,south,east,west):
     """
@@ -102,7 +110,7 @@ def replace_latlonbox(north,south,east,west,north_e,south_e,east_e,west_e,north_
     This function replaces the latlon box in the kml file with the new latlon box
     """
     domain_box = [north,south,east,west]
-    domain_box_i = [north,south,east_i,west_i] #for simpilicity
+    domain_box_i = [north_i,south_i,east_i,west_i] #for simpilicity
     domain_boxe = [north_e,south_e,east_e,west_e]
     domain_search = [domain_box,domain_box_i,domain_boxe]
     domain_box_replace = [north_r,south_r,east_r,west_r]
@@ -155,7 +163,8 @@ def rewrite_kml(kml_file,coordinates,malpasset_loc,gauge_lat_long):
         # approximate the gauge locations
         [gauge_lat,gauge_lon] = gauge_lat_long
 
-        police, transformers, gauge = read_locations_data(malpasset_loc)
+        # police, transformers, gauge = read_locations_data(malpasset_loc)
+        gauge = read_locations_data(malpasset_loc)
 
         gauge_loc = []
         gauge_round = []
@@ -220,6 +229,9 @@ def overlay_image_google_earth(func_arg):
     if not os.path.exists("kmz"):
         print("kmz folder does not exist, creating kmz folder...")
         os.system("mkdir kmz")
+    else:
+        os.system("rm -rf kmz")  # remove the kmz folder to avoid overwriting
+        os.system("mkdir kmz")
 
     os.chdir("kmz") # go into the kmz folder
     os.system("cp -f ../*.kmz .") # copy the kmz file to the kmz folder
@@ -255,42 +267,47 @@ def overlay_image_google_earth(func_arg):
     if not os.path.exists("../_geoReferenced"):
         os.mkdir("../_geoReferenced")
    
-    os.system("zip -r -o -9 ../_geoReferenced/MalpassetDam.kmz *") # make a new .kmz file and save it in the _geoReferenced folder
+    os.system("zip -r -o -9 ../_geoReferenced/MissoulaFlood.kmz *") # make a new .kmz file and save it in the _geoReferenced folder
     os.chdir("../_geoReferenced") # go back to the _geoReferenced folder
 
     # finally open the .kmz file to visualize the georeferenced image in google earth
     print("Opening the .kmz file in Google Earth")
-    os.system("open MalpassetDam.kmz")
+    os.system("open MissoulaFlood.kmz")
 
 # === end of function definitions ===
 
 # === define the latlon box for the initial reservior ===
-north_i = '1844566.5000'
-south_i = '1844520.82'
-east_i = '957987.1'
-west_i = '957738.41'
+north_i = '1568295.3980055586'
+south_i = '1343371.8325164416'
+east_i  = '1127834.0106196684'
+west_i  = '877279.2360924416'
 
 # === Initial reservior in lat-long ===
-north_il = '43.548464'
-south_il = '43.512148'
-east_il = '6.780684'
-west_il = '6.737070'
+north_il = '48.171612'
+south_il = '45.991771'
+east_il = '-112.798891'
+west_il = '-116.259674'
 
 # === define the latlon box for the simulation ===
-north = '1848572.75'
-south = '1832407.25'
-east = '959554.0'
-west = '953236.0'
+north = '1658032.3788042287'
+south = '1111417.5338057536'
+east = '1172647.141836348'
+west = '302901.6624167535'
 
 # === define the latlon box for the reference image (Acting as our computational domain for the visualization) ===
-north_r = '43.549942109'
-south_r = '43.400191065'
-east_r = '6.781941194'
-west_r = '6.690324187'
+# north_r = '49.15'
+# south_r = '44.25'
+# east_r = '-112.23'
+# west_r = '-124.49'
+
+north_r = '50.9834534285535810'
+south_r = '43.1974005538929973'
+east_r = '-112.0458918647948821'
+west_r = '-124.8585786379917693'
 
 # === guages locations latlong (approximate) ===
-gauge_lat = [43.508383,43.503714,43.493864,43.488525,43.476069,43.466011,43.450400,43.432585,43.428329]
-gauge_lon = [6.757204,6.758799,6.751142,6.740853,6.743523,6.736402,6.735097,6.721494,6.716970]
+gauge_lat = [44.508383,44.508383,44.508383,44.508383,44.508383,44.508383,44.508383,44.508383]
+gauge_lon = [-113.757204,-113.757204,-113.757204,-113.757204,-113.757204,-113.757204,-113.757204,-113.757204]
 
 # === function arguments ===
 gauge_lat_long = [gauge_lat, gauge_lon]
@@ -299,8 +316,8 @@ coordinates_f = [[north,south,east,west],[north_r,south_r,east_r,west_r]]
 coordinates = [cordinates_i,coordinates_f]
 
 # === locate data files ===
-malpasset_loc = "../../../malpasset_locs.txt"   # Police, transformer and guage data
-gcp_points = "../../../../malpasset_gcp.points" # locate the gcp points file from the frame folders
+malpasset_loc = "../../../missoula_locs.txt"   # Police, transformer and guage data
+gcp_points = "../../../../missoula_gcp_final.points" # locate the gcp points file from the frame folders
 
 # make one fuction argument
 func_arg = [gcp_points,coordinates,malpasset_loc,gauge_lat_long]
