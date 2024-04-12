@@ -97,6 +97,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __shared__ int xs, ys, zs;
     __shared__ int ifaces_x, ifaces_y, num_ifaces;
 
+    double mcapa_flag = (mcapa > 0);
+
     if (threadIdx.x == 0)
     {
         // Initialize variables related to time and grid spacing
@@ -172,7 +174,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     double maxcfl = 0;
-    // double aggregate = 0;
+    double dtdx0, dtdy0;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     {
 
@@ -239,10 +241,10 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
             
             int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            // double dtdx_ = mcapa_flag * dtdx/aux[I_capa] + (1.0 - mcapa_flag) * dtdx;
+            double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+            // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
 
-            
-            
             for(int mw = 0; mw < mwaves; mw++)
             {
                 // if ((fabs(s[mw]*dtdx_) > 5.6 )&& (fabs(s[mw]*dtdx_) < 5.63))
@@ -251,6 +253,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 // }
 
                 maxcfl = fmax(maxcfl,fabs(s[mw])*dtdx_);
+                // maxcfl = mcapa_flag*fmax(maxcfl,-s[mw]*dtdx0);
                 // maxcfl = max(maxcfl, maxfl_update_x * fabs(s[mw] * dtdx_));
 
                 if (order[0] == 2)
@@ -265,6 +268,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     }
                 }
             }
+            // dtdx0 = dtdx_; /* update dtdx for next step */
         }
         // aggregate = (iy <= my + 1) ? fmax(aggregate, maxcfl) : aggregate;
 
@@ -282,7 +286,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     __syncthreads();
 
     /* ---------------------------- Y-sweeps -------------------------------- */
-
+    // double dtdy0 = 
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     {
         /* 
@@ -350,7 +354,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             }
 
             int I_capa = I + (mcapa-1)*zs; // mcapa is set to 2 for latlon cordinates (-1 due to the switch between fortran and C)
-            double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+            // double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+            double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
 
             
 
@@ -374,6 +379,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     }
                 }
             }
+            // dtdy0 = dtdy_; /* update dtdy for next step */
         }
         // aggregate = (ix <= mx + 1) ? fmax(aggregate, maxcfl) : aggregate;
     }
@@ -391,7 +397,6 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
     __syncthreads();
 
-    /* ---------------------- Second order corrections and limiters --------------------*/  
 /* ---------------------- Second order corrections and limiters --------------------*/  
 
     if (order[0] == 2)
@@ -404,6 +409,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         }
         __syncthreads();
 
+        
+        dtdx0 = mcapa_flag * dtdx/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+                + (1.0 - mcapa_flag) * dtdx;
         for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
         { 
             int ix = thread_index % ifaces_x;
@@ -413,7 +421,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int I = (iy + iadd)*ys + (ix + iadd);
 
             int I_capa = I + (mcapa-1)*zs; 
-            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+            double dtdx_ave = 0.5*(dtdx0 + dtdx_);
             
             /* ------------------------------- X-directions --------------------------- */
 
@@ -454,7 +464,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
 
                 for(int mq = 0; mq < meqn; mq++)
                 {
-                    double cqxx = (1.0 - fabs(s[mw])*dtdx_)*wave[mq];
+                    double cqxx = (1.0 - fabs(s[mw])*dtdx_ave)*wave[mq];
                     cqxx *= (use_fwaves) ? copysign(1.,s[mw]) : fabs(s[mw]);
 
                     int I_q = I + mq*zs;
@@ -467,6 +477,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     }  
                 }
             }
+            dtdx0 = dtdx_; /* update dtdx for next step */
         }
     }
 
@@ -481,6 +492,10 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         }
         __syncthreads();
 
+        // dtdy0 = mcapa_flag * dtdy/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+                // + (1.0 - mcapa_flag) * dtdy;
+        dtdx0 = mcapa_flag * dtdx/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+                + (1.0 - mcapa_flag) * dtdx;
         for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
         { 
             int ix = thread_index % ifaces_x;
@@ -491,7 +506,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int I = (iy + iadd)*ys + ix + iadd;
 
             int I_capa = I + (mcapa-1)*zs; 
-            double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+            double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+            double dtdx_ave = 0.5*(dtdx0 + dtdx_);
+            // double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
+            // double dtdy_ave = 0.5*(dtdy0 + dtdy_);
 
             double *const s = start;
             double *const wave = s + mwaves;
@@ -532,7 +551,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 for(int mq = 0; mq < meqn; mq++)
                 {
                     int I_q = I + mq*zs;
-                    double cqyy = (1.0 - fabs(s[mw])*dtdx_)*wave[mq];
+                    double cqyy = (1.0 - fabs(s[mw])*dtdx_ave)*wave[mq];
                     cqyy *= (use_fwaves) ? copysign(1.,s[mw]) : fabs(s[mw]);
 
                     gm[I_q] += 0.5*cqyy;   
@@ -545,6 +564,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                     } 
                 }   
             }  
+            // dtdy0 = dtdy_; /* update dtdy for next step */
+            dtdx0 = dtdx_; /* update dtdx for next step */
         }  
         __syncthreads();
     }  
@@ -605,7 +626,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 |     |     |
 
     */              
-
+    dtdx0 = mcapa_flag * dtdx/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+            + (1.0 - mcapa_flag) * dtdx;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -615,7 +637,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
 
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+        double dtdx_ave = 0.5*(dtdx0 + dtdx_);
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -653,10 +677,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdx_*bmasdq[mq];
+            double gupdate = 0.5*dtdx_ave*bmasdq[mq];
             gm[I_q - 1] -= gupdate;       
             gp[I_q - 1] -= gupdate;   
-        }            
+        }     
+        dtdx0 = dtdx_; /* update dtdx for next step */       
     }
 
     __syncthreads();
@@ -674,7 +699,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             |     |     |
 
     */              
-
+    dtdx0 = mcapa_flag * dtdx/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+            + (1.0 - mcapa_flag) * dtdx;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -683,7 +709,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+        double dtdx_ave = 0.5*(dtdx0 + dtdx_);
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -721,10 +749,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdx_*bpasdq[mq];
+            double gupdate = 0.5*dtdx_ave*bpasdq[mq];
             gm[I_q - 1 + ys] -= gupdate;
             gp[I_q - 1 + ys] -= gupdate;
-        }        
+        }     
+        dtdx0 = dtdx_; /* update dtdx for next step */   
     }
 
     __syncthreads();
@@ -741,7 +770,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 |     |     |
                 |     |     |
 
-        */        
+        */   
+    dtdx0 = mcapa_flag * dtdx/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+    + (1.0 - mcapa_flag) * dtdx;     
 
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
@@ -751,7 +782,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+        double dtdx_ave = 0.5*(dtdx0 + dtdx_);
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -794,6 +827,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             gm[I_q] -= gupdate;       
             gp[I_q] -= gupdate;
         }
+        dtdx0 = dtdx_; /* update dtdx for next step */
     }
 
     __syncthreads();
@@ -811,7 +845,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
                 |     |     |
 
         */              
-
+        dtdx0 = mcapa_flag * dtdx/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+        + (1.0 - mcapa_flag) * dtdx;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -820,7 +855,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);  /* (ix,iy) = (0,0) maps to first non-ghost value */
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+        double dtdx_ave = 0.5*(dtdx0 + dtdx_);
 
         double *const qr     = start;          /* meqn   */
         double *const ql     = qr + meqn;      /* meqn   */
@@ -858,10 +895,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdx_*bpasdq[mq];
+            double gupdate = 0.5*dtdx_ave*bpasdq[mq];
             gm[I_q + ys] -= gupdate;
             gp[I_q + ys] -= gupdate;
         }
+        dtdx0 = dtdx_; /* update dtdx for next step */
         
     } 
 
@@ -896,6 +934,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     }
     __syncthreads();
 
+    dtdy0 = mcapa_flag * dtdy/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+            + (1.0 - mcapa_flag) * dtdy;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -904,7 +944,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;  // Shift from corner by 1 in each direction
         int I =  (iy + iadd)*ys + (ix + iadd);
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        // double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
+        double dtdy_ave = 0.5*(dtdy0 + dtdy_);
 
         double *const qr     = start;          /* meqn   */
         double *const qd     = qr + meqn;      /* meqn   */
@@ -942,12 +984,12 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdy_*bmasdq[mq];
+            double gupdate = 0.5*dtdy_ave*bmasdq[mq];
             fm[I_q - ys] -= gupdate;        
             fp[I_q - ys] -= gupdate;
 
         }
-
+        dtdy0 = dtdy_; /* update dtdy for next step */
     }
 
     __syncthreads();
@@ -966,6 +1008,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             |     |     
     */          
 
+    dtdy0 = mcapa_flag * dtdy/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+            + (1.0 - mcapa_flag) * dtdy;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -974,8 +1018,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
-
+        // double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
+        double dtdy_ave = 0.5*(dtdy0 + dtdy_);
 
         double *const qr     = start;          /* meqn   */
         double *const qd     = qr + meqn;      /* meqn   */
@@ -1012,10 +1057,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdy_*bpasdq[mq];
+            double gupdate = 0.5*dtdy_ave*bpasdq[mq];
             fm[I_q - ys + 1] -= gupdate;
             fp[I_q - ys + 1] -= gupdate;                
         }
+        dtdy0 = dtdy_; /* update dtdy for next step */
         
     }
 
@@ -1036,6 +1082,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             |     |     
     */        
 
+    dtdy0 = mcapa_flag * dtdy/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+            + (1.0 - mcapa_flag) * dtdy;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -1044,8 +1092,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
-
+        // double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
+        double dtdy_ave = 0.5*(dtdy0 + dtdy_);
 
         double *const qr     = start;          /* meqn   */
         double *const qd     = qr + meqn;      /* meqn   */
@@ -1082,10 +1131,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdy_*bmasdq[mq];
+            double gupdate = 0.5*dtdy_ave*bmasdq[mq];
             fm[I_q] -= gupdate;        
             fp[I_q] -= gupdate;
         }
+        dtdy0 = dtdy_; /* update dtdy for next step */
     }
 
     __syncthreads();
@@ -1105,6 +1155,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             |     |     
     */         
 
+    dtdy0 = mcapa_flag * dtdy/(aux[((0 + (mbc-1))*ys + (0 + (mbc-1))) + (mcapa-1)*zs] + (1.0 - mcapa_flag)) 
+            + (1.0 - mcapa_flag) * dtdy;
     for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
     { 
         int ix = thread_index % ifaces_x;
@@ -1113,8 +1165,9 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         int iadd = mbc-1;
         int I =  (iy + iadd)*ys + (ix + iadd);
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
-
+        // double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
+        double dtdy_ave = 0.5*(dtdy0 + dtdy_);
 
         double *const qr     = start;          /* meqn   */
         double *const qd     = qr + meqn;      /* meqn   */
@@ -1151,11 +1204,11 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdy_*bpasdq[mq];
+            double gupdate = 0.5*dtdy_ave*bpasdq[mq];
             fm[I_q + 1] -= gupdate;
             fp[I_q + 1] -= gupdate;
         }   
-        
+        dtdy0 = dtdy_; /* update dtdy for next step */
     } 
 
     __syncthreads();
@@ -1173,8 +1226,10 @@ FINAL_UPDATE: /* No transverse propagation; Update the solution and exit */
         int I = (iy + iadd)*ys + (ix + iadd);
 
         int I_capa = I + (mcapa-1)*zs; 
-        double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
-        double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        // double dtdx_ = (mcapa > 0) ? dtdx/aux[I_capa] : dtdx;
+        // double dtdy_ = (mcapa > 0) ? dtdy/aux[I_capa] : dtdy;
+        double dtdx_ = mcapa_flag * dtdx/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdx;
+        double dtdy_ = mcapa_flag * dtdy/(aux[I_capa] + (1.0 - mcapa_flag)) + (1.0 - mcapa_flag) * dtdy;
 
         for(int mq = 0; mq < meqn; mq++)
         {
