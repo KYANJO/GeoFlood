@@ -823,7 +823,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
         for(int mq = 0; mq < meqn; mq++)
         {
             int I_q = I + mq*zs;  
-            double gupdate = 0.5*dtdx_*bmasdq[mq];
+            double gupdate = 0.5*dtdx_ave*bmasdq[mq];
             gm[I_q] -= gupdate;       
             gp[I_q] -= gupdate;
         }
