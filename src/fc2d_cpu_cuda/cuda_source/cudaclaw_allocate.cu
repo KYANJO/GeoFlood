@@ -1,7 +1,7 @@
 #include "../fc2d_cudaclaw_cuda.h"
 #include "cudaclaw_allocate.h" /* Needed for definition of fluxes */
 
-#include <fc2d_geoclaw_options.h>
+#include <fc2d_cpucuda_options.h>
 
 #include <fclaw2d_global.h>
 #include <fclaw2d_patch.h>

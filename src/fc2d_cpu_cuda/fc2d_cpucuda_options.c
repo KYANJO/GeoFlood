@@ -23,7 +23,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "fc2d_geoclaw_options.h"
+#include "fc2d_cpucuda_options.h"
 #include <fclaw_options.h>
 #include <fclaw_pointer_map.h>
 

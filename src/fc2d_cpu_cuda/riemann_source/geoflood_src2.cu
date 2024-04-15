@@ -8,7 +8,7 @@
 #include "../fc2d_cudaclaw_cuda.h"
 #include "variables.h"
 #include <math.h>
-#include <fc2d_geoclaw.h>
+#include <fc2d_cpucuda.h>
 #include <fc2d_cudaclaw_check.h>
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
