@@ -27,7 +27,7 @@ scratch_dir = os.path.join('../scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 0.0001  # Initial time step
 fixed_dt = False   # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -49,7 +49,7 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 32
+mx =  32
 my = 32
 
 minlevel = 2
@@ -384,8 +384,8 @@ def setrun(claw_pkg='geoclaw'):
 
 
     # Block dimensions for non-square domains
-    geoflooddata.mi = 1
-    geoflooddata.mj = 1
+    geoflooddata.mi = 5
+    geoflooddata.mj = 2
 
     geoflooddata.user = {'example'     : 1}
 
