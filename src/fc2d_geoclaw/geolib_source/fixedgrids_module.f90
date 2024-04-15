@@ -6,18 +6,18 @@ module fixedgrids_module
     ! Container for fixed grid data, geometry and output settings
     type fixedgrid_type
         ! Grid data
-        real(kind=8), pointer :: early(:,:,:)
-        real(kind=8), pointer :: late(:,:,:)
-        real(kind=8), pointer :: often(:,:,:)
+        double precision, pointer :: early(:,:,:)
+        double precision, pointer :: late(:,:,:)
+        double precision, pointer :: often(:,:,:)
         
         ! Geometry
         integer :: num_vars(2),mx,my
-        real(kind=8) :: dx,dy,x_low,x_hi,y_low,y_hi
+        double precision :: dx,dy,x_low,x_hi,y_low,y_hi
         
         ! Time Tracking and output types
         integer :: num_output,last_output_index
         integer :: output_arrival_times,output_surface_max
-        real(kind=8) :: last_output_time,start_time,end_time,dt
+        double precision :: last_output_time,start_time,end_time,dt
     end type fixedgrid_type    
 
 
@@ -26,7 +26,7 @@ module fixedgrids_module
     ! Fixed grid arrays and sizes
     integer :: num_fixed_grids
     type(fixedgrid_type), allocatable :: fgrids(:)
-    real(kind=8) :: tcfmax
+    double precision :: tcfmax
 
 contains
     
@@ -171,9 +171,9 @@ contains
         integer, intent(in) :: fgrid_type
         type(fixedgrid_type), intent(inout) :: fgrid
         integer, intent(in) :: meqn,mxc,myc,mbc,maux,maxcheck
-        real(kind=8), intent(in) :: t,dxc,dyc,xlowc,ylowc
-        real(kind=8), intent(in) :: q(meqn,1-mbc:mxc+mbc,1-mbc:myc+mbc)
-        real(kind=8), intent(in) :: aux(maux,1-mbc:mxc+mbc,1-mbc:myc+mbc)
+        double precision, intent(in) :: t,dxc,dyc,xlowc,ylowc
+        double precision, intent(in) :: q(meqn,1-mbc:mxc+mbc,1-mbc:myc+mbc)
+        double precision, intent(in) :: aux(maux,1-mbc:mxc+mbc,1-mbc:myc+mbc)
     
         ! Indices
         integer :: ifg,jfg,m,ic1,ic2,jc1,jc2
@@ -181,20 +181,20 @@ contains
         integer :: eta_min_index,eta_max_index,eta_now_index
 
         ! Tolerances
-        real(kind=8), parameter :: arrival_tolerance = 1.d-2
-        real(kind=8) :: total_depth,depth_indicator,nan_check
+        double precision, parameter :: arrival_tolerance = 1.d-2
+        double precision :: total_depth,depth_indicator,nan_check
 
         ! Geometry
-        real(kind=8) :: xfg,yfg,xc1,xc2,yc1,yc2,xhic,yhic
-        real(kind=8) :: geometry(4)
+        double precision :: xfg,yfg,xc1,xc2,yc1,yc2,xhic,yhic
+        double precision :: geometry(4)
         
         ! Work arrays for eta interpolation
-        real(kind=8) :: eta(2,2),h(2,2)
+        double precision :: eta(2,2),h(2,2)
         
         
         ! Alias to data in fixed grid
         integer :: num_vars
-        real(kind=8), pointer :: fg_data(:,:,:)
+        double precision, pointer :: fg_data(:,:,:)
         
         ! Setup aliases for specific fixed grid
         if (fgrid_type == 1) then
@@ -370,7 +370,7 @@ contains
         
         ! Subroutine arguments
         type(fixedgrid_type), intent(inout) :: fgrid
-        real(kind=8), intent(in) :: out_time
+        double precision, intent(in) :: out_time
         integer, intent(in) :: grid_index,out_index, out_flag
               
         ! I/O
@@ -400,7 +400,7 @@ contains
         ! Other locals
         integer :: i,j,m
         integer :: eta_min_index,eta_max_index
-        real(kind=8) :: t0,tf,tau
+        double precision :: t0,tf,tau
     
 
         ! Make the file names and open output files
@@ -510,8 +510,8 @@ contains
     ! =========================================================================
     ! Utility functions for this module
     ! Returns back a NaN
-    real(kind=8) function nan()
-        real(kind=8) dnan
+    double precision function nan()
+        double precision dnan
         integer inan(2)
         equivalence (dnan,inan)
         inan(1)=2147483647
@@ -521,13 +521,13 @@ contains
     
     ! Interpolation function (in space)
     ! Given 4 points (points) and geometry from x,y,and cross terms
-    real(kind=8) pure function interpolate(points,geometry) result(interpolant)
+    double precision pure function interpolate(points,geometry) result(interpolant)
                             
         implicit none
                                 
         ! Function signature
-        real(kind=8), intent(in) :: points(2,2)
-        real(kind=8), intent(in) :: geometry(4)
+        double precision, intent(in) :: points(2,2)
+        double precision, intent(in) :: geometry(4)
         
         ! This is set up as a dot product between the approrpriate terms in 
         ! the input data.  This routine could be vectorized or a BLAS routine
@@ -547,10 +547,10 @@ contains
         
         ! Input arguments
         integer, intent(in) :: num_vars
-        real(kind=8), intent(in) :: early(num_vars),late(num_vars),tau
+        double precision, intent(in) :: early(num_vars),late(num_vars),tau
         
         ! Return value
-        real(kind=8) :: interpolant(num_vars)
+        double precision :: interpolant(num_vars)
 
         interpolant = (1.d0 - tau) * early(:) + tau * late(:)
 

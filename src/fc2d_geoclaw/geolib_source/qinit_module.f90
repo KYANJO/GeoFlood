@@ -1,3 +1,4 @@
+
 module qinit_module
 
     use amr_module, only: rinfinity
@@ -11,17 +12,17 @@ module qinit_module
     integer, public :: qinit_type
     
     ! Work array
-    real(kind=8), private, allocatable :: qinit(:)
+    double precision, private, allocatable :: qinit(:)
 
     ! Geometry
-    real(kind=8) :: x_low_qinit
-    real(kind=8) :: y_low_qinit
-    real(kind=8) :: t_low_qinit
-    real(kind=8) :: x_hi_qinit
-    real(kind=8) :: y_hi_qinit
-    real(kind=8) :: t_hi_qinit
-    real(kind=8) :: dx_qinit
-    real(kind=8) :: dy_qinit
+    double precision :: x_low_qinit
+    double precision :: y_low_qinit
+    double precision :: t_low_qinit
+    double precision :: x_hi_qinit
+    double precision :: y_hi_qinit
+    double precision :: t_hi_qinit
+    double precision :: dx_qinit
+    double precision :: dy_qinit
     
     integer, private :: mx_qinit
     integer, private :: my_qinit
@@ -29,17 +30,17 @@ module qinit_module
     ! for initializing using force_dry to indicate dry regions below sealevel:
 
     integer :: mx_fdry, my_fdry
-    real(kind=8) :: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry, dx_fdry, dy_fdry
+    double precision :: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry, dx_fdry, dy_fdry
     integer(kind=1), allocatable :: force_dry(:,:)
     logical :: use_force_dry
-    real(kind=8) :: tend_force_dry  ! always use mask up to this time
+    double precision :: tend_force_dry  ! always use mask up to this time
 
     logical :: variable_eta_init
 
     ! to initialize using different initial eta values in different regions:
     integer :: etain_mx, etain_my
-    real(kind=8) :: etain_dx, etain_dy
-    real(kind=8), allocatable :: etain_x(:), etain_y(:), etain_eta(:,:)
+    double precision :: etain_dx, etain_dy
+    double precision, allocatable :: etain_x(:), etain_y(:), etain_eta(:,:)
 
     integer :: mqinitfiles
     integer, allocatable :: minlevel_qinit(:), maxlevel_qinit(:)
@@ -62,7 +63,8 @@ contains
         character(len=150) :: qinit_fname
         character(len=150) :: fname_force_dry
 
-        integer :: num_force_dry
+
+        integer :: num_force_dry, filetype, minlevel_qinit, maxlevel_qinit
         
         if (.not.module_setup) then
             write(GEO_PARM_UNIT,*) ' '
@@ -85,10 +87,11 @@ contains
             else
                 read(unit,*) qinit_fname
                 write(GEO_PARM_UNIT,*)  qinit_fname
-            
-                call read_qinit(qinit_fname)
-            endif
 
+                read(unit,*) filetype, minlevel_qinit, maxlevel_qinit
+
+                call read_qinit(qinit_fname,filetype)
+            endif
 
             ! If variable_eta_init then function set_eta_init is called
             ! to set initial eta when interpolating onto newly refined patches
@@ -124,16 +127,16 @@ contains
     
         ! Subroutine arguments
         integer, intent(in) :: meqn,mbc,mx,my,maux
-        real(kind=8), intent(in) :: xlow_patch,ylow_patch,dx,dy
-        real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-        real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+        double precision, intent(in) :: xlow_patch,ylow_patch,dx,dy
+        double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+        double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
         
         ! Local
         integer :: i,j
-        real(kind=8) :: ximc,xim,x,xip,xipc,yjmc,yjm,y,yjp,yjpc,dq
+        double precision :: ximc,xim,x,xip,xipc,yjmc,yjm,y,yjp,yjpc,dq
         
         ! Topography integral function
-        real(kind=8) :: topointegral
+        double precision :: topointegral
         
         if (qinit_type > 0) then
             do i=1-mbc,mx+mbc
@@ -185,7 +188,7 @@ contains
     ! if iqinit = 1,2, or 3 respectively.
     ! if iqinit = 4, the z column corresponds to the definition of the 
     ! surface elevation eta. The depth is then set as q(i,j,1)=max(eta-b,0)
-    subroutine read_qinit(fname)
+    subroutine read_qinit(fname,filetype)
     
         use geoclaw_module, only: GEO_PARM_UNIT
         
@@ -193,6 +196,7 @@ contains
         
         ! Subroutine arguments
         character(len=150) :: fname
+        integer :: filetype
         
         ! Data file opening
         integer, parameter :: unit = 19
@@ -208,59 +212,10 @@ contains
         write(GEO_PARM_UNIT,*) fname
         write(GEO_PARM_UNIT,*) '  '
         
-        open(unit=unit, file=fname, iostat=status, status="unknown", &
-             form='formatted',action="read")
-        if ( status /= 0 ) then
-            print *,"Error opening file", fname
-            stop
-        endif
-        
-        ! Initialize counters
-        num_points = 0
-        mx_qinit = 0
-        
-        ! Read in first values, determines x_low and y_hi
-        read(unit,*) x_low_qinit,y_hi_qinit
-        num_points = num_points + 1
-        mx_qinit = mx_qinit + 1
-        
-        ! Sweep through first row figuring out mx
-        y = y_hi_qinit
-        do while (y_hi_qinit == y)
-            read(unit,*) x,y
-            num_points = num_points + 1
-            mx_qinit = mx_qinit + 1
-        enddo
-        ! We over count by one in the above loop
-        mx_qinit = mx_qinit - 1
-        
-        ! Continue to count the rest of the lines
-        do
-            read(unit,*,iostat=status) x,y
-            if (status /= 0) exit
-            num_points = num_points + 1
-        enddo
-        if (status > 0) then
-            print *,"ERROR:  Error reading qinit file ",fname
-            stop
-        endif
-        
-        ! Extract rest of geometry
-        x_hi_qinit = x
-        y_low_qinit = y
-        my_qinit = num_points / mx_qinit
-        dx_qinit = (x_hi_qinit - x_low_qinit) / (mx_qinit-1)
-        dy_qinit = (y_hi_qinit - y_low_qinit) / (my_qinit-1)
-        
-        rewind(unit)
-        allocate(qinit(num_points))
-        
-        ! Read and store the data this time
-        do i=1,num_points
-            read(unit,*) x,y,qinit(i)
-        enddo
-        close(unit)
-        
+        call read_qinit_header(fname,filetype,qinit_type,mx_qinit,my_qinit, &
+                               x_low_qinit,y_low_qinit,x_hi_qinit,y_hi_qinit, &
+                               dx_qinit,dy_qinit)
+
     end subroutine read_qinit
 
     subroutine read_force_dry(fname)
@@ -268,7 +223,7 @@ contains
         use utility_module, only: parse_values
         character(len=*), intent(in) :: fname
         integer :: iunit,i,j,n
-        real(kind=8) :: values(10), nodata_value
+        double precision :: values(10), nodata_value
         character(len=80) :: str
 
         iunit = 8
@@ -320,7 +275,7 @@ contains
         ! local 
         integer, parameter :: iunit = 7
         integer :: i,j
-        real(kind=8) :: nodata_value, xllower, yllower
+        double precision :: nodata_value, xllower, yllower
 
         if (present(file_name)) then
             open(unit=iunit, file=file_name, status='unknown',&
@@ -356,5 +311,152 @@ contains
         
         close(unit=iunit)
     end subroutine read_eta_init
+
+
+    ! ========================================================================
+    ! subroutine read_qinit_header(fname,qinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
+    ! ========================================================================
+    !  Read qinit file header to determine space needed in allocatable array
+    !
+    !  :Input:
+    !   - fname - (char) Name of file
+    !   - qinit_type - (int) Type of file format (1 < qinit_type < 3)
+    !
+    !  :Output:
+    !   - mx,my - (int) Number of grid points
+    !   - xll,yll,xhi,yhi - (float) Lower and upper coordinates for grid
+    !   - dx,dy - (float) Spatial resolution of grid
+    ! ========================================================================
+    subroutine read_qinit_header(fname,filetype,qinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
+
+        use geoclaw_module
+
+        implicit none
+
+        ! Input and Output
+        character*150, intent(in) :: fname
+        integer, intent(in) :: qinit_type, filetype
+        integer, intent(out) :: mx,my
+        double precision, intent(out) :: xll,yll,xhi,yhi,dx,dy
+        double precision, parameter :: qinit_missing = -150.d0
+
+        ! Local
+        integer, parameter :: iunit = 19
+        integer :: qinit_size, status, missing, i,j,ios
+        double precision :: x,y,z,nodata_value
+        logical :: found_file
+
+        open(unit=iunit, file=fname, iostat=status, status="unknown", &
+             form='formatted',action="read")
+        if ( status /= 0 ) then
+            print *,"Error opening file", fname
+            stop
+        endif
+
+        select case(abs(filetype))
+            ! ASCII file with 3 columns
+            ! determine data size
+            case(1)
+                ! Initial size variables
+                qinit_size = 0
+                mx = 0
+
+                ! Read in first values, determines xlow and yhi
+                read(iunit,*) xll,yhi
+                qinit_size = qinit_size + 1
+                mx = mx + 1
+
+                ! Go through first row figuring out mx, continue to count
+                y = yhi
+                do while (yhi == y)
+                    read(iunit,*) x,y
+                    qinit_size = qinit_size + 1
+                    mx = mx + 1
+                enddo
+                mx = mx - 1
+                ! Continue to count the rest of the lines
+                do
+                    read(iunit,*,iostat=status) x,y
+                    if (status /= 0) exit
+                    qinit_size = qinit_size + 1
+                enddo
+                if (status > 0) then
+                    print *,"ERROR:  Error reading qinit file ",fname
+                    stop
+                endif
+
+                ! Calculate remaining values
+                my = qinit_size / mx
+                xhi = x
+                yll = y
+                dx = (xhi-xll) / (mx-1)
+                dy = (yhi-yll) / (my-1)
+
+                rewind(iunit)
+                allocate(qinit(qinit_size))
+
+                ! Read and store the data this time
+                do i=1,qinit_size
+                    read(iunit,*) x,y,qinit(i)
+                enddo
+                close(iunit)
+
+            ! ASCII file with header followed by z data 
+            case(2:3)
+                read(iunit,*) mx
+                read(iunit,*) my
+                read(iunit,*) xll
+                read(iunit,*) yll
+                read(iunit,*) dx
+                read(iunit,*) nodata_value
+                dy = dx
+                xhi = xll + (mx-1)*dx
+                yhi = yll + (my-1)*dy
+
+                ! Read in data
+                missing = 0
+                select case(abs(filetype))
+                    case(2) ! (one value per line if filetype=2)
+                        rewind(iunit)
+                        allocate(qinit(mx*my))
+                        do i=1,mx*my
+                            read(iunit,*) qinit(i)
+                            ! if (qinit(i) == nodata_value) then
+                            !     missing = missing + 1
+                            !     qinit(i) = qinit_missing
+                            ! endif
+                        enddo
+                        close(iunit)
+                    case(3) ! (mx values per line if filetype=3)
+                        rewind(iunit)
+                        allocate(qinit(mx*my))
+                        do j=1,my
+                            read(iunit,*) (qinit((j-1)*mx + i),i=1,mx)
+                            if (ios /= 0) then
+                                print *, "Read error on line ", j, " Error code: ", ios
+                                exit  ! or handle the error as appropriate
+                            endif
+                            do i=1,mx
+                                if (qinit((j-1)*mx + i) == nodata_value) then
+                                    missing = missing + 1
+                                    qinit((j-1)*mx + i) = qinit_missing
+                                endif
+                            enddo
+                        enddo
+                        close(iunit)
+                end select
+            case default
+                print *, 'ERROR:  Unrecognized qinit_type'
+                print *, '    qinit_file_type = ',qinit_type
+                print *, '  for qinit file:'
+                print *, '   ', fname
+                stop
+        end select
+
+        write(GEO_PARM_UNIT,*) '  mx = ',mx,'  x = (',xll,',',xhi,')'
+        write(GEO_PARM_UNIT,*) '  my = ',my,'  y = (',yll,',',yhi,')'
+        write(GEO_PARM_UNIT,*) '  dx, dy (meters/degrees) = ', dx,dy
+
+    end subroutine read_qinit_header
 
 end module qinit_module
