@@ -29,7 +29,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 0.0001  # Initial time step
 fixed_dt = False   # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -38,10 +38,10 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 15              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    n_hours = 20              # Total number of hours in simulation, changed 10.14.2020  should be 5      
     
 
-    frames_per_minute = 1/30   # Frames every 1/2 hour
+    frames_per_minute = 1/15   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -51,14 +51,14 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 32
-my = 32
+mx = 54
+my = 54
 
 mi = 5  # Number of x grids per block  <-- mx = mi*mx 
 mj = 2  # Number of y grids per block   <-- my = mj*my 
 
-minlevel = 1 
-maxlevel = 3 #resolution based on levels
+minlevel = 2 
+maxlevel = 5 #resolution based on levels
 
 regrid_interval = 16
 
