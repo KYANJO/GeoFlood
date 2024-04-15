@@ -11,10 +11,13 @@ import copy
 import numpy as np
 import re
 import logging
-import clawpack.clawutil.data as clawdata
+import sys
+
+sys.path.append('../../../scripts')
+import clawutil.data as clawdata
 import time
 
-import clawpack.pyclaw.controller
+import pyclaw.controller
 
 # ============================================================================
 #  Subclass ClawPlotData containing data for plotting results
@@ -56,7 +59,7 @@ class ClawPlotData(clawdata.ClawData):
         # This should eventually replace all need for recording the above
         # information
         self.add_attribute('output_controller', None)
-        self.output_controller = clawpack.pyclaw.controller.OutputController(
+        self.output_controller = pyclaw.controller.OutputController(
                                            self.outdir, file_format=self.format)
 
 
@@ -216,7 +219,7 @@ class ClawPlotData(clawdata.ClawData):
         frame has previously been read and the dictionary value is returned.
         """
 
-        from clawpack.pyclaw import solution
+        from pyclaw import solution
 
         framesoln_dict = self.framesoln_dict
 
@@ -318,7 +321,7 @@ class ClawPlotData(clawdata.ClawData):
             try:
 
                 # Read gauge solution:
-                import clawpack.pyclaw.gauges as gauges
+                import pyclaw.gauges as gauges
 
                 self.gaugesoln_dict[key] = gauges.GaugeSolution(
                                            gauge_id=gauge_id, path=outdir)
@@ -335,7 +338,7 @@ class ClawPlotData(clawdata.ClawData):
 
 
     def plotframe(self, frameno):
-        from clawpack.visclaw import frametools
+        from visclaw import frametools
         frametools.plotframe(frameno, self)
 
     def printframes(self, verbose=True):
@@ -808,13 +811,13 @@ class ClawPlotItem(clawdata.ClawData):
                 self.add_attribute('amr_%s' % a, [])
 
             if plot_type == '2d_pcolor':
-                from clawpack.visclaw import colormaps
+                from visclaw import colormaps
                 self.add_attribute('pcolor_cmap',colormaps.yellow_red_blue)
                 self.add_attribute('pcolor_cmin',None)
                 self.add_attribute('pcolor_cmax',None)
 
             elif plot_type == '2d_imshow':
-                from clawpack.visclaw import colormaps
+                from visclaw import colormaps
                 self.add_attribute('imshow_cmap',colormaps.yellow_red_blue)
                 self.add_attribute('imshow_cmin',None)
                 self.add_attribute('imshow_cmax',None)
@@ -841,7 +844,7 @@ class ClawPlotItem(clawdata.ClawData):
                     # Note either fill_cmap or fill_colors must be None
 
             elif plot_type == '2d_schlieren':
-                from clawpack.visclaw import colormaps
+                from visclaw import colormaps
                 self.add_attribute('schlieren_cmap',colormaps.schlieren_grays)
                 self.add_attribute('schlieren_cmin',None)
                 self.add_attribute('schlieren_cmax',None)

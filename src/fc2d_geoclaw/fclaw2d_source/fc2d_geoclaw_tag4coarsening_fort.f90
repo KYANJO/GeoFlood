@@ -187,7 +187,7 @@ use qinit_module
 implicit none
 
 ! Function arguments
-real(kind=8), intent(in) :: x,y,t
+double precision, intent(in) :: x,y,t
 integer, intent(in) :: level
 
 ! Locals

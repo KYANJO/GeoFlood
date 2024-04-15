@@ -31,7 +31,7 @@ scratch_dir = os.path.join('scratch')
 # User specified parameters
 #===============================================================================
 #------------------ Time stepping------------------------------------------------
-initial_dt = 1  # Initial time step
+initial_dt = 1 # Initial time step
 fixed_dt = False  # Take constant time step
 
 # -------------------- Output files -------------------------------------------------
@@ -40,7 +40,7 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 5.0              # Total number of hours in simulation     
+    n_hours = 6.0            # Total number of hours in simulation     
     
     frames_per_minute = 1/30   # (1 frame every 30 mins)
 
@@ -48,6 +48,7 @@ if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
 
 if output_style == 3:
+    n_hours = 0.5 
     step_interval = 1800   # Create output file every 10 steps
     total_steps = 3600   # ... for a total of 500 steps (so 50 output files total)
 
@@ -56,14 +57,14 @@ if output_style == 3:
 # mx = int(clawdata.upper[0] - clawdata.lower[0]) /grid_resolution
 # my = int(clawdata.upper[1] - clawdata.lower[1])/grid_resolution
 
-mx = 16 # Number of x grids per block
-my = 16 # Number of y grids per block
+mx = 50 # Number of x grids per block
+my = 50 # Number of y grids per block
 
-mi = 8 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
-mj = 24  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
+mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
+mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
-minlevel = 0
-maxlevel = 1 #resolution based on levels
+minlevel = 1 
+maxlevel = 3 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -76,10 +77,11 @@ num_dim = 2
 use_cuda = True
 gravity = 9.81
 dry_tolerance = 1e-4
-earth_radius = 6367.5e3
+earth_radius = 6371220.0
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
 buffer_length = 1024
+regrid_interval = 16
 
 # --------------------- guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -239,7 +241,8 @@ def setrun(claw_pkg='geoclaw'):
         clawdata.output_step_interval = step_interval
         clawdata.total_steps = total_steps
         clawdata.output_t0 = True
-        clawdata.tfinal = total_steps*fixed_dt
+        clawdata.tfinal = 60*60*n_hours
+        clawdata.num_output_times = int(total_steps/step_interval) + 1
 
     clawdata.output_format = 'ascii'      # 'ascii' or 'netcdf'
 
@@ -393,14 +396,15 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = True
-    geoflooddata.regrid_interval = 3
+    geoflooddata.regrid_interval = regrid_interval
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
+    geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
-    geoflooddata.output = True
-    geoflooddata.output_gauges = True
+    geoflooddata.output = False
+    geoflooddata.output_gauges = False
 
 
     # Block dimensions for non-square domains
@@ -438,6 +442,12 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
+    geoflooddata.report_timing_verbosity = 'counters'
+
+    # -----------------------------------------------
+    # setrob parameters:
+    # -----------------------------------------------
+    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # -----------------------------------------------
     # AMR parameters:
@@ -462,7 +472,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
     amrdata.flag2refine_tol = 0.5
-    amrdata.regrid_interval = 3
+    amrdata.regrid_interval = regrid_interval
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
@@ -502,7 +512,7 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.uprint = False      # update/upbnd reporting
 
 
-    return rundata, geoflooddata, hydrographdata
+    return rundata, geoflooddata, hydrographdata, setprobdata
     # end of function setrun
     # ----------------------
 
@@ -589,10 +599,8 @@ def generate_topo_file():
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
     # generate_topo_file()         # generate topo file (generated before running setrun.py)
-    rundata,geoflooddata, hydrographdata = setrun(*sys.argv[1:])
+    rundata,geoflooddata, hydrographdata, setprobdata = setrun(*sys.argv[1:])
     rundata.write()
-
-    geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-    hydrographdata.write()       # writes a geoflood hydrograph file
+    geoflood.write_data_outputs(rundata,geoflooddata, hydrographdata, setprobdata)
 
     

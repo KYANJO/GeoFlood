@@ -1,8 +1,7 @@
 # --------------------------------------------
 # List of available bench marks
 # --------------------------------------------
-
-if(TARGET GEOFLOOD::GEOCLAW)
+if(TARGET GEOFLOOD::CPU_CUDA)
 
     include(benchmarks.cmake)
 

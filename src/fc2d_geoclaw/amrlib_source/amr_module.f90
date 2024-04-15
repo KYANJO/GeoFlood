@@ -160,15 +160,15 @@ module amr_module
     ! :::::::  for flagging points   
     ! TODO: can use one bit for this instead of real?
     ! needs to be set
-    real(kind=8), parameter :: UNSET = -1.0
+    double precision, parameter :: UNSET = -1.0
     ! needs no refine
-    real(kind=8), parameter :: DONTFLAG = 0.0
+    double precision, parameter :: DONTFLAG = 0.0
     ! needs refine
-    real(kind=8), parameter :: DOFLAG  = 2.0
-    real(kind=8), parameter :: badpro = 3.0
+    double precision, parameter :: DOFLAG  = 2.0
+    double precision, parameter :: badpro = 3.0
 
-    real(kind=8), parameter :: NEEDS_TO_BE_SET = 10.e33
-    real(kind=8), parameter :: rinfinity = 10.e32
+    double precision, parameter :: NEEDS_TO_BE_SET = 10.e33
+    double precision, parameter :: rinfinity = 10.e32
     integer, parameter :: iinfinity = 999999999
     integer, parameter :: horizontal = 1
     integer, parameter :: vertical = 2
@@ -195,17 +195,17 @@ module amr_module
     integer :: bndListSize
     integer,allocatable, dimension(:,:) :: bndList  ! new way is allocatable 
 
-    !real(kind=8) hxposs(maxlv), hyposs(maxlv),possk(maxlv),rnode(rsize, maxgr) 
-    real(kind=8) hxposs(maxlv), hyposs(maxlv),possk(maxlv)
+    !double precision hxposs(maxlv), hyposs(maxlv),possk(maxlv),rnode(rsize, maxgr) 
+    double precision hxposs(maxlv), hyposs(maxlv),possk(maxlv)
 
     ! start of dynamic allocation for maxgr and associated arrays
     integer   maxgr 
-    real(kind=8), allocatable, dimension(:,:) :: rnode    ! new way, use allocatable, not pointer
+    double precision, allocatable, dimension(:,:) :: rnode    ! new way, use allocatable, not pointer
     integer, allocatable, dimension(:,:) :: node
     integer, allocatable, dimension(:) :: listOfGrids
 
 
-    real(kind=8) tol, tolsp
+    double precision tol, tolsp
     !integer ibuff,  mstart, ndfree, ndfree_bnd, lfine, node(nsize, maxgr), &
     integer ibuff,  mstart, ndfree, ndfree_bnd, lfine,  &
             icheck(maxlv),lstart(maxlv),newstl(maxlv), &
@@ -225,9 +225,9 @@ module amr_module
     ! common  /calloc/   alloc(memsize)
 
     ! Dynamic memory: 
-    !real(kind=8), allocatable, target, dimension(:) :: storage
-    !real(kind=8), pointer, dimension(:) :: alloc   ! old way, changed mjb Sept. 2014
-    real(kind=8), allocatable, dimension(:) :: alloc    ! new way, use allocatable, not pointer
+    !double precision, allocatable, target, dimension(:) :: storage
+    !double precision, pointer, dimension(:) :: alloc   ! old way, changed mjb Sept. 2014
+    double precision, allocatable, dimension(:) :: alloc    ! new way, use allocatable, not pointer
     integer memsize
        
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\
@@ -240,22 +240,22 @@ module amr_module
     ! :::::  domain description variables
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     logical xperdom, yperdom, spheredom
-    real(kind=8) :: xupper, yupper, xlower, ylower
+    double precision :: xupper, yupper, xlower, ylower
     integer :: nghost, mthbc(4)
 
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ! :::::  collect stats
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    real(kind=8)  rvoll(maxlv),evol,rvol,avenumgrids(maxlv)
+    double precision  rvoll(maxlv),evol,rvol,avenumgrids(maxlv)
     integer ::  iregridcount(maxlv)
     integer(kind=8) ::  tvoll(maxlv)
     integer(kind=8) :: timeRegridding, timeUpdating, timeValout
     integer(kind=8) :: timeFlglvl,timeGrdfit2,timeGrdfit3,timeGrdfitAll
     integer(kind=8) :: timeBound,timeStepgrid
     integer(kind=8) :: timeFlagger, timeBufnst,timeTick, tick_clock_start
-    real(kind=8) tvollCPU(maxlv), timeTickCPU, tick_cpu_start
-    real(kind=8) timeBoundCPU,timeStepgridCPU,timeRegriddingCPU
-    real(kind=8) timeValoutCPU
+    double precision tvollCPU(maxlv), timeTickCPU, tick_cpu_start
+    double precision timeBoundCPU,timeStepgridCPU,timeRegriddingCPU
+    double precision timeValoutCPU
 
     integer lentot,lenmax,lendim
 
@@ -265,7 +265,7 @@ module amr_module
     character(len=10), allocatable :: auxtype(:)
     integer  method(7), mwaves, mcapa, dimensional_split
     integer, allocatable :: mthlim(:)
-    real(kind=8) cfl,cflmax,cflv1,cfl_level
+    double precision cfl,cflmax,cflv1,cfl_level
 
     logical :: use_fwaves
     logical :: flag_richardson,flag_gradient
@@ -277,13 +277,13 @@ module amr_module
     logical    printout,matlabout,ncarout
 
     ! variables for conservation checking:
-    real(kind=8) tmass0
+    double precision tmass0
 
     ! variables for specifying output format
     integer :: output_style, nstop, nout, iout
-    real(kind=8), allocatable :: tout(:)
-    real(kind=8) :: t0, tfinal
-    real(kind=8) :: tstart_thisrun  ! /= t0 in case of restart
+    double precision, allocatable :: tout(:)
+    double precision :: t0, tfinal
+    double precision :: tstart_thisrun  ! /= t0 in case of restart
     integer :: nq_components, naux_components, output_format
     integer, allocatable :: output_q_components(:)
     integer, allocatable :: output_aux_components(:)
@@ -291,7 +291,7 @@ module amr_module
 
     ! checkpointing:
     integer :: checkpt_style, nchkpt, checkpt_interval
-    real(kind=8), allocatable :: tchk(:)
+    double precision, allocatable :: tchk(:)
 
     integer :: matlabu
 

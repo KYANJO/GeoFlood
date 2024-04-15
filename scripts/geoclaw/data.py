@@ -26,8 +26,12 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 import numpy
-import clawpack.clawutil.data
 import warnings
+import sys
+
+sys.path.append('../../../scripts')
+import clawutil.data
+from tools_main import tools
 
 # Radius of earth in meters.
 # For consistency, should always use this value when needed, e.g.
@@ -38,7 +42,7 @@ DEG2RAD = numpy.pi / 180.0
 RAD2DEG = 180.0 / numpy.pi
 LAT2METER = Rearth * DEG2RAD
 
-class GeoClawData(clawpack.clawutil.data.ClawData):
+class GeoClawData(clawutil.data.ClawData):
     r"""
     Object containing the basic .
 
@@ -105,7 +109,7 @@ class GeoClawData(clawpack.clawutil.data.ClawData):
 
 
 
-class RefinementData(clawpack.clawutil.data.ClawData):
+class RefinementData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -142,7 +146,7 @@ class RefinementData(clawpack.clawutil.data.ClawData):
 
 
 
-class TopographyData(clawpack.clawutil.data.ClawData):
+class TopographyData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -212,7 +216,7 @@ class TopographyData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-class FixedGridData(clawpack.clawutil.data.ClawData):
+class FixedGridData(clawutil.data.ClawData):
 
     """
     Deprecated, starting in 5.9.0 use FGoutData instead.
@@ -235,7 +239,7 @@ class FixedGridData(clawpack.clawutil.data.ClawData):
             raise AttributeError(msg)
 
 
-class FGoutData(clawpack.clawutil.data.ClawData):
+class FGoutData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -273,7 +277,7 @@ class FGoutData(clawpack.clawutil.data.ClawData):
             fg.write_to_fgout_data(self._out_file)
         self.close_data_file()
 
-class FGmaxData(clawpack.clawutil.data.ClawData):
+class FGmaxData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -329,7 +333,7 @@ class FGmaxData(clawpack.clawutil.data.ClawData):
 
 
 
-class DTopoData(clawpack.clawutil.data.ClawData):
+class DTopoData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -409,7 +413,7 @@ class DTopoData(clawpack.clawutil.data.ClawData):
 
 
 
-class ForceDry(clawpack.clawutil.data.ClawData):
+class ForceDry(clawutil.data.ClawData):
 
     def __init__(self):
         r"""
@@ -421,7 +425,7 @@ class ForceDry(clawpack.clawutil.data.ClawData):
         self.add_attribute('fname','')
 
 
-class QinitData(clawpack.clawutil.data.ClawData):
+class QinitData(clawutil.data.ClawData):
 
     def __init__(self):
 
@@ -429,10 +433,12 @@ class QinitData(clawpack.clawutil.data.ClawData):
 
         # Qinit data
         self.add_attribute('qinit_type',0)
+        self.add_attribute('mqinitfiles',0)
         self.add_attribute('qinitfiles',[])
         self.add_attribute('variable_eta_init',False)
         self.add_attribute('force_dry_list',[])
         self.add_attribute('num_force_dry',0)
+
 
     def write(self,data_source='setrun.py', out_file='qinit.data'):
 
@@ -440,31 +446,84 @@ class QinitData(clawpack.clawutil.data.ClawData):
         self.open_data_file(out_file, data_source)
         self.data_write('qinit_type')
 
+        # --------------------------
+        # nqinits = len(self.qinitfiles)
+        # self.data_write(value=nqinits,alt_name='mqinitfiles')
+        # self.data_write()
+        # --------------------------
+
         # Perturbation requested
         if self.qinit_type == 0:
             pass
         else:
-            # Check to see if each qinit file is present and then write the data
-            for tfile in self.qinitfiles:
-
-                if len(tfile) == 3:
-                    w = '\n  *** WARNING: qinit specs changed in v5.8.0 -- ' + \
-                          'Flag level info now ignored'
+            nqinits = len(self.qinitfiles)
+            if nqinits == 1: # only one file
+                tfile  = self.qinitfiles[0]
+                try:
+                    # fname = "'%s'" % os.path.abspath(tfile[-1])
+                    fname = os.path.abspath(tfile[-1])
+                except:
+                    print("*** Error: file not found: ",tfile[-1])
+                    w = '\n  *** WARNING: qinit file not found: %s' % tfile[-1]
                     warnings.warn(w, UserWarning)
-                    tfile = [tfile[-1]]  # drop minlevel,maxlevel
-                elif len(tfile) == 1:
-                    pass  # now expect only filename
+                if len(tfile) < 4:
+                    defualt_qinit_ftype = 1
+                    tfile.append(defualt_qinit_ftype)  
+                    tfile = tfile[-1:] + tfile[:-1]  # append at the beginning of the list
                 else:
-                    raise ValueError('Unexpected len(tfile) = %i' % len(tfile))
+                    if tfile[0] > 2:
+                        read_in = tfile[0]
+                        tfile[0] = 2
+                        # convert read_in file to type 2
+                        cwdr = os.getcwd()
+                        fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
+                        tools.convert_file_type(fname, fname_new, read_in, tfile[0])
+                        fname = fname_new
 
-                # if path is relative in setrun, assume it's relative to the
-                # same directory that out_file comes from
-                fname = os.path.abspath(os.path.join(os.path.dirname(out_file),tfile[-1]))
-                self._out_file.write("\n'%s' \n" % fname)
-        # else:
-        #     raise ValueError("Invalid qinit_type parameter %s." % self.qinit_type)
+                fname = "'%s'" % fname
+                self._out_file.write("\n %s \n" % fname) 
+                self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
 
+            else: # mulptiple files merge them into one file
+                nqinit_type = []
+                dem_paths = []
+                for tfile in self.qinitfiles:
+                    dem_paths.append(tfile[-1])
+                    nqinit_type.append(tfile[0])
+                
+                # chcek if all files are same type
+                if len(set(nqinit_type))!= 1:
+                    raise ValueError('All qinit files must be of the same type')
+                
+                tfile = self.qinitfiles[0]
+                if len(tfile) < 4:
+                    defualt_qinit_ftype = 1
+                    tfile.append(defualt_qinit_ftype)  
+                    tfile = tfile[-1:] + tfile[:-1]  # append at the beginning of the list
+                    fname = fname = os.path.abspath(tfile[-1])
+                else:
+                    cwdr = os.getcwd()
+                    fname_new = os.path.join(cwdr,tfile[-1][:-4] + '_converted.tt2')
+                    if os.path.exists(fname_new):
+                        fname = fname_new
+                        tfile[0] = 2 # convert read_in file to type 2
+                        print("\n*** Warning: merged file already exists: ",fname_new, " delete it to re-merge files\n")
+                    else:
+                        fname_merged = os.path.join(cwdr,tfile[-1][:-4] + '_merged.tt2')
+                        tools.merge_dems(dem_paths, fname_merged) # merge files
+                        if tfile[0] > 2:
+                            read_in = tfile[0]
+                            tfile[0] = 2
+                            tools.convert_file_type(fname_merged, fname_new, read_in, tfile[0]) # convert read_in file to type 2
+                            fname = fname_new
+                            # check if merged file is exists and remove it if
+                            if os.path.exists(fname_merged): os.remove(fname_merged)
+                            
+                fname = "'%s'" % fname  
+                self._out_file.write("\n %s \n" % fname) 
+                self._out_file.write("%3i %3i %3i \t=: qinitftype, minilevel_qinit, maxlevel_qinit\n" % tuple(tfile[:-1]))
 
+            
         self.data_write('variable_eta_init')
 
         self.num_force_dry = len(self.force_dry_list)
@@ -484,7 +543,7 @@ class QinitData(clawpack.clawutil.data.ClawData):
 
 
 # Storm data
-class SurgeData(clawpack.clawutil.data.ClawData):
+class SurgeData(clawutil.data.ClawData):
     r"""Data object describing storm surge related parameters"""
 
     # Provide some mapping between model names and integers
@@ -591,7 +650,7 @@ class SurgeData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-class FrictionData(clawpack.clawutil.data.ClawData):
+class FrictionData(clawutil.data.ClawData):
     r"""Data class representing complex variable friction"""
 
     def __init__(self):
@@ -647,7 +706,7 @@ class FrictionData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-class MultilayerData(clawpack.clawutil.data.ClawData):
+class MultilayerData(clawutil.data.ClawData):
     r"""
     Multilayer SWE data object
     """

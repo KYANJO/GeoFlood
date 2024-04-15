@@ -25,14 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef FLOOD_SPEED_USER_H
 #define FLOOD_SPEED_USER_H
-#include <fc2d_cudaclaw.h>
-#include <fc2d_cudaclaw_options.h>
-#include <cudaclaw_user_fort.h>
 
 #include <fclaw2d_include_all.h>
-
-#include <fclaw2d_clawpatch.h>
-#include <fclaw2d_clawpatch_options.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -42,50 +36,27 @@ extern "C"
 #endif
 #endif
 
-typedef struct user_options
-{
-    int cuda;
-    int example;
-    double gravity;
-    double dry_tolerance;
-    double earth_radius;
-    double coordinate_system;
-    int mcapa;
-    int is_registered;
-} user_options_t;
-
-
-// --- will call the riemann solvers here ----
-void flood_speed_assign_rpn2(cudaclaw_cuda_rpn2_t *rpn2);
-void flood_speed_assign_rpt2(cudaclaw_cuda_rpt2_t *rpt2);
-void flood_speed_assign_speeds(cudaclaw_cuda_speeds_t *speeds);
-
-void setprob_cuda();
-
 // --------------------------------------------
 void flood_speed_link_solvers(fclaw2d_global_t *glob);
-user_options_t* flood_speed_options_register (fclaw_app_t * app,
-                                          const char *configfile);
-void flood_speed_options_store (fclaw2d_global_t* glob, user_options_t* user);
-user_options_t* flood_speed_get_options(fclaw2d_global_t* glob);
-// #define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 
-// void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
-//                     const int* mx, const int* my,
-//                     const double* xlower, const double* ylower,
-//                     const double* dx, const double* dy,
-//                     double q[], const int* maux, double aux[]);
+#define FLOOD_SPEED_QINIT  FCLAW_F77_FUNC(flood_speed_qinit, FLOOD_SPEED_QINIT)
 
-// //  BC (Fortran to c)
-// #define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
+void FLOOD_SPEED_QINIT(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    double q[], const int* maux, double aux[]);
 
-// void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
-//                     const int* mx, const int* my,
-//                     const double* xlower, const double* ylower,
-//                     const double* dx, const double* dy,
-//                     const double q[], const int* maux,
-//                     const double aux[], const double* t,
-//                     const double* dt, const int mthbc[]);
+//  BC (Fortran to c)
+#define FLOOD_SPEED_BC2   FCLAW_F77_FUNC(flood_speed_bc2, FLOOD_SPEED_BC2)
+
+void FLOOD_SPEED_BC2(const int* meqn, const int* mbc,
+                    const int* mx, const int* my,
+                    const double* xlower, const double* ylower,
+                    const double* dx, const double* dy,
+                    const double q[], const int* maux,
+                    const double aux[], const double* t,
+                    const double* dt, const int mthbc[]);
 
 
 /* Mappings */

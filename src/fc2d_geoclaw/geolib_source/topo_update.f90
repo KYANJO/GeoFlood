@@ -17,13 +17,13 @@ subroutine topo_update(t)
    implicit none
 
    !arguments
-   real(kind=8), intent(in) ::t
+   double precision, intent(in) ::t
 
    !locals
    integer :: i,j,m,mt
    integer :: ij,ij0,irank,idtopo1,idtopo2,jdtopo1,jdtopo2
    integer :: ijll,ijlr,ijul,ijur
-   real(kind=8) :: x,y,xl,xr,yu,yl,zll,zlr,zul,zur,dz12,dz1,dz2,dztotal
+   double precision :: x,y,xl,xr,yu,yl,zll,zlr,zul,zur,dz12,dz1,dz2,dztotal
 
    if (t<minval(t0dtopo).or.topo_finalized.eqv..true.) then
       return

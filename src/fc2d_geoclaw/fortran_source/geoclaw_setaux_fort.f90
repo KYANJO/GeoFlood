@@ -27,15 +27,15 @@ SUBROUTINE fc2d_geoclaw_setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux, &
 
   !! Arguments
   INTEGER, INTENT(in) :: mbc,mx,my,maux
-  REAL(kind=8), INTENT(in) :: xlow,ylow,dx,dy
-  REAL(kind=8), INTENT(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+  double precision, INTENT(in) :: xlow,ylow,dx,dy
+  double precision, INTENT(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
   integer, intent(in) :: nghost, mint
   INTEGER, INTENT(in) :: is_ghost_in
   LOGICAL*1 :: is_ghost
 
   !! Locals
   INTEGER :: ii,jj,m, iint,jint
-  REAL(kind=8) :: x,y,xm,ym,xp,yp,topo_integral
+  double precision :: x,y,xm,ym,xp,yp,topo_integral
   CHARACTER(len=*), PARAMETER :: aux_format = "(2i4,4d15.3)"
   INTEGER :: skipcount,iaux,ilo,jlo
   LOGICAL ghost_invalid

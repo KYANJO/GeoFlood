@@ -22,20 +22,20 @@ SUBROUTINE fc2d_geoclaw_src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
 
   !! Locals
   integer :: i, j, nman
-  real(kind=8) :: h, hu, hv, gamma, dgamma, y, fdt, a(2,2), coeff
-  real(kind=8) :: xm, xc, xp, ym, yc, yp, dx_meters, dy_meters
-  real(kind=8) :: u, v, hu0, hv0
-  real(kind=8) :: tau, wind_speed, theta, phi, psi, P_gradient(2), S(2)
-  real(kind=8) :: Ddt, sloc(2)
+  double precision :: h, hu, hv, gamma, dgamma, y, fdt, a(2,2), coeff
+  double precision :: xm, xc, xp, ym, yc, yp, dx_meters, dy_meters
+  double precision :: u, v, hu0, hv0
+  double precision :: tau, wind_speed, theta, phi, psi, P_gradient(2), S(2)
+  double precision :: Ddt, sloc(2)
 
   !! Algorithm parameters
   !! Parameter controls when to zero out the momentum at a depth in the
   !! friction source term
-  real(kind=8), parameter :: depth_tolerance = 1.0d-30
+  double precision, parameter :: depth_tolerance = 1.0d-30
 
   !! Physics
   !! Nominal density of water
-  real(kind=8), parameter :: rho = 1025.d0
+  double precision, parameter :: rho = 1025.d0
 
   !! Friction source term
   if (friction_forcing) then
@@ -61,6 +61,7 @@ SUBROUTINE fc2d_geoclaw_src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
                  gamma = sqrt(q(2,i,j)**2 + q(3,i,j)**2) * g     &
                       * coeff**2 / (q(1,i,j)**(7.d0/3.d0))
                  dgamma = 1.d0 + dt * gamma
+               !   write(*,*) 'dgamma = ', dgamma
                  q(2, i, j) = q(2, i, j) / dgamma
                  q(3, i, j) = q(3, i, j) / dgamma
               endif

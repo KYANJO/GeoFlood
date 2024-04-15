@@ -1,6 +1,6 @@
 # Add boundary conditions as a library
 add_library(filling_depressions_f OBJECT
-  # fortran/fc2d_geoflood_bc2.f90
+  fortran/fc2d_geoflood_bc2.f90
   ../../../../src/fc2d_geoclaw/hydrograph/hydrograh_module.f90
   ../../../../src/fc2d_geoclaw/geolib_source/geoclaw_module.f90 
   ../../../../src/fc2d_geoclaw/geolib_source/utility_module.f90

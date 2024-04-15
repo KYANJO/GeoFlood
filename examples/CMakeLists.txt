@@ -5,20 +5,16 @@
 #----------------------------------
 # GeoFlood library and examples
 # ----------------------------------
-
+# cpu version
 if(TARGET GEOFLOOD::GEOCLAW)
 
     include(cpuflood/cpuflood.cmake)
 
 endif()
 
-if(TARGET GEOFLOOD::CUDACLAW)
-    enable_language(CUDA)
-    include(cudaflood/cudaflood.cmake)
-endif()
-
+# hybrid cpu/cuda version
 if(TARGET GEOFLOOD::CPU_CUDA)
     enable_language(CUDA)
-    # include(cudaflood/cudaflood.cmake)
     include(cpu_cuda/cpu_cuda.cmake)
 endif()
+

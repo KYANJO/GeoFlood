@@ -24,11 +24,13 @@ from six.moves import range
 matplotlib.use('Agg') 
 
 import sys
+
+sys.path.append('../../../scripts')
 import os
 import time
 import subprocess
 
-import clawpack.visclaw.frametools as frametools
+import visclaw.frametools as frametools
 
 if sys.platform in ['win32','cygwin']:
     pypath = 'C:/cygwin' + os.environ['CLAW'] + '/python'
@@ -46,8 +48,8 @@ def plotclaw(outdir='.', plotdir='_plots', setplot = 'setplot.py',
         format specifies the format of the files output from Clawpack
     """
 
-    from clawpack.visclaw.data import ClawPlotData
-    from clawpack.visclaw import plotpages
+    from visclaw.data import ClawPlotData
+    from visclaw import plotpages
 
     plotdata = ClawPlotData()
     plotdata.outdir = outdir

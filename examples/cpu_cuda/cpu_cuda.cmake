@@ -3,9 +3,10 @@
 ## ----------------------------------
 ## GeoFlood examples
 ## ----------------------------------
-# if(cudaflood)
-    # add_subdirectory(cudaflood/teton)
-    add_subdirectory(cpu_cuda/bump) #!<-- different initial conditions
+if(cpu_cuda)
     add_subdirectory(cpu_cuda/benchmark_tests)
-    # add_subdirectory(cudaflood/malpasset) #<--will switch on when implementation
-# endif(cudaflood)
+    add_subdirectory(cpu_cuda/malpasset) 
+    add_subdirectory(cpu_cuda/teton)
+    add_subdirectory(cpu_cuda/missoula)
+    # add_subdirectory(cpu_cuda/bump)
+endif(cpu_cuda)
