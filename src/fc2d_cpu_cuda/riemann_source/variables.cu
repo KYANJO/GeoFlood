@@ -1,5 +1,5 @@
 #include "../fc2d_cudaclaw_cuda.h"
-#include "../fc2d_geoclaw_fort.h"
+#include "../fc2d_cpucuda_fort.h"
 #include "variables.h"
 #include <math.h>
 #include <fc2d_cudaclaw_check.h>

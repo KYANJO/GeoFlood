@@ -1,4 +1,4 @@
-#include "../fc2d_geoclaw.h"
+#include "../fc2d_cpucuda.h"
 
 #include "../fc2d_cudaclaw_cuda.h"
 
@@ -11,7 +11,7 @@
 
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
-#include <fc2d_geoclaw_options.h>
+#include <fc2d_cpucuda_options.h>
 
 #include "../fc2d_cudaclaw_check.h"  /* CHECK defined here */
 

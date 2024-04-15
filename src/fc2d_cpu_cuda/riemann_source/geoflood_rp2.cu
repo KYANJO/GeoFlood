@@ -269,7 +269,9 @@ __device__ void cuda_flood_rpn2(int idir, int meqn, int mwaves,
     /* --- Capacity or Mapping from Latitude Longitude to physical space ----*/
     if (mcapa > 0) {
         // Compute dxdc based on idir without branching
-        dxdc = earth_radius * deg2rad * (idir == 0 ? 1.0 : cos(auxr[2]));
+        double idir_flag = (idir == 0);
+        dxdc = earth_radius * deg2rad * (idir_flag + (1.0 - idir_flag) * cos(auxr[2]));
+        // dxdc = earth_radius * deg2rad * (idir == 0 ? 1.0 : cos(auxr[2]));
     
         // Update fwave and corresponding speeds
         for (int mw = 0; mw < mwaves; mw++) {
@@ -346,20 +348,26 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
     bpasdq[mu] = 0.0;
     bpasdq[mv] = 0.0;
 
-    h = (imp == 0) ? ql[0] : qr[0];
+    double imp_flag = (imp == 0);
+    h = (imp_flag * ql[0] + (1.0 - imp_flag) * qr[0]);
 
-    bool debug = (idir == 0) ? 1 : 0;
+    // h = (imp == 0) ? ql[0] : qr[0];
+
+    // bool debug = (idir == 0) ? 1 : 0;
   
     if (h <= drytol) return; // skip problem if dry cell (leaves bmadsq(:) = bpasdq(:) = 0)
     
 
     /* Compute velocities in relevant cell, and other quantities */
-    int k = imp * maux; 
-
+    
     // fluctuations being split is either left-going or right-going
-    u = (imp == 0 ? ql[mu] : qr[mu]) / h;
-    v = (imp == 0 ? ql[mv] : qr[mv]) / h;
+    // double imp_flag = (imp == 0);
+    u = (imp_flag * ql[mu] + (1.0 - imp_flag) * qr[mu]) / h;
+    v = (imp_flag * ql[mv] + (1.0 - imp_flag) * qr[mv]) / h;
+    // u = (imp == 0 ? ql[mu] : qr[mu]) / h;
+    // v = (imp == 0 ? ql[mv] : qr[mv]) / h;
 
+    int k = imp * maux; 
     eta = h + aux2[k];
     topo1 = aux1[k];
     topo3 = aux3[k];
@@ -369,22 +377,38 @@ __device__ void cuda_flood_rpt2(int idir, int meqn, int mwaves, int maux,
    
     /* Check if cell that transverse waves go into are both to high, if so,
     do the splitting (no dry cells), and compute necessary quantities */
+   
+    // Cartesian
+    dxdcp = 1.0;
+    dxdcm = 1.0;
+
     if (coordinate_system == 2) {
         // On the sphere
-        if (idir == 1) {
-            dxdcp = earth_radius * deg2rad;
-            dxdcm = dxdcp;
-        } else {
+        int k = imp * maux + 2;
+        double idir_flag = (idir == 1);
+        dxdcp = earth_radius * (idir_flag + (1.0 - idir_flag) * cos(aux3[k])) * deg2rad;
+        dxdcm = idir_flag*dxdcp + (1.0 - idir_flag) * earth_radius * cos(aux1[k]) * deg2rad;
+        // if (idir == 1) {
+        //     dxdcp = earth_radius * deg2rad;
+        //     dxdcm = dxdcp;
+        // } else {
             
-            int k = imp * maux + 2;
-            dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
-            dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
-        }
-    } else {
-        // Cartesian
-        dxdcp = 1.0;
-        dxdcm = 1.0;
+        //     int k = imp * maux + 2;
+        //     dxdcp = earth_radius * cos(aux3[k]) * deg2rad;
+        //     dxdcm = earth_radius * cos(aux1[k]) * deg2rad;
+        // }
     }
+    //  else {
+    //     // Cartesian
+    //     dxdcp = 1.0;
+    //     dxdcm = 1.0;
+    // }
+
+    // double cord_sytem_flag = (coordinate_system == 2);
+    // double idir_flag = (idir == 1);
+    // k = imp * maux + 2;
+    // dxdcp = cord_sytem_flag * earth_radius * (idir_flag + (1.0 - idir_flag) * cos(aux3[k])) * deg2rad + (1.0 - cord_sytem_flag);
+    // dxdcm = cord_sytem_flag * idir_flag*dxdcp + (1.0 - idir_flag) * earth_radius * cos(aux1[k]) * deg2rad + (1.0 - cord_sytem_flag);
 
     /* Compute some speeds necessary for the Jacobian 
     - Computing upgoing, downgoing waves either in cell on left (if imp==0)

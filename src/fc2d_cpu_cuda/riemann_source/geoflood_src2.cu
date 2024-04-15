@@ -85,7 +85,7 @@ __device__ void cuda_flood_src2(int meqn, int maux, double xlower, double ylower
         double fdt = coriolis(y) * dt; // Calculate f dependent on coordinate system
 
         // calculate the matrix components
-        double a[2][2];
+        __shared__ double a[2][2];
         a[0][0] = 1.0 - (0.5*fdt*fdt) + pow(fdt,4)/24.0;
         a[0][1] = fdt - pow(fdt,3)/6.0;
         a[1][0] = -fdt + pow(fdt,3)/6.0;

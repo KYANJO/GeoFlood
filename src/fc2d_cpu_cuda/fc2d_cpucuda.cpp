@@ -26,14 +26,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fc2d_geoclaw.h"
 // #include "fc2d_geoclaw_options.h"
 #include "fc2d_geoclaw_fort.h"
-#include "fc2d_geoclaw_output_ascii.h"
+#include "../fc2d_geoclaw/fc2d_geoclaw_output_ascii.h"
 
 #include <stdlib.h>  /* For size_t */
 
 #include <fclaw_pointer_map.h>
 
 #include <fclaw_gauges.h>
-#include "fc2d_geoclaw_gauges_default.h"
+#include "../fc2d_geoclaw/fc2d_geoclaw_gauges_default.h"
 
 #include <fclaw2d_clawpatch.hpp>
 #include <fclaw2d_clawpatch.h>

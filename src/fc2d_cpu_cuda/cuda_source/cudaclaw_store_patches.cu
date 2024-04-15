@@ -1,10 +1,10 @@
-#include "../fc2d_geoclaw.h"
+#include "../fc2d_cpucuda.h"
 #include <fclaw2d_global.h>
 #include <fclaw2d_patch.h>
 
 #include <fclaw2d_clawpatch.h>
 #include <fclaw2d_clawpatch_options.h>
-#include <fc2d_geoclaw_options.h>
+#include <fc2d_cpucuda_options.h>
 
 #include "cudaclaw_allocate.h"
 #include <fc2d_cuda_profiler.h>
