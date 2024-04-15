@@ -28,13 +28,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fclaw2d_include_all.h>
 
 #include <fclaw2d_clawpatch.h>
-#include <fc2d_geoclaw.h>
+#include <fc2d_cpucuda.h>
 
 static
 void debug_problem_setup(fclaw2d_global_t* glob)
 {
     user_options_t* user_opt = geoflood_get_options(glob);
-    // fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    // fc2d_cpucuda_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
     fclaw2d_domain_barrier (glob->domain);
     if (user_opt->cuda != 0)
     {
@@ -51,7 +51,7 @@ void debug_link_solvers(fclaw2d_global_t *glob)
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
     const user_options_t* user_opt = geoflood_get_options(glob);
-    // fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    // fc2d_cpucuda_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
     // if (user_opt->cuda == 0)
     // {
         fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);

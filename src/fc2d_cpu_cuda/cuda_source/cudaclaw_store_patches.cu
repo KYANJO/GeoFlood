@@ -25,7 +25,7 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 {
     PROFILE_CUDA_GROUP("fc2d_cudaclaw_store_buffer",4);
 
-    const fc2d_geoclaw_options_t *cuclaw_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t *cuclaw_opt = fc2d_geoclaw_get_options(glob);
     fc2d_geoclaw_vtable_t*  cudaclaw_vt = fc2d_geoclaw_vt(glob);
 
 

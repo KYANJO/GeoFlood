@@ -76,7 +76,7 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
     cudaclaw_fluxes_t* fluxes;
 
     /* To get patch-independent parameters */
-    fc2d_geoclaw_options_t *clawopt;
+    fc2d_cpucuda_options_t *clawopt;
     fclaw2d_clawpatch_options_t *clawpatch_opt;
 
     /* ---------------------------------- start code ---------------------------------- */

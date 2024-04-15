@@ -23,9 +23,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "fc2d_geoclaw.h"
-// #include "fc2d_geoclaw_options.h"
-#include "fc2d_geoclaw_fort.h"
+#include "fc2d_cpucuda.h"
+// #include "fc2d_cpucuda_options.h"
+#include "fc2d_cpucuda_fort.h"
 #include "../fc2d_geoclaw/fc2d_geoclaw_output_ascii.h"
 
 #include <stdlib.h>  /* For size_t */
@@ -140,7 +140,7 @@ void geoclaw_bc2(fclaw2d_global_t *glob,
     // PROFILE_CUDA_GROUP("geoclaw_bc2",6);
     fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
 
-    fc2d_geoclaw_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
+    fc2d_cpucuda_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
     FCLAW_ASSERT(geoclaw_vt->bc2 != NULL);
 
     int mx,my,mbc;
@@ -294,7 +294,7 @@ double geoclaw_step2(fclaw2d_global_t *glob,
     FCLAW_ASSERT(geoclaw_vt->rpn2 != NULL);
     FCLAW_ASSERT(geoclaw_vt->rpt2 != NULL);
 
-    fc2d_geoclaw_options_t* geoclaw_options = fc2d_geoclaw_get_options(glob);
+    fc2d_cpucuda_options_t* geoclaw_options = fc2d_geoclaw_get_options(glob);
 
     int level = patch->level;
 
@@ -392,7 +392,7 @@ double geoclaw_update(fclaw2d_global_t *glob,
 
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
 
-    const fc2d_geoclaw_options_t* geoclaw_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t* geoclaw_opt = fc2d_geoclaw_get_options(glob);
     if (geoclaw_opt->src_term > 0)
     {
         geoclaw_src2(glob,
@@ -419,7 +419,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     // PROFILE_CUDA_GROUP("cudaclaw_update",3);
     // fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
     fc2d_geoclaw_vtable_t*  cudaclaw_vt = fc2d_geoclaw_vt(glob);
-    const fc2d_geoclaw_options_t* cuclaw_opt;
+    const fc2d_cpucuda_options_t* cuclaw_opt;
 
     int iter, total, patch_buffer_len;
     size_t size, bytes;
@@ -567,7 +567,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     // PROFILE_CUDA_GROUP("cudaclaw_update",3);
     fc2d_geoclaw_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
     // fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
-    const fc2d_geoclaw_options_t* cuclaw_opt;
+    const fc2d_cpucuda_options_t* cuclaw_opt;
 
     int iter, total, patch_buffer_len;
     size_t size, bytes;
@@ -693,7 +693,7 @@ double cudaclaw_update(fclaw2d_global_t *glob,
 static
 void geoclaw_output(fclaw2d_global_t *glob, int iframe)
 {
-    const fc2d_geoclaw_options_t*geo_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t*geo_opt = fc2d_geoclaw_get_options(glob);
     if (geo_opt->ascii_out != 0)
         fc2d_geoclaw_output_ascii(glob,iframe);        
 }
@@ -878,7 +878,7 @@ void geoclaw_average2coarse(fclaw2d_global_t *glob,
         double *auxfine;
         fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
 
-        const fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+        const fc2d_cpucuda_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
         int mcapa = geo_opt->mcapa;
         FC2D_GEOCLAW_FORT_AVERAGE2COARSE(&mx,&my,&mbc,&meqn,qcoarse,qfine,
                                          &maux,auxcoarse,auxfine,&mcapa,&igrid);
@@ -918,7 +918,7 @@ void geoclaw_average_face(fclaw2d_global_t *glob,
     double *auxfine;
     fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
 
-    const fc2d_geoclaw_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
     int mcapa = geo_opt->mcapa;
 
     const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
@@ -995,7 +995,7 @@ void geoclaw_average_corner(fclaw2d_global_t *glob,
     double *auxfine;
     fclaw2d_clawpatch_aux_data(glob,fine_patch,&auxfine,&maux);
 
-    const fc2d_geoclaw_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
     int mcapa = geo_opt->mcapa;
 
     const fclaw_options_t *fclaw_opt = fclaw2d_get_options(glob);
@@ -1097,7 +1097,7 @@ void fc2d_geoclaw_module_setup(fclaw2d_global_t *glob)
 {
     const fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
     const fclaw2d_clawpatch_options_t *clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
-    const fc2d_geoclaw_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t *geo_opt = fc2d_geoclaw_get_options(glob);
 
     FC2D_GEOCLAW_SET_MODULES(&geo_opt->mwaves, 
                              &geo_opt->mcapa,
@@ -1138,7 +1138,7 @@ void fc2d_geoclaw_solver_initialize(fclaw2d_global_t* glob)
 {
 	fclaw_options_t* fclaw_opt = fclaw2d_get_options(glob);
 	fclaw2d_clawpatch_options_t* clawpatch_opt = fclaw2d_clawpatch_get_options(glob);
-	fc2d_geoclaw_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+	fc2d_cpucuda_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
     user_options_t* user_opt = geoflood_get_options(glob);
 
     geo_opt->method[6] = clawpatch_opt->maux;

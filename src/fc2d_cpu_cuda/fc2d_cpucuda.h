@@ -23,13 +23,13 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef FC2D_GEOCLAW_H
-#define FC2D_GEOCLAW_H
+#ifndef FC2D_CPUCUDA_H
+#define FC2D_CPUCUDA_H
 
 #include <fclaw_base.h>   /* Needed for FCLAW_F77_FUNC */
 #include <fc2d_cudaclaw_cuda.h>  /* Needed for cuda_rpn2, cuda_rpt2 and other cuda functions */
-#include <fc2d_geoclaw_fort.h>  /* Needed for virtual functions */
-#include "fc2d_geoclaw_options.h"
+#include <fc2d_cpucuda_fort.h>  /* Needed for virtual functions */
+#include "fc2d_cpucuda_options.h"
 #include "geoflood_options_user.h"
 
 #ifdef __cplusplus
@@ -65,8 +65,8 @@ void fc2d_geoclaw_output(struct fclaw2d_global *glob, int iframe);
  * 
  * fclaw2d_vtables_intialize should be called before this function.
  * 
- * fclaw_options, fclaw2d_clawpatch_options, and fc2d_geoclaw_options should be stored in glob.
- * fclaw_options, and, fc2d_geoclaw_options will be changed in this call.
+ * fclaw_options, fclaw2d_clawpatch_options, and fc2d_cpucuda_options should be stored in glob.
+ * fclaw_options, and, fc2d_cpucuda_options will be changed in this call.
  * 
  * @param global the global context
  */
