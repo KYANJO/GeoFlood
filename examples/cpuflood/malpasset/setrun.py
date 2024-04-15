@@ -2,7 +2,7 @@
 # @author:  Brian Kyanjo
 # @contact: briankyanjo@u.boisestate.edu
 # @date:    2022-10-16
-# @version: 1.0
+# @version: 2.0
 # ------------------------------------------------
 
 import os
@@ -17,11 +17,13 @@ import tools
 #===============================================================================
 sys.path.append('../../../scripts')
 import geoflood # -- importing geoflood.py
+import data
+from geoclaw.topotools import Topography
 
 #===============================================================================
 # scratch directory
 #===============================================================================
-scratch_dir = os.path.join('../scratch')
+scratch_dir = os.path.join('scratch')
 
 #===============================================================================
 # User specified parameters
@@ -49,23 +51,30 @@ if output_style == 3:
     total_steps = 1000   # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 32
-my = 32
+mx = 16
+my = 16
 
-mi = 1  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
-mj = 2  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
+mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
+mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
 
-minlevel = 1
-maxlevel = 6 #resolution based on levels
-ratios_x = [2]*(maxlevel+1)
-ratios_y = [2]*(maxlevel+1)
-ratios_t = [2]*(maxlevel+1)
+minlevel = 1 
+maxlevel = 3 #resolution based on levels
+
  
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.03333
 
 #-------------------  Number of dimensions ---------------------------------------
 num_dim = 2
+
+# ------------------  user options ---------------------------------------------------
+use_cuda = True
+gravity = 9.81
+dry_tolerance = 1e-4
+earth_radius = 6371220.0
+coordinate_system = 1
+mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
+buffer_length = 1024
 
 # --------------------- Topography file -----------------------------------------------
 topofile = 'scratch/Malpasset/malpasset_domaingrid_20m_nolc.topotype2'
@@ -88,8 +97,6 @@ def setrun(claw_pkg='geoclaw'):
         rundata - object of class ClawRunData
 
     """
-
-    from clawpack.clawutil import data
 
     assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
 
@@ -198,7 +205,7 @@ def setrun(claw_pkg='geoclaw'):
     clawdata.num_aux = 1
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 0 #flag set to 0 if coordinate system = 1 otherwise 2
+    clawdata.capa_index = mcapa #flag set to 0 if coordinate system = 1 otherwise 2
 
     # -------------
     # Initial time:
@@ -383,6 +390,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
+    geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
     geoflooddata.output = True
@@ -401,7 +409,13 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.tikz_plot_prefix = "mlp"
     geoflooddata.tikz_plot_suffix = "png"
 
-    geoflooddata.user = {'example'     : 1}
+    geoflooddata.cuda = use_cuda
+    geoflooddata.gravity = gravity
+    geoflooddata.dry_tolerance = dry_tolerance
+    geoflooddata.earth_radius = earth_radius
+    geoflooddata.coordinate_system = coordinate_system
+    geoflooddata.mcapa = mcapa
+    geoflooddata.buffer_len = buffer_length
 
     # Clawpatch tagging criteria
     # value       : value exceeds threshold
@@ -418,6 +432,12 @@ def setrun(claw_pkg='geoclaw'):
     # 3 or 'info'        : More detailed output
     # 4 or 'debug'       : Includes detailed output from each processor
     geoflooddata.verbosity = 'production'
+    geoflooddata.report_timing_verbosity = 'all'
+
+    # -----------------------------------------------
+    # setrob parameters:
+    # -----------------------------------------------
+    setprobdata = geoflood.Setprobdata(gravity, dry_tolerance, earth_radius, coordinate_system, mcapa)
 
     # -----------------------------------------------
     # AMR parameters:
@@ -425,9 +445,9 @@ def setrun(claw_pkg='geoclaw'):
     amrdata = rundata.amrdata
 
     amrdata.amr_levels_max = maxlevel    # Set to 3 for best results
-    amrdata.refinement_ratios_x = ratios_x
-    amrdata.refinement_ratios_y = ratios_y
-    amrdata.refinement_ratios_t = ratios_t
+    # amrdata.refinement_ratios_x = ratios_x
+    # amrdata.refinement_ratios_y = ratios_y
+    # amrdata.refinement_ratios_t = ratios_t
     # rundata.tol = -1
     # rundata.tolsp = 0.001
 
@@ -476,7 +496,7 @@ def setrun(claw_pkg='geoclaw'):
     print('Lake domain')
     print('%-12s (%14.8f, %12.8f)' % ('x',region_lower[0],region_upper[0]))
     print('%-12s (%14.8f, %12.8f)' % ('y',region_lower[1],region_upper[1]))
-    regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
+    # regions.append([0,0,0, 1e10, region_lower[0],region_upper[0],region_lower[1],region_upper[1]])
 
     xll = [9.57e5,  clawdata.lower[1]]
     xur = [9.585e5, 1.832e6] 
@@ -524,7 +544,8 @@ def setrun(claw_pkg='geoclaw'):
     amrdata.tprint = True      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-    return rundata,geoflooddata, hydrographdata, flowgrades_data
+
+    return rundata, geoflooddata, setprobdata
     # end of function setrun
     # ----------------------
 
@@ -543,16 +564,16 @@ def setgeo(rundata):
         raise AttributeError("Missing geo_data attribute")
 
     # == Physics ==
-    geo_data.gravity = 9.81
-    geo_data.coordinate_system = 1   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
-    geo_data.earth_radius = 6367.5e3
+    geo_data.gravity = gravity
+    geo_data.coordinate_system = coordinate_system   # 1 - for cartesian x-y cordinates  2 - LatLong coordinates
+    geo_data.earth_radius = earth_radius
 
     # == Forcing Options
     geo_data.coriolis_forcing = False #Not used in TELEmac
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
-    geo_data.dry_tolerance = 1.e-3
+    geo_data.dry_tolerance = dry_tolerance
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = manning_coefficient
     geo_data.friction_depth = 500
@@ -579,14 +600,21 @@ def setgeo(rundata):
     topo_data.topofiles.append([2, minlevel, maxlevel, 0, 1e10, 'scratch/Malpasset/malpasset_damapproach_1m_nolc.topotype2'])
 
     # == setqinit.data values ==
-    rundata.qinit_data.qinit_type = 4
-    rundata.qinit_data.qinitfiles = []
-    rundata.qinit_data.variable_eta_init = True
+    # rundata.qinit_data.qinit_type = 4
+    # # rundata.qinit_data.qinitfiles = []
+    # rundata.qinit_data.variable_eta_init = True
     # for qinit perturbations, append lines of the form: (<= 1 allowed for now!)
     #   [minlev, maxlev, fname]
+
+    # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
     
-    rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
     # rundata.qinit_data.qinitfiles.append([minlevel,minlevel,'scratch/Malpasset/init_h_5m_cadam.xyz'])
+
+    rundata.qinit_data.qinit_type = 4
+    rundata.qinit_data.variable_eta_init = True
+    # for qinit perturbations append lines of the form
+    #   [qinitftype, minlev, maxlev, fname]
+    rundata.qinit_data.qinitfiles.append([1,minlevel,minlevel,'scratch/Malpasset/init_eta_5m_cadam.xyz'])
 
 
     return rundata
@@ -595,22 +623,9 @@ def setgeo(rundata):
 
 if __name__ == '__main__':
     # Set up run-time parameters and write all data files.
-    # generate_qinit()         # generate topo file (generated before running setrun.py)
-
-    rundata,geoflooddata,hydrographdata,flowgrades_data = setrun(*sys.argv[1:])
+    # generate_topo_file()         # generate topo file (generated before running setrun.py)
+    rundata,geoflooddata, setprobdata = setrun(*sys.argv[1:])
     rundata.write()
+    geoflood.write_data_outputs(rundata,geoflooddata, setprobdata)
 
-    geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-
-    hydrographdata.write()  # writes a geoflood hydrograph file
-
-    flowgrades_data.write()  # writes a geoflood flowgrades file
-
-# if __name__ == '__main__':
-#     # Set up run-time parameters and write all data files.
-#     rundata,geoflooddata = setrun(*sys.argv[1:])
-#     rundata.write()
-
-#     geoflooddata.write(rundata)  # writes a geoflood geoflood.ini file
-
-#     hydrographdata.write()  # writes a geoflood hydrograph file
+    

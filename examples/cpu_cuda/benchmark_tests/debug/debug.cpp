@@ -72,7 +72,7 @@ void run_program(fclaw2d_global_t* glob)
        --------------------------------------------------------------- */
     fclaw2d_domain_data_new(glob->domain);
     user_options_t* user_opt = geoflood_get_options(glob);
-    // fc2d_cpucuda_options_t* geo_opt = fc2d_geoclaw_get_options(glob);
+    // fc2d_cpucuda_options_t* geo_opt = fc2d_cpucuda_get_options(glob);
 
     /* Initialize virtual table for ForestClaw */
     fclaw2d_vtables_initialize(glob);
@@ -80,7 +80,7 @@ void run_program(fclaw2d_global_t* glob)
     if(user_opt->cuda != 0)
     {
         /* Initialize virtual tables for solvers */
-        fc2d_cpucuda_options_t *clawopt = fc2d_geoclaw_get_options(glob);
+        fc2d_cpucuda_options_t *clawopt = fc2d_cpucuda_get_options(glob);
 
         fc2d_cudaclaw_initialize_GPUs(glob);
 

@@ -90,7 +90,7 @@ TEST_CASE("fc2d_geoclaw_vt fails if not intialized")
 	fclaw2d_global_destroy(glob2);
 }
 
-TEST_CASE("fc2d_geoclaw_vtable_initialize fails if called twice on a glob")
+TEST_CASE("fc2d_cpucuda_vtable_initialize fails if called twice on a glob")
 {
 	fclaw2d_global_t* glob1 = fclaw2d_global_new();
 	fclaw2d_global_t* glob2 = fclaw2d_global_new();

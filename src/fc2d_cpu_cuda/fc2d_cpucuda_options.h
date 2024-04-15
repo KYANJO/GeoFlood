@@ -88,7 +88,7 @@ fc2d_cpucuda_options_t *fc2d_cpucuda_options_register (fclaw_app_t * app,
 void fc2d_cpucuda_options_store (struct fclaw2d_global* glob, 
                                  fc2d_cpucuda_options_t* geo_opt);
 
-fc2d_cpucuda_options_t* fc2d_geoclaw_get_options(struct fclaw2d_global *glob);
+fc2d_cpucuda_options_t* fc2d_cpucuda_get_options(struct fclaw2d_global *glob);
 
 int cudaclaw_check_parameters(int mwaves);
 void cudaclaw_set_method_parameters(int order[], int mthlim[], int mwaves, int use_fwaves);

@@ -49,17 +49,17 @@ void flood_speed_link_solvers(fclaw2d_global_t *glob)
 
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
-    // fc2d_cpucuda_options_t* user_opt = fc2d_geoclaw_get_options(glob);
+    // fc2d_cpucuda_options_t* user_opt = fc2d_cpucuda_get_options(glob);
     // if (user_opt->cuda == 0)
     // // {
-        fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+        fc2d_cpucuda_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
     // //     // geoclaw_vt->qinit = &FLOOD_SPEED_QINIT; /* initial conditions */
         // geoclaw_vt->bc2 = &FLOOD_SPEED_BC2; /* special BC at the left boundary */
         geoclaw_vt->qinit = &FLOOD_SPEED_QINIT;
     // }
     // else 
     // {
-    //     fc2d_geoclaw_vtable_t *cuclaw_vt = fc2d_geoclaw_vt(glob);
+    //     fc2d_cpucuda_vtable_t *cuclaw_vt = fc2d_geoclaw_vt(glob);
     //     // cuclaw_vt->fort_bc2 = &CUDACLAW_BC2;
     //     // cuclaw_vt->bc2 = &FLOOD_SPEED_BC2;
     //     // cuclaw_vt->qinit = &FLOOD_SPEED_QINIT;

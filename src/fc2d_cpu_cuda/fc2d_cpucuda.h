@@ -40,7 +40,7 @@ extern "C"
 #endif
 #endif
 
-typedef struct fc2d_geoclaw_vtable fc2d_geoclaw_vtable_t;
+typedef struct fc2d_cpucuda_vtable fc2d_cpucuda_vtable_t;
 
 /* Forward declarations */
 struct fclaw2d_patch_transform_data;
@@ -86,11 +86,11 @@ void CUDACLAW_SWAP_DATA(const int* mx, const int *my, const int *mbc, const int*
  * @brief Get the geoclaw vtable
  * 
  * @param global the global context
- * @return fc2d_geoclaw_vtable_t* the vtable
+ * @return fc2d_cpucuda_vtable_t* the vtable
  */
-fc2d_geoclaw_vtable_t* fc2d_geoclaw_vt(struct fclaw2d_global *glob);
+fc2d_cpucuda_vtable_t* fc2d_geoclaw_vt(struct fclaw2d_global *glob);
 
-struct fc2d_geoclaw_vtable
+struct fc2d_cpucuda_vtable
 {
     fc2d_geoclaw_setprob_t  setprob;
     fc2d_geoclaw_bc2_t      bc2;
