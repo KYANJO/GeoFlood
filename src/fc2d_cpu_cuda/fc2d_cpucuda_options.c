@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 static void*
-geoclaw_register (fc2d_geoclaw_options_t *geo_opt, sc_options_t * opt)
+geoclaw_register (fc2d_cpucuda_options_t *geo_opt, sc_options_t * opt)
 {
     fclaw_options_add_int_array (opt, 0, "order", &geo_opt->order_string,
                                "2 2", &geo_opt->order, 2,
@@ -103,7 +103,7 @@ geoclaw_register (fc2d_geoclaw_options_t *geo_opt, sc_options_t * opt)
 }
 
 static fclaw_exit_type_t 
-geoclaw_check (fc2d_geoclaw_options_t *geo_opt)
+geoclaw_check (fc2d_cpucuda_options_t *geo_opt)
 {
     geo_opt->method[0] = 0;  /* Time stepping is controlled outside of clawpack */
 
@@ -125,7 +125,7 @@ geoclaw_check (fc2d_geoclaw_options_t *geo_opt)
 
 
 static fclaw_exit_type_t
-geoclaw_postprocess (fc2d_geoclaw_options_t * geo_opt)
+geoclaw_postprocess (fc2d_cpucuda_options_t * geo_opt)
 {
     fclaw_options_convert_int_array (geo_opt->mthbc_string, &geo_opt->mthbc,4);
 
@@ -141,7 +141,7 @@ geoclaw_postprocess (fc2d_geoclaw_options_t * geo_opt)
 }
 
 static void
-geoclaw_destroy (fc2d_geoclaw_options_t * geo_opt)
+geoclaw_destroy (fc2d_cpucuda_options_t * geo_opt)
 {
     fclaw_options_destroy_array (geo_opt->mthbc);
     fclaw_options_destroy_array (geo_opt->order);
@@ -156,13 +156,13 @@ geoclaw_destroy (fc2d_geoclaw_options_t * geo_opt)
 static void*
 options_register (fclaw_app_t * app, void *package, sc_options_t * opt)
 {
-    fc2d_geoclaw_options_t *geo_opt;
+    fc2d_cpucuda_options_t *geo_opt;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT (opt != NULL);
 
-    geo_opt = (fc2d_geoclaw_options_t*) package;
+    geo_opt = (fc2d_cpucuda_options_t*) package;
 
     return geoclaw_register(geo_opt, opt);
 }
@@ -170,13 +170,13 @@ options_register (fclaw_app_t * app, void *package, sc_options_t * opt)
 static fclaw_exit_type_t
 options_check (fclaw_app_t * app, void *package, void *registered)
 {
-    fc2d_geoclaw_options_t *geo_opt;
+    fc2d_cpucuda_options_t *geo_opt;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT (registered == NULL);
 
-    geo_opt = (fc2d_geoclaw_options_t*) package;
+    geo_opt = (fc2d_cpucuda_options_t*) package;
     FCLAW_ASSERT(geo_opt->is_registered != 0);
 
 
@@ -186,13 +186,13 @@ options_check (fclaw_app_t * app, void *package, void *registered)
 static fclaw_exit_type_t
 options_postprocess (fclaw_app_t * app, void *package, void *registered)
 {
-    fc2d_geoclaw_options_t *geo_opt;
+    fc2d_cpucuda_options_t *geo_opt;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT (registered == NULL);
 
-    geo_opt = (fc2d_geoclaw_options_t*) package;
+    geo_opt = (fc2d_cpucuda_options_t*) package;
     FCLAW_ASSERT (geo_opt->is_registered);
 
     return geoclaw_postprocess (geo_opt);
@@ -202,13 +202,13 @@ options_postprocess (fclaw_app_t * app, void *package, void *registered)
 static void
 options_destroy (fclaw_app_t * app, void *package, void *registered)
 {
-    fc2d_geoclaw_options_t *geo_opt;
+    fc2d_cpucuda_options_t *geo_opt;
 
     FCLAW_ASSERT (app != NULL);
     FCLAW_ASSERT (package != NULL);
     FCLAW_ASSERT (registered == 0);
 
-    geo_opt = (fc2d_geoclaw_options_t*) package;
+    geo_opt = (fc2d_cpucuda_options_t*) package;
     FCLAW_ASSERT (geo_opt->is_registered);
 
     geoclaw_destroy (geo_opt);
@@ -225,16 +225,16 @@ static const fclaw_app_options_vtable_t geoclaw_options_vtable = {
 /* ----------------------------------------------------------
    Public interface to clawpack options
    ---------------------------------------------------------- */
-fc2d_geoclaw_options_t*  
-fc2d_geoclaw_options_register (fclaw_app_t * app,
+fc2d_cpucuda_options_t*  
+fc2d_cpucuda_options_register (fclaw_app_t * app,
                                const char *section,
                                const char *configfile)
 {
-    fc2d_geoclaw_options_t *geo_opt;
+    fc2d_cpucuda_options_t *geo_opt;
 
     FCLAW_ASSERT (app != NULL);
 
-    geo_opt = FCLAW_ALLOC (fc2d_geoclaw_options_t, 1);
+    geo_opt = FCLAW_ALLOC (fc2d_cpucuda_options_t, 1);
     fclaw_app_options_register (app, section, configfile,
                                 &geoclaw_options_vtable, geo_opt);
 
@@ -243,16 +243,16 @@ fc2d_geoclaw_options_register (fclaw_app_t * app,
     return geo_opt;
 }
 
-fc2d_geoclaw_options_t* fc2d_geoclaw_get_options(fclaw2d_global_t *glob)
+fc2d_cpucuda_options_t* fc2d_geoclaw_get_options(fclaw2d_global_t *glob)
 {
-    fc2d_geoclaw_options_t* geo_opt = (fc2d_geoclaw_options_t*) 
+    fc2d_cpucuda_options_t* geo_opt = (fc2d_cpucuda_options_t*) 
 	   							fclaw_pointer_map_get(glob->options, "fc2d_geoclaw");
 	FCLAW_ASSERT(geo_opt != NULL);
 	return geo_opt;
 }
 
-void fc2d_geoclaw_options_store (fclaw2d_global_t* glob, 
-                               fc2d_geoclaw_options_t* geo_opt)
+void fc2d_cpucuda_options_store (fclaw2d_global_t* glob, 
+                               fc2d_cpucuda_options_t* geo_opt)
 {
 	FCLAW_ASSERT(fclaw_pointer_map_get(glob->options,"fc2d_geoclaw") == NULL);
 	fclaw_pointer_map_insert(glob->options, "fc2d_geoclaw", geo_opt, NULL);

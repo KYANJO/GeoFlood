@@ -38,7 +38,7 @@ extern "C"
 
 struct fclaw2d_global;
 
-typedef struct fc2d_geoclaw_options
+typedef struct fc2d_cpucuda_options
 {
     // int cuda;
     
@@ -71,7 +71,7 @@ typedef struct fc2d_geoclaw_options
 
     int is_registered;
     
-} fc2d_geoclaw_options_t;
+} fc2d_cpucuda_options_t;
 
 /**
  * @brief Register options in SC
@@ -79,16 +79,16 @@ typedef struct fc2d_geoclaw_options
  * @param a the app context
  * @param section the section name
  * @param configfile the config file
- * @return fc2d_geoclaw_options_t* a newly allocated options struct
+ * @return fc2d_cpucuda_options_t* a newly allocated options struct
  */
-fc2d_geoclaw_options_t *fc2d_geoclaw_options_register (fclaw_app_t * app,
+fc2d_cpucuda_options_t *fc2d_cpucuda_options_register (fclaw_app_t * app,
                                                        const char *section,
                                                        const char *configfile);
 
-void fc2d_geoclaw_options_store (struct fclaw2d_global* glob, 
-                                 fc2d_geoclaw_options_t* geo_opt);
+void fc2d_cpucuda_options_store (struct fclaw2d_global* glob, 
+                                 fc2d_cpucuda_options_t* geo_opt);
 
-fc2d_geoclaw_options_t* fc2d_geoclaw_get_options(struct fclaw2d_global *glob);
+fc2d_cpucuda_options_t* fc2d_geoclaw_get_options(struct fclaw2d_global *glob);
 
 int cudaclaw_check_parameters(int mwaves);
 void cudaclaw_set_method_parameters(int order[], int mthlim[], int mwaves, int use_fwaves);

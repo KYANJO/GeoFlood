@@ -43,7 +43,7 @@ void cudaclaw_allocate_fluxes(fclaw2d_global_t *glob,
     fluxes->ylower = ylower;
           
     /* Set global arrays on device */
-    fc2d_geoclaw_options_t* cuda_opt = fc2d_geoclaw_get_options(glob);
+    fc2d_cpucuda_options_t* cuda_opt = fc2d_geoclaw_get_options(glob);
     int mwaves = cuda_opt->mwaves;
 
 
@@ -124,7 +124,7 @@ void fc2d_cudaclaw_allocate_buffers(fclaw2d_global_t *glob)
     int maux = clawpatch_opt->maux;
     int meqn = clawpatch_opt->meqn;  
 
-    const fc2d_geoclaw_options_t *cuclaw_opt = fc2d_geoclaw_get_options(glob);
+    const fc2d_cpucuda_options_t *cuclaw_opt = fc2d_geoclaw_get_options(glob);
 
 
     int batch_size = cuclaw_opt->buffer_len;
