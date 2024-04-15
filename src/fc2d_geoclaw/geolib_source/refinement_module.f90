@@ -11,15 +11,15 @@ module refinement_module
     ! ========================================================================
     !  Refinement Criteria
     ! ========================================================================
-    real(kind=8) :: wave_tolerance
-    real(kind=8), allocatable :: speed_tolerance(:)
+    double precision :: wave_tolerance
+    double precision, allocatable :: speed_tolerance(:)
     logical :: varRefTime = .FALSE. ! Choose dt refinement automatically
     
     ! ========================================================================
     !  Flowgrades - Not updated yet, use at your own risk
     ! ========================================================================
     integer :: num_flowgrades
-    real(kind=8), allocatable :: flowgradevalue(:)
+    double precision, allocatable :: flowgradevalue(:)
     integer, allocatable :: iflowgradevariable(:), iflowgradetype(:)
     integer, allocatable :: iflowgrademinlevel(:)
 
