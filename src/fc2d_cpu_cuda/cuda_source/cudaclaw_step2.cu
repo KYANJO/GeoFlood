@@ -82,10 +82,10 @@ double cudaclaw_step2_batch(fclaw2d_global_t *glob,
     /* ---------------------------------- start code ---------------------------------- */
     FCLAW_ASSERT(batch_size > 0);
 
-    clawopt = fc2d_geoclaw_get_options(glob);
+    clawopt = fc2d_cpucuda_get_options(glob);
     mwaves = clawopt->mwaves;
 
-    fc2d_geoclaw_vtable_t*  cuclaw_vt = fc2d_geoclaw_vt(glob);
+    fc2d_cpucuda_vtable_t*  cuclaw_vt = fc2d_geoclaw_vt(glob);
     FCLAW_ASSERT(cuclaw_vt->cuda_rpn2 != NULL);
     if (clawopt->order[1] > 0)
     {

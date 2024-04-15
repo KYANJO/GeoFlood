@@ -48,7 +48,7 @@ void dam_break_link_solvers(fclaw2d_global_t *glob)
     vt->problem_setup = &dam_break_problem_setup;  /* Version-independent */
     /* These are set by GeoClaw for convenience, but the user
        can set these with customized functions, if desired. */
-    fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
+    fc2d_cpucuda_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
 
     geoclaw_vt->qinit = &DAM_BREAK_QINIT; /* initial conditions */
 }
