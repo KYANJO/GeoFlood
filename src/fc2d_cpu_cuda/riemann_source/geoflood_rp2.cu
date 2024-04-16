@@ -26,7 +26,7 @@ where h is the height, u is the x velocity, v is the y velocity, g is the gravit
 #include "../fc2d_cudaclaw_cuda.h"
 #include "variables.h"
 #include <math.h>
-#include <fc2d_geoclaw.h>
+#include <fc2d_cpucuda.h>
 #include <fc2d_cudaclaw_check.h>
 // #include <fc2d_cudaclaw_options.h>
 // #include <cudaclaw_user_fort.h>
