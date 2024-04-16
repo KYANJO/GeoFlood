@@ -169,20 +169,7 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     {
         for(int thread_index = threadIdx.x; thread_index < num_ifaces; thread_index += blockDim.x)
         {
-            /* 
-            0 <= ix < ifaces_x
-            0 <= iy < ifaces_y
-
-            ---> 0 <= ix < mx + 2*mbc - 1
-            ---> 0 <= iy < mx + 2*mbc - 2
-            ---> ys+1 <= I < (mx+2*mbc-1)*ys + (mx+2*mbc-2)
-            ---> ys+1 <= I <= (mx+2*mbc-2)*ys + (mx+2*mbc-3)
-
-            Example : mbc=2; mx=8; (ix=0,iy=0) --> I = 13  (i=0,j=0)
-                                (ix=mx+2,iy=mx+1) --> I=10*12 + 9 = 129
-                                (i=mx+2,j=my+1)
-            */
-
+        
             int ix = thread_index % ifaces_x;
             int iy = thread_index/ifaces_x;
 
@@ -190,8 +177,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int I_capa = I + (mcapa-1)*zs; 
 
             // dtdx1d[thread_index] = dtdx/aux[I_capa];
-            dtdx1d[I] = dtdx/aux[I_capa];
-            dtdy1d[I] = dtdy/aux[I_capa];
+            dtdx1d[I-1] = dtdx/aux[I_capa];
+            dtdy1d[I-ys] = dtdy/aux[I_capa];
 
         }
         __syncthreads();
