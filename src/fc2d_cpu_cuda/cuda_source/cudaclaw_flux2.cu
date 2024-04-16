@@ -177,8 +177,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
             int I_capa = I + (mcapa-1)*zs; 
 
             // dtdx1d[thread_index] = dtdx/aux[I_capa];
-            dtdx1d[I-1] = dtdx/aux[I_capa];
-            dtdy1d[I-ys] = dtdy/aux[I_capa];
+            dtdx1d[I] = dtdx/aux[I_capa];
+            dtdy1d[I] = dtdy/aux[I_capa];
 
         }
         __syncthreads();
