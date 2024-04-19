@@ -521,14 +521,14 @@ def setrun(claw_pkg='geoclaw'):
     rundata.gaugedata.gauges.append([3,xc,yc,0.,clawdata.tfinal])  # Wilford Gauge 
     rundata.gaugedata.gtype[3] = 'stationary'
 
-    #Sugar_City_Gauge_
-    xc,yc = [-111.743358, 43.873840]
-    rundata.gaugedata.gauges.append([4,xc,yc,0.,clawdata.tfinal])  # Sugar City Gauge 2 
+    # Teton City
+    xc,yc = [-111.669167,43.887778]
+    rundata.gaugedata.gauges.append([4,xc,yc,0.,clawdata.tfinal])  # Teton City
     rundata.gaugedata.gtype[4] = 'stationary'
 
-    #Roberts Gauge 
-    xc,yc = [-112.126403, 43.7202] 
-    rundata.gaugedata.gauges.append([5,xc,yc,0.,clawdata.tfinal])  # Roberts Gauge    
+    #Sugar_City_Gauge_
+    xc,yc = [-111.743358, 43.873840]
+    rundata.gaugedata.gauges.append([5,xc,yc,0.,clawdata.tfinal])  # Sugar City Gauge 2 
     rundata.gaugedata.gtype[5] = 'stationary'
 
     #Rexburg_Gauge_
@@ -536,6 +536,12 @@ def setrun(claw_pkg='geoclaw'):
     rundata.gaugedata.gauges.append([6,xc,yc,0.,clawdata.tfinal])  # Rexburg Gauge 
     rundata.gaugedata.gtype[6] = 'stationary'
 
+    #Roberts Gauge 
+    xc,yc = [-112.126403, 43.7202] 
+    rundata.gaugedata.gauges.append([7,xc,yc,0.,clawdata.tfinal])  # Roberts Gauge    
+    rundata.gaugedata.gtype[7] = 'stationary'
+
+    
     # or to have some of each type, use a dictionary:
     rundata.gaugedata.gtype = {}
     
