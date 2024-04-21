@@ -38,10 +38,10 @@ output_style = 1
 if output_style == 1:
     # Total number of frames will be frames_per_minute*60*n_hours
 
-    n_hours = 20              # Total number of hours in simulation, changed 10.14.2020  should be 5      
+    n_hours = 15              # Total number of hours in simulation, changed 10.14.2020  should be 5      
     
 
-    frames_per_minute = 1/15   # Frames every 1/2 hour
+    frames_per_minute = 1/5   # Frames every 1/2 hour
 
 if output_style == 2:
     output_times = [1,2,3]    # Specify exact times to output files
@@ -54,13 +54,13 @@ if output_style == 3:
 mx = 54
 my = 54
 
-mi = 5  # Number of x grids per block  <-- mx = mi*mx 
+mi = 4  # Number of x grids per block  <-- mx = mi*mx 
 mj = 2  # Number of y grids per block   <-- my = mj*my 
 
 minlevel = 2 
 maxlevel = 5 #resolution based on levels
 
-regrid_interval = 16
+regrid_interval = 40
 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.06
@@ -398,9 +398,9 @@ def setrun(claw_pkg='geoclaw'):
     # -----------------------------------------------
     # Tikz output parameters:
     # -----------------------------------------------
-    geoflooddata.tikz_out = False
-    geoflooddata.tikz_figsize = "4 4"
-    geoflooddata.tikz_plot_prefix = "mlp"
+    geoflooddata.tikz_out = True
+    geoflooddata.tikz_figsize = "4 2"
+    geoflooddata.tikz_plot_prefix = "teton"
     geoflooddata.tikz_plot_suffix = "png"
 
     geoflooddata.cuda = use_cuda

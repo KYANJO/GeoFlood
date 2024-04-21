@@ -59,7 +59,7 @@ SUBROUTINE fc2d_geoclaw_test_coarsen(blockno, mx,my,mbc,meqn,maux,xlower,ylower,
 
     INTEGER :: mx, my, mbc, meqn, maux, tag_patch, blockno
     INTEGER :: level, maxlevel,init_flag
-    DOUBLE PRECISION :: xlower, ylower, dx, dy, t
+    DOUBLE PRECISION :: xlower, ylower, dx, dy, t, x1,x2,y1,y2
 
     DOUBLE PRECISION :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
     DOUBLE PRECISION :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
@@ -93,19 +93,16 @@ SUBROUTINE fc2d_geoclaw_test_coarsen(blockno, mx,my,mbc,meqn,maux,xlower,ylower,
     is_coarsening = .true.
     do j = 1,my
         yc   = ylower + (j - 0.5d0) * dy
+        y1 = ylower + (j-1)*dy
+        y2 = ylower + j*dy
         do i = 1,mx
             xc   = xlower + (i - 0.5d0) * dx
-
-            do m = 1,meqn
-                qvec(m) = q(m,i,j)
-            end do
-            do m = 1,maux
-                auxvec(m) = aux(m,i,j)
-            enddo
+            x1 = xlower +  (i-1)*dx
+            x2 = xlower +  i*dx
 
             flag_patch = fc2d_geoclaw_flag2refine( & 
-                    blockno,mx,my, meqn, maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
-                    maxlevel, init_flag, is_coarsening)
+                    blockno,mx,my, meqn,maux, q, aux, dx,dy,xc,yc,x1,y1,x2,y2,t,level, & 
+                    maxlevel, init_flag, is_coarsening,i,j,mbc)
 
 !!          # flag_patch : 
 !!          # -1 : Not conclusive (possibly ghost cell) (do not tag for coarsening)

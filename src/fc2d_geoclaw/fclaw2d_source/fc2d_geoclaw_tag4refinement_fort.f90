@@ -5,7 +5,7 @@ SUBROUTINE fc2d_geoclaw_fort_tag4refinement(mx,my,mbc,meqn,maux,xlower,ylower, &
 
     INTEGER :: mx,my, mbc, meqn, maux, tag_patch, init_flag
     INTEGER :: blockno, level, maxlevel
-    DOUBLE PRECISION :: xlower, ylower, dx, dy, t
+    DOUBLE PRECISION :: xlower, ylower, dx, dy, t, x1,x2,y1,y2
     DOUBLE PRECISION, intent(in) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
     DOUBLE PRECISION, INTENT(in) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
@@ -33,18 +33,18 @@ SUBROUTINE fc2d_geoclaw_fort_tag4refinement(mx,my,mbc,meqn,maux,xlower,ylower, &
 
     is_coarsening = .false.   !! Don't loop over ghost cells.
     DO j = 1,my
+        yc = ylower + (j-0.5)*dy
+        y1 = ylower + (j-1)*dy
+        y2 = ylower + j*dy
+
         DO i = 1,mx
             xc = xlower + (i-0.5)*dx
-            yc = ylower + (j-0.5)*dy
-            do m = 1,meqn
-                qvec(m) = q(m,i,j)
-            end do
-            do m = 1,maux
-                auxvec(m) = aux(m,i,j)
-            enddo
+            x1 = xlower +  (i-1)*dx
+            x2 = xlower +  i*dx
+
             flag_patch = fc2d_geoclaw_flag2refine( & 
-                    blockno,mx,my, meqn,maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
-                    maxlevel, init_flag, is_coarsening)
+                    blockno,mx,my, meqn,maux, q, aux, dx,dy,xc,yc,x1,y1,x2,y2,t,level, & 
+                    maxlevel, init_flag, is_coarsening,i,j,mbc)
 
 !!          # -1 : Not conclusive (possibly ghost cell); don't tag for refinement
 !!          # 0  : Does not pass threshold (don't tag for refinement)      
