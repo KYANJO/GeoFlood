@@ -44,7 +44,8 @@ add_library(geoflood_f OBJECT
     fclaw2d_source/fc2d_geoclaw_tag4refinement_fort.f90 
     fclaw2d_source/fc2d_geoclaw_tag4coarsening_fort.f90 
     fclaw2d_source/fc2d_geoclaw_test_regions.f90 
-    fclaw2d_source/fc2d_geoclaw_flag2refine_fort.f90 
+    # fclaw2d_source/fc2d_geoclaw_flag2refine_fort.f90
+    fclaw2d_source/fc2d_geoflood_flag2refine.f90 
     fclaw2d_source/fc2d_geoclaw_local_ghost_pack_fort.f 
     fclaw2d_source/fc2d_geoclaw_local_ghost_pack_aux_fort.f 
     fclaw2d_source/fc2d_geoclaw_diagnostics_fort.f 
