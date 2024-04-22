@@ -482,8 +482,8 @@ void cudaclaw_flux2_and_update(const int mx,   const int my,
     if (threadIdx.x == 0)
     {
         /* Cap the maximum CFL to 30.0 (for unrealistic speeds) */
-        maxcflblocks[blockIdx.z] = fmin(aggregate, 30.0);
-        // maxcflblocks[blockIdx.z] = aggregate;
+        // maxcflblocks[blockIdx.z] = fmin(aggregate, 30.0);
+        maxcflblocks[blockIdx.z] = aggregate;
     }
 
     __syncthreads();
