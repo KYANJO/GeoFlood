@@ -8,10 +8,11 @@ function setplot is called to set the plot parameters.
 """
 
 import sys
+sys.path.append('../../../scripts')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image
-from clawpack.geoclaw import topotools
+from geoclaw import topotools
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
 malpasset_loc = "./malpasset_locs.txt"
@@ -29,7 +30,7 @@ def setplot(plotdata):
     """
 
 
-    from clawpack.visclaw import colormaps, geoplot
+    from visclaw import colormaps, geoplot
     from numpy import linspace
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
@@ -90,13 +91,13 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 32
-    mi = 1
-    mj = 2
+    mx = 16
+    mi = 2
+    mj = 5
     minlevel = 1
-    maxlevel = 6
+    maxlevel = 4
     p = 1
-    plotfigure.kml_figsize = [2,4]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_figsize = [2,5]  #[mx*2**p*mi,mx*2**p*mj]
     plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2  
 
     # --------------------------------------------------
@@ -115,7 +116,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     # plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = False       # Show patch edges
+    plotitem.patchedges_show = True      # Show patch edges
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)
@@ -281,7 +282,7 @@ def setplot(plotdata):
 
     plotdata.parallel = False
     plotdata.print_format = 'png'           # file format
-    plotdata.print_framenos = range(0,100,25)         # list of frames to print
+    plotdata.print_framenos = range(0,100,5)         # list of frames to print
     plotdata.print_gaugenos = 'all'         # list of gauges to print
     plotdata.print_fignos = [1,300]         # list of figures to print
 
@@ -302,5 +303,5 @@ def setplot(plotdata):
     return plotdata
 
 if __name__=="__main__":
-    from clawpack.visclaw.plotclaw import plotclaw
+    from visclaw.plotclaw import plotclaw
     plotclaw(outdir='.',setplot=setplot,plotdir='_plots',format='forestclaw')    

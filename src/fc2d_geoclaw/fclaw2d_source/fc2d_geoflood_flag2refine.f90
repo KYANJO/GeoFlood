@@ -92,6 +92,19 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx, my, meqn, maux, q, aux, d
                         fc2d_geoclaw_flag2refine = 1
                         return
                     endif
+
+                    ! refine in shoreregions or river banks or flood edges
+                    if (abs(aux(1,i,j)) < 5.0d0) then
+                        fc2d_geoclaw_flag2refine = 1
+                        return
+                    endif
+
+                endif
+
+                ! refine at maximum velocity-depth product is 0.5 s^-1
+                if (speed/depth > 0.5) then
+                    fc2d_geoclaw_flag2refine = 1
+                    return
                 endif
 
             endif
