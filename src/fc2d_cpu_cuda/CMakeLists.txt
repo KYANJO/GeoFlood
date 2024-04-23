@@ -7,7 +7,7 @@ add_library(cpu_cuda_f OBJECT
     ../fc2d_geoclaw/geolib_source/topo_module.f90 
     ../fc2d_geoclaw/geolib_source/qinit_module.f90 
     ../fc2d_geoclaw/geolib_source/fixedgrids_module.f90 
-    ../fc2d_geoclaw/geolib_source/refinement_module.f90 
+    ../fc2d_geoclaw/geolib_source/refinement_data_module.f90
     ../fc2d_geoclaw/geolib_source/friction_module.f90 
     ../fc2d_geoclaw/hydrograph/hydrograh_module.f90
     ../fc2d_geoclaw/riemann_source/rpn2_geoclaw.f 
@@ -115,7 +115,7 @@ install(FILES
 
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/include/geoclaw_module.mod
-  ${CMAKE_CURRENT_BINARY_DIR}/include/refinement_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/refinement_data_module.mod
   ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
   ${CMAKE_CURRENT_BINARY_DIR}/include/topo_module.mod
   DESTINATION include

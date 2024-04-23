@@ -7,7 +7,7 @@ add_library(geoflood_f OBJECT
     geolib_source/topo_module.f90 
     geolib_source/qinit_module.f90 
     geolib_source/fixedgrids_module.f90 
-    geolib_source/refinement_module.f90 
+    geolib_source/refinement_data_module.f90
     geolib_source/friction_module.f90 
     hydrograph/hydrograh_module.f90
     riemann_source/rpn2_geoclaw.f 
@@ -29,7 +29,6 @@ add_library(geoflood_f OBJECT
     fortran_source/geoclaw_block_fort.f 
     fortran_source/geoclaw_gauges_fort.f90  
     fortran_source/geoclaw_topo_update_fort.f 
-    # fortran_source/geoclaw_bc2_fort.f 
     fortran_source/geoflood_bc2_fort.f90
     fortran_source/geoclaw_step2_fort.f90 
     fortran_source/geoclaw_setaux_fort.f90 
@@ -89,7 +88,7 @@ install(FILES
 )
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/include/geoclaw_module.mod
-  ${CMAKE_CURRENT_BINARY_DIR}/include/refinement_module.mod
+  ${CMAKE_CURRENT_BINARY_DIR}/include/refinement_data_module.mod
   ${CMAKE_CURRENT_BINARY_DIR}/include/hydrograph_module.mod
   DESTINATION include
 )

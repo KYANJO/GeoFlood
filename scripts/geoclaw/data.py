@@ -118,8 +118,9 @@ class RefinementData(clawutil.data.ClawData):
         # Refinement controls
         self.add_attribute('wave_tolerance',1.0e-1)
         self.add_attribute('speed_tolerance',[1.0e12]*6)
-        self.add_attribute('deep_depth',None)      # deprecated
-        self.add_attribute('max_level_deep',None)  # deprecated
+        self.add_attribute('deep_depth',100.0)      
+        self.add_attribute('max_level_deep',6.0)  
+        self.add_attribute('max_velocity_depth_product',0.5)
         self.add_attribute('variable_dt_refinement_ratios',False)
 
 
@@ -128,13 +129,9 @@ class RefinementData(clawutil.data.ClawData):
         self.open_data_file(out_file, data_source)
         self.data_write('wave_tolerance')
 
-        # check if user set deprecated parameters:
-        if self.deep_depth is not None:
-            w = '\n  *** WARNING: deep_depth parameter ignored as of v5.8.0'
-            # warnings.warn(w, UserWarning)
-        if self.max_level_deep is not None:
-            w = '\n  *** WARNING: max_level_deep parameter ignored as of v5.8.0'
-            # warnings.warn(w, UserWarning)
+        self.data_write('deep_depth')
+        self.data_write('max_level_deep')
+        self.data_write('max_velocity_depth_product')
 
         if not isinstance(self.speed_tolerance,list):
             self.speed_tolerance = [self.speed_tolerance]
@@ -143,7 +140,6 @@ class RefinementData(clawutil.data.ClawData):
         self.data_write('variable_dt_refinement_ratios',
                         description="(Set dt refinement ratios automatically)")
         self.close_data_file()
-
 
 
 class TopographyData(clawutil.data.ClawData):

@@ -177,7 +177,7 @@ LOGICAL FUNCTION allowcoarsen(x,y,t,level)
 use amr_module, only: t0
 use geoclaw_module
 use regions_module
-use refinement_module
+use refinement_data_module
 use topo_module
 use qinit_module
 
