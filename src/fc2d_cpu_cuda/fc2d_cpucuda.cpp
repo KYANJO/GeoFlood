@@ -404,7 +404,7 @@ double geoclaw_update(fclaw2d_global_t *glob,
     return maxcfl;
 }
 
-#if 0
+
 static
 double cudaclaw_update(fclaw2d_global_t *glob,
                          fclaw2d_patch_t *this_patch,
@@ -416,172 +416,13 @@ double cudaclaw_update(fclaw2d_global_t *glob,
 {
     FC2D_GEOCLAW_TOPO_UPDATE(&t);
 
-    // PROFILE_CUDA_GROUP("cudaclaw_update",3);
-    // fc2d_cpucuda_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
-    fc2d_cpucuda_vtable_t*  cudaclaw_vt = fc2d_geoclaw_vt(glob);
-    const fc2d_cpucuda_options_t* cuclaw_opt;
 
-    int iter, total, patch_buffer_len;
-    size_t size, bytes;
-    double maxcfl;
-
-    /* ------------------------------- Call b4step2 ----------------------------------- */
-    if (cudaclaw_vt->b4step2 != NULL)
-    {
-        fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
-        geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
-        fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
-    }
-
-    /* -------------------------------- Main update ----------------------------------- */
-    fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
-
-    cuclaw_opt = fc2d_cpucuda_get_options(glob);
-    maxcfl = 0.0;
-
-
-    fclaw2d_single_step_buffer_data_t *buffer_data = 
-              (fclaw2d_single_step_buffer_data_t*) user;
-
-    patch_buffer_len = cuclaw_opt->buffer_len;
-    iter = buffer_data->iter;
-    total = buffer_data->total_count; 
-    // total = 46;
-    // printf("iter = %d, total = %d\n",iter,total);
-    
-    /* Be sure to save current step! */
-    fclaw2d_clawpatch_save_current_step(glob, this_patch);
-
-    cudaclaw_patch_data_t* patch_data = (cudaclaw_patch_data_t*) buffer_data->user;
-
-    maxcfl = 0;
-    if (iter == 0)
-    {
-
-        /* Create array to store pointers to patch data */
-        patch_data = (cudaclaw_patch_data_t*) FCLAW_ALLOC(cudaclaw_patch_data_t,1);
-        size = (total < patch_buffer_len) ? total : patch_buffer_len;
-        //int bytes = size*sizeof(cudaclaw_fluxes_t);
-#if 1        
-        if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
-        {
-            patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
-            patch_data->patchno_array = FCLAW_ALLOC(int,size);
-            patch_data->blockno_array = FCLAW_ALLOC(int,size);
-        }
-#endif        
- 
-        patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,size); // Is it bytes or size?
-        // buffer_data->user = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes);
-        buffer_data->user = patch_data;
-    } 
- 
-    /* Buffer pointer to fluxes */
-    cudaclaw_store_buffer(glob,this_patch,this_patch_idx,this_block_idx,total,iter,
-                            patch_data->flux_array,
-                            patch_data->patch_array,
-                            patch_data->patchno_array,
-                            patch_data->blockno_array);
-
-    /* Update all patches in buffer if :
-          (1) we have filled the buffer, or 
-          (2) we have a partially filled buffer, but no more patches to update */
-
-    if ((iter+1) % patch_buffer_len == 0)
-    {
-        /* (1) We have filled the buffer */
-        //printf("fc2d_cudaclaw : Processing full buffer; iter = %d\n",iter);        
-        maxcfl = cudaclaw_step2_batch(glob,
-                                      (cudaclaw_fluxes_t*) patch_data->flux_array,
-                                      patch_buffer_len,t,dt);
-    }
-    else if ((iter+1) == total)
-    {        
-        /* (2) We have a partially filled buffer, but are done with all the patches 
-            that need to be updated.  */
-        int remaining_patches = total % patch_buffer_len;
-        //printf("fc2d_cudaclaw : Processing partial buffer;  iter = %d\n",iter);
-        maxcfl = cudaclaw_step2_batch(glob,
-                                      (cudaclaw_fluxes_t*) patch_data->flux_array,
-                                      remaining_patches,t,dt); 
-    }  
-    
-    /* -------------------------------- Source term ----------------------------------- */
-    // Check if we have stored all the patches in the buffer
- #if 1
-    // Check if we have stored all the patches in the buffer
-    if (((iter+1) % patch_buffer_len == 0) || ((iter+1) == total))
-    {
-        int remaining = (iter+1) % patch_buffer_len == 0 ? patch_buffer_len : 
-              total-iter;
-        //printf("fc2d_cudaclaw : Remaining : %d\n",remaining);
-        if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
-        {   
-            //FCLAW_ASSERT(cudaclaw_vt->src2 != NULL);
-            // iterate over patches in buffer and call src2 to update them
-            for (int i = 0; i < remaining; i++)
-            {
-                geoclaw_src2(glob,patch_data->patch_array[i],
-                              patch_data->blockno_array[i],
-                              patch_data->patchno_array[i],t,dt);
-            }
-        }
-    }   
-#endif    
-
-    if (iter+1 == total)
-    {
-        // FCLAW_FREE(patch_data->patch_array);
-        FCLAW_FREE(patch_data->flux_array);   
-        FCLAW_FREE(buffer_data->user);  
-
-#if 1
-        if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
-        {
-            FCLAW_FREE(patch_data->patch_array);
-            FCLAW_FREE(patch_data->patchno_array);
-            FCLAW_FREE(patch_data->blockno_array);       
-        }
-#endif    
-    }
-
-    fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);    
-
-    //printf("fc2d_cudaclaw : (after) dt = %24.16e\n\n",dt);
-    return maxcfl;
-}
-#endif
-
-#if 1
-static
-double cudaclaw_update(fclaw2d_global_t *glob,
-                         fclaw2d_patch_t *this_patch,
-                         int this_block_idx,
-                         int this_patch_idx,
-                         double t,
-                         double dt,
-                         void* user)
-{
-    FC2D_GEOCLAW_TOPO_UPDATE(&t);
-
-    // PROFILE_CUDA_GROUP("cudaclaw_update",3);
     fc2d_cpucuda_vtable_t *geoclaw_vt = fc2d_geoclaw_vt(glob);
-    // fc2d_cudaclaw_vtable_t*  cudaclaw_vt = fc2d_cudaclaw_vt(glob);
     const fc2d_cpucuda_options_t* cuclaw_opt;
 
     int iter, total, patch_buffer_len;
     size_t size, bytes;
     double maxcfl;
-
-#if 0 /*being called in flux2.cu*/
-    /* ------------------------------- Call b4step2 ----------------------------------- */
-    if (geoclaw_vt->b4step2 != NULL)
-    {
-        fclaw2d_timer_start (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
-        geoclaw_b4step2(glob,this_patch,this_block_idx,this_patch_idx,t,dt);
-        fclaw2d_timer_stop (&glob->timers[FCLAW2D_TIMER_ADVANCE_B4STEP2]);       
-    }
-#endif
 
     /* -------------------------------- Main update ----------------------------------- */
     fclaw2d_timer_start_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]);  
@@ -596,8 +437,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     patch_buffer_len = cuclaw_opt->buffer_len;
     iter = buffer_data->iter;
     total = buffer_data->total_count; 
-    // total = 46;
-    // printf("iter = %d, total = %d\n",iter,total);
     
     /* Be sure to save current step! */
     fclaw2d_clawpatch_save_current_step(glob, this_patch);
@@ -613,24 +452,13 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         size = (total < patch_buffer_len) ? total : patch_buffer_len;
         bytes = size*sizeof(cudaclaw_fluxes_t);
         
-        // if (cuclaw_opt->src_term > 0)
-        // {
-        //     patch_data->patch_array = FCLAW_ALLOC(fclaw2d_patch_t*,size);
-        //     patch_data->patchno_array = FCLAW_ALLOC(int,size);
-        //     patch_data->blockno_array = FCLAW_ALLOC(int,size);
-        // }
- 
         patch_data->flux_array = FCLAW_ALLOC(cudaclaw_fluxes_t,size); // Is it bytes or size?
-        // buffer_data->user = FCLAW_ALLOC(cudaclaw_fluxes_t,bytes);
         buffer_data->user = patch_data;
     } 
  
     /* Buffer pointer to fluxes */
     cudaclaw_store_buffer(glob,this_patch,this_patch_idx,this_block_idx,total,iter,
-                            patch_data->flux_array,
-                            patch_data->patch_array,
-                            patch_data->patchno_array,
-                            patch_data->blockno_array);
+                            patch_data->flux_array);
 
     /* Update all patches in buffer if :
           (1) we have filled the buffer, or 
@@ -641,8 +469,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         /* (1) We have filled the buffer */
         maxcfl = cudaclaw_step2_batch(glob,(cudaclaw_fluxes_t*) patch_data->flux_array,
                                       patch_buffer_len,t,dt);
-        // printf("iter = %d maxcfl_0 = %f\n",iter,maxcfl);
-        // exit(0);
     }
     else if ((iter+1) == total)
     {        
@@ -654,30 +480,6 @@ double cudaclaw_update(fclaw2d_global_t *glob,
     }  
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
     
-    /* -------------------------------- Source term ----------------------------------- */
-    // Check if we have stored all the patches in the buffer
- #if 0  
-    if (((iter+1) % patch_buffer_len == 0) || ((iter+1) == total))
-    {
-        if (cuclaw_opt->src_term > 0)
-        {   
-            FCLAW_ASSERT(geoclaw_vt->src2 != NULL);
-            // iterate over patches in buffer and call src2 to update them
-
-            for (int i = 0; i < (total); i++)
-            {
-                geoclaw_src2(glob,patch_data->patch_array[i],
-                              patch_data->blockno_array[i],
-                              patch_data->patchno_array[i],t,dt);
-            }
-// #endif
-            FCLAW_FREE(patch_data->patch_array);
-            FCLAW_FREE(patch_data->patchno_array);
-            FCLAW_FREE(patch_data->blockno_array);
-        }
-    }  
-#endif 
-   
     if (iter == total-1)
     {
         // FCLAW_FREE(patch_data->patch_array);
@@ -687,7 +489,8 @@ double cudaclaw_update(fclaw2d_global_t *glob,
 
     return maxcfl;
 }
-#endif
+
+
 /* --------------------------------- Output functions ---------------------------- */
 
 static

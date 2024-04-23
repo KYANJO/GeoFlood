@@ -100,10 +100,7 @@ void cudaclaw_store_buffer(struct fclaw2d_global* glob,
                            struct fclaw2d_patch *this_patch,
                            int patchno, int blockno,
                            int total, int iter,
-                           struct cudaclaw_fluxes* flux_array,
-                           struct fclaw2d_patch** patch_array,
-                           int* patchno_array,
-                           int* blockno_array);
+                           struct cudaclaw_fluxes* flux_array);
                           
 
 double *cudaclaw_get_cpu_membuffer();
