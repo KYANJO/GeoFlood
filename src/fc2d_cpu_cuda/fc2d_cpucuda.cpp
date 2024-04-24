@@ -388,7 +388,8 @@ double geoclaw_update(fclaw2d_global_t *glob,
                                   blockno,
                                   patchno,t,dt);
     
-//    printf("maxcfl = %f, blockno = %d, patchno = %d, dt = %f\n",maxcfl,blockno,patchno,dt);
+    /* cap the CFL number for very complex terrain */
+    if (maxcfl > MAXCFL_CAP) maxcfl = 0.000; 
 
     fclaw2d_timer_stop_threadsafe (&glob->timers[FCLAW2D_TIMER_ADVANCE_STEP2]); 
 
@@ -486,6 +487,9 @@ double cudaclaw_update(fclaw2d_global_t *glob,
         FCLAW_FREE(patch_data->flux_array);   
         FCLAW_FREE(buffer_data->user);                                   
     }   
+
+    /* cap the CFL number for very complex terrain */
+    if (maxcfl > MAXCFL_CAP)  maxcfl = 0.0;
 
     return maxcfl;
 }

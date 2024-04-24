@@ -40,6 +40,8 @@ extern "C"
 #endif
 #endif
 
+#define MAXCFL_CAP 1000.0
+
 typedef struct fc2d_cpucuda_vtable fc2d_cpucuda_vtable_t;
 
 /* Forward declarations */
