@@ -49,7 +49,7 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
     ! write(*,*) 'dt_extract = ', dt_extract
 
     !! Check for NaNs in the solution
-    CALL check4nans(meqn,mbc,mx,my,q,t,1)
+    ! CALL check4nans(meqn,mbc,mx,my,q,t,1)
 
     !! check for h < 0 and reset to zero
     !! check for h < dry tolerance
