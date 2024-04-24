@@ -71,7 +71,7 @@ num_dim = 2
 # ------------------  user options ---------------------------------------------------
 use_cuda = False
 gravity = 9.81
-dry_tolerance = 1e-3
+dry_tolerance = 1e-4
 earth_radius = 6371220.0
 coordinate_system = 1
 mcapa = 0 # flag set to 0 if coordinate system = 1 otherwise 2
@@ -83,6 +83,7 @@ buffer_length = 1024
 topo_file = "Missoula4Brian/topo/Scenario4a_maxice_except_Okanogan/topo_with_ice.tt3"
 init_file = "Missoula4Brian/topo/lakemissoula/lakemissoula1295.tt3"
 ice_dam   = "Missoula4Brian/topo/lakemissoula/LakeM_1295ascii/icedam1295.asc"
+merged_dem = "Missoula4Brian/topo/merge_dem.xyz"
 
 #------------------------------
 def setrun(claw_pkg='geoclaw'):
@@ -288,7 +289,7 @@ def setrun(claw_pkg='geoclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     clawdata.cfl_desired = 0.8
-    clawdata.cfl_max = 0.99
+    clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -320,7 +321,7 @@ def setrun(claw_pkg='geoclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'mc'       ==> MC limiter
     #   4 or 'vanleer'  ==> van Leer
-    clawdata.limiter = ['vanleer', 'vanleer', 'vanleer']
+    clawdata.limiter = ['minmod', 'minmod', 'minmod']
 
     clawdata.use_fwaves = True    # True ==> use f-wave version of algorithms
 
@@ -384,7 +385,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata.refine_threshold = 0.01
     geoflooddata.coarsen_threshold = 0.005
     geoflooddata.smooth_refine = True
-    geoflooddata.regrid_interval = 16
+    geoflooddata.regrid_interval = 3
     geoflooddata.advance_one_step = False
     geoflooddata.ghost_patch_pack_aux = True
     geoflooddata.conservation_check = False
@@ -453,14 +454,14 @@ def setrun(claw_pkg='geoclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = ['center']
+    amrdata.aux_type = ['center','center','yleft']
 
 
     # Flag using refinement routine flag2refine rather than richardson error
     amrdata.flag_richardson = False    # use Richardson?
     amrdata.flag2refine = True
     amrdata.flag2refine_tol = 0.5
-    amrdata.regrid_interval = 16
+    amrdata.regrid_interval = 3
     amrdata.regrid_buffer_width  = 2
     amrdata.clustering_cutoff = 0.700000
     amrdata.verbosity_regrid = 0
@@ -504,6 +505,8 @@ def setrun(claw_pkg='geoclaw'):
     #flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
     #flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
     
+    # flowgrades_data.flowgrades.append([1.e-1, 1, 1, maxlevel])
+    # flowgrades_data.flowgrades.append([1.e-3, 2, 1, maxlevel])
     flowgrades_data.flowgrades.append([1.e-4, 1, 1, maxlevel])
     flowgrades_data.flowgrades.append([1.e-8, 2, 1, maxlevel])
     
@@ -561,7 +564,7 @@ def setgeo(rundata):
     refinement_data.wave_tolerance = 5.e-2
     refinement_data.speed_tolerance = [1.e-2]*6
     refinement_data.deep_depth = 1e2
-    refinement_data.max_level_deep = 1
+    refinement_data.max_level_deep = (maxlevel-1)
     refinement_data.variable_dt_refinement_ratios = True
 
     # == settopo.data values ==
@@ -578,6 +581,7 @@ def setgeo(rundata):
     #   [qinitftype, minlev, maxlev, fname]
     rundata.qinit_data.qinitfiles.append([3,minlevel,minlevel,init_file])
     rundata.qinit_data.qinitfiles.append([3,minlevel,minlevel,ice_dam])
+    # rundata.qinit_data.qinitfiles.append([1,minlevel,minlevel,merged_dem])
 
     return rundata
     # end of function setgeo

@@ -51,16 +51,16 @@ if output_style == 3:
     total_steps = 500    # ... for a total of 500 steps (so 50 output files total)
 
 #-------------------  Computational coarse grid ---------------------------------------
-mx = 54
-my = 54
+mx = 32
+my = 32
 
 mi = 4  # Number of x grids per block  <-- mx = mi*mx 
 mj = 2  # Number of y grids per block   <-- my = mj*my 
 
-minlevel = 2 
-maxlevel = 5 #resolution based on levels
+minlevel = 1 
+maxlevel = 4 #resolution based on levels
 
-regrid_interval = 40
+regrid_interval = 3
 
 #-------------------manning coefficient -----------------------------------------------
 manning_coefficient = 0.06
@@ -657,7 +657,7 @@ def setgeo(rundata):
     # Refinement data
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
-    refinement_data.speed_tolerance = [1.e-1]*6
+    refinement_data.speed_tolerance = [1.e-2]*6
     refinement_data.deep_depth = 1e2
     refinement_data.max_level_deep = maxlevel
     refinement_data.variable_dt_refinement_ratios = False

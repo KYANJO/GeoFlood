@@ -60,8 +60,8 @@ def setplot(plotdata):
     lower = [302901.6624167535,  1111417.5338057536]
     upper = [1172647.141836348, 1658032.3788042287]
 
-    # lower = [6.69262004,  43.40252126]
-    # upper = [6.78171094,  43.55083988 ]
+    # lower = [285186.68554100, 1093702.55693000]
+    # upper = [1190362.11871210, 1675747.35567998]
     #-----------------------------------------------------------
     # Figure for KML files (large view)
     # This under-resolves the finest level.
@@ -104,19 +104,20 @@ def setplot(plotdata):
 
     # Color axis : transparency below 0.1*(cmax-cmin)
     cmin = 0
-    cmax = 5
-    cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    cmax = 100
+    # cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark
+    cmap = geoplot.cyan_colormap
 
     # Water
     plotaxes = plotfigure.new_plotaxes('kml')
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     plotitem.plot_var = geoplot.depth   # Plot height field h.
     # plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
-    plotitem.pcolor_cmap = geoplot.googleearth_flooding
+    plotitem.pcolor_cmap = cmap
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     plotitem.amr_celledges_show = [0,0, 0]
-    plotitem.patchedges_show = True      # Show patch edges
+    plotitem.patchedges_show = False      # Show patch edges
 
     def kml_colorbar(filename):
         geoplot.kml_build_colorbar(filename,cmap,cmin,cmax)
@@ -165,20 +166,20 @@ def setplot(plotdata):
 
     # --------------------------------------------------
 
-    plotfigure.kml_tile_images = False    # Tile images for faster loading.  Requires GDAL [False]
+    plotfigure.kml_tile_images = True   # Tile images for faster loading.  Requires GDAL [False]
 
     # Color axis : transparency below 0.1*(cmax-cmin)
-    cmin = 0
-    cmax = 5
-    cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    # cmin = 0
+    # cmax = 5
+    # cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
 
-    # # Water
-    plotaxes = plotfigure.new_plotaxes('kml')
-    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    plotitem.plot_var = geoplot.depth   # Plot height field h.
-    plotitem.pcolor_cmap = geoplot.googleearth_flooding
-    plotitem.pcolor_cmin = cmin
-    plotitem.pcolor_cmax = cmax
+    # # # Water
+    # plotaxes = plotfigure.new_plotaxes('kml')
+    # plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
+    # plotitem.plot_var = geoplot.depth   # Plot height field h.
+    # plotitem.pcolor_cmap = geoplot.googleearth_flooding
+    # plotitem.pcolor_cmin = cmin
+    # plotitem.pcolor_cmax = cmax
 
     # plot point locations 
     # police, transformers, gauges, all_guages = tools.read_locations_data(malpasset_loc)

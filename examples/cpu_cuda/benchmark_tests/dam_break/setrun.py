@@ -394,7 +394,7 @@ def setrun(claw_pkg='geoclaw'):
     geoflooddata. speed_tolerance_entries_c = 6
 
     geoflooddata.subcycle = True
-    geoflooddata.output = False
+    geoflooddata.output = True
     geoflooddata.output_gauges = False
 
 

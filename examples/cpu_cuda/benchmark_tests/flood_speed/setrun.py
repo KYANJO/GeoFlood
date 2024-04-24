@@ -64,7 +64,7 @@ mi = 2 # Number of x grids per block  <-- mx = mi*mx = 4*50 = 200
 mj = 4  # Number of y grids per block   <-- my = mj*my = 8*50 = 400
 
 minlevel = 1 
-maxlevel = 3 #resolution based on levels
+maxlevel = 4 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------

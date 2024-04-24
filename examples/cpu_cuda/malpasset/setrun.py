@@ -58,7 +58,7 @@ mi = 2  # Number of x grids per block  <-- mx = mi*mx = 2*16 = 32
 mj = 5  # Number of y grids per block   <-- my = mj*my = 5*16 = 80
 
 minlevel = 1 
-maxlevel = 3 #resolution based on levels
+maxlevel = 4 #resolution based on levels
 
  
 #-------------------manning coefficient -----------------------------------------------
@@ -582,8 +582,9 @@ def setgeo(rundata):
     refinement_data = rundata.refinement_data
     refinement_data.wave_tolerance = 1.e-2
     refinement_data.speed_tolerance = [1.e-1]*6
-    refinement_data.deep_depth = 1e2
-    refinement_data.max_level_deep = maxlevel
+    refinement_data.deep_depth = 5.0
+    refinement_data.max_level_deep = (maxlevel-1)
+    refinement_data.max_velocity_depth_product = 0.5
     refinement_data.variable_dt_refinement_ratios = True
 
     # == settopo.data values ==

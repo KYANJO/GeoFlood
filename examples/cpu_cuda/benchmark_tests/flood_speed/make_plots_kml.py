@@ -8,10 +8,11 @@ function setplot is called to set the plot parameters.
 """
 
 import sys
+sys.path.append('../../../../scripts')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import image
-from clawpack.geoclaw import topotools
+from geoclaw import topotools
 
 # --------------------- Police, transformer and guage data -----------------------------------------------
 gauge_loc = "./scratch/gauge_loc.csv"
@@ -28,7 +29,7 @@ def setplot(plotdata):
     """
 
 
-    from clawpack.visclaw import colormaps, geoplot
+    from visclaw import colormaps, geoplot
     from numpy import linspace
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
@@ -88,28 +89,29 @@ def setplot(plotdata):
 
     # If amr refinement ratios set to [0,6]; max_level = 6
     # figsize*dpi = [2,1]*16*2**6 = [2048,1024]
-    mx = 16
-    mi = 1
-    mj = 1
-    minlevel = 0
-    maxlevel = 4
+    mx = 50
+    mi = 2
+    mj = 4
+    minlevel = 1
+    maxlevel = 2
     p = 1
-    plotfigure.kml_figsize = [32,32]  #[mx*2**p*mi,mx*2**p*mj]
-    plotfigure.kml_dpi = 64
+    plotfigure.kml_figsize = [2,4]  #[mx*2**p*mi,mx*2**p*mj]
+    plotfigure.kml_dpi = (mi*mx*(2**maxlevel))/2
 
     # --------------------------------------------------
 
     # Color axis : transparency below 0.1*(cmax-cmin)
     cmin = 0
-    cmax = 5
-    cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    cmax = 0.545
+    # cmap = geoplot.googleearth_flooding  # transparent --> light blue --> dark blue
+    cmap = geoplot.cyan_colormap
 
     # Water
     plotaxes = plotfigure.new_plotaxes('kml')
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     plotitem.plot_var = geoplot.depth   # Plot height field h.
     # plotitem.plot_var = geoplot.surface_or_depth # mask out the lake
-    plotitem.pcolor_cmap = geoplot.googleearth_flooding
+    plotitem.pcolor_cmap = cmap
     plotitem.pcolor_cmin = cmin
     plotitem.pcolor_cmax = cmax
     # plotitem.amr_celledges_show = [0,0,0]
@@ -255,5 +257,5 @@ def setplot(plotdata):
     return plotdata
 
 if __name__=="__main__":
-    from clawpack.visclaw.plotclaw import plotclaw
+    from visclaw.plotclaw import plotclaw
     plotclaw(outdir='.',setplot=setplot,plotdir='_plots',format='forestclaw')    
