@@ -9,13 +9,19 @@
 #include "cudaclaw_allocate.h"
 #include <fc2d_cuda_profiler.h>
 
+// #include "../fc2d_cudaclaw_fort.h"
+
+// #include "data_swap.h"
 
 void cudaclaw_store_buffer(fclaw2d_global_t* glob,
                            fclaw2d_patch_t *this_patch,
                            int this_patch_idx,
                            int this_block_idx,
-                           int total, int iter,
-                           cudaclaw_fluxes_t* flux_array)
+                           int count, int iter, 
+                           cudaclaw_fluxes_t* flux_array,
+                           fclaw2d_patch_t** patch_array,
+                           int* patchno_array,
+                           int* blockno_array)
 {
     PROFILE_CUDA_GROUP("fc2d_cudaclaw_store_buffer",4);
 
@@ -38,5 +44,14 @@ void cudaclaw_store_buffer(fclaw2d_global_t* glob,
 
     int n = iter % cuclaw_opt->buffer_len;
     flux_array[n] = *fluxes;
-          
+    
+#if 0
+    // if (cuclaw_opt->src_term > 0 && cudaclaw_vt->src2 != NULL)
+    // {
+    //     patch_array[n] = this_patch;
+    //     patchno_array[n] = this_patch_idx;
+    //     blockno_array[n] = this_block_idx;
+    // }
+#endif    
+        
 }

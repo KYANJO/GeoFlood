@@ -82,30 +82,30 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx, my, meqn, maux, q, aux, d
         endif
     enddo
 
-    ! Perform a separate check for speed criteria if no specific flow grade triggered refinement
-    if (depth > dry_tolerance) then
-        speed = momentum / depth  
-        do n = 1, max_num_speeds
-            if ((speed > th_factor * speed_tolerance(n)) .and. (level <= n)) then
-                fc2d_geoclaw_flag2refine = 1
-                return
-            endif
+    ! ! Perform a separate check for speed criteria if no specific flow grade triggered refinement
+    ! if (depth > dry_tolerance) then
+    !     speed = momentum / depth  
+    !     do n = 1, max_num_speeds
+    !         if ((speed > th_factor * speed_tolerance(n)) .and. (level <= n)) then
+    !             fc2d_geoclaw_flag2refine = 1
+    !             return
+    !         endif
 
-        enddo
-    endif    
+    !     enddo
+    ! endif    
 
     ! Evaluate additional wave criteria if no specific flow grades or speed creteria are defined
     if ((num_flowgrades == 0) .and. (depth > dry_tolerance)) then
 
         ! Check wave criteria
         if (abs(eta - sea_level) > th_factor*wave_tolerance) then
-            if (level < max_level_deep) then
+            if (level < maxlevel) then
                 fc2d_geoclaw_flag2refine = 1
                 return
             endif
 
             ! refine in shoreregions or river banks or flood edges
-            if (abs(aux(1,i,j)) < deep_depth) then
+            if ((abs(aux(1,i,j)) < deep_depth) .and. (speed > speed_tolerance(1))) then
                 fc2d_geoclaw_flag2refine = 1
                 return
             endif
@@ -125,6 +125,17 @@ integer function fc2d_geoclaw_flag2refine(blockno, mx, my, meqn, maux, q, aux, d
         endif
 
     endif
-    
+
+    ! Perform a separate check for speed criteria if no specific flow grade  or other creteria that triggered refinement
+    if (depth > dry_tolerance) then
+        speed = momentum / depth  
+        do n = 1, max_num_speeds
+            if ((speed > th_factor * speed_tolerance(n)) .and. (level <= n)) then
+                fc2d_geoclaw_flag2refine = 1
+                return
+            endif
+
+        enddo
+    endif      
 
 end function fc2d_geoclaw_flag2refine
