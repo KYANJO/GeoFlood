@@ -368,6 +368,9 @@ double geoclaw_update(fclaw2d_global_t *glob,
                                   patch,
                                   blockno,
                                   patchno,t,dt);
+    
+    /* cap the CFL number for very complex terrain */
+    if (maxcfl > MAXCFL_CAP) maxcfl = 0.000; 
 
     const fc2d_geoclaw_options_t* geoclaw_opt = fc2d_geoclaw_get_options(glob);
     if (geoclaw_opt->src_term > 0)

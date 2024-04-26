@@ -37,6 +37,8 @@ extern "C"
 #endif
 #endif
 
+#define MAXCFL_CAP 1000.0
+
 typedef struct fc2d_geoclaw_vtable fc2d_geoclaw_vtable_t;
 
 /* Forward declarations */
