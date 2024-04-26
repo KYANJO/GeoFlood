@@ -73,7 +73,7 @@ set_target_properties(cpu_cuda_c PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 target_sources(cpu_cuda_c PRIVATE
     $<TARGET_OBJECTS:cpu_cuda_f>
-    fc2d_geoclaw.cpp 
+    fc2d_cpucuda.cpp 
     fc2d_geoclaw_options.c 
     geoflood_options_user.c
     ${CPU_SRC}/fc2d_geoclaw_gauges_default.c 
