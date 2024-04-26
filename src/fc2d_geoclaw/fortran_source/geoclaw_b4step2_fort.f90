@@ -30,13 +30,13 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
     !! Subroutine arguments
     INTEGER, INTENT(in) :: meqn
     INTEGER, INTENT(inout) :: mbc,mx,my,maux
-    REAL(kind=8), INTENT(inout) :: xlower, ylower, dx, dy, t, dt
-    REAL(kind=8), INTENT(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-    REAL(kind=8), INTENT(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, INTENT(inout) :: xlower, ylower, dx, dy, t, dt
+    double precision, INTENT(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+    double precision, INTENT(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
     !! Local storage
     INTEGER :: index,i,j,k,dummy
-    REAL(kind=8) :: h,u,v
+    double precision :: h,u,v
 
     INTEGER :: is_ghost, mint, nghost
     LOGICAL :: fc2d_geoclaw_check_dtopotime, t_in_dtopo_interval
@@ -61,18 +61,18 @@ SUBROUTINE fc2d_geoclaw_b4step2(mbc,mx,my,meqn,q,xlower,ylower, &
 
     !! Determine if time is in dtopo interval.  If so, we need to update the 
     !! aux array.  
-    t_in_dtopo_interval = fc2d_geoclaw_check_dtopotime(t, tau)
+    ! t_in_dtopo_interval = fc2d_geoclaw_check_dtopotime(t, tau)
 
 
-    if (t_in_dtopo_interval) then
-        ! topo arrays might have been updated by dtopo more recently than
-        ! aux arrays were set unless at least 1 step taken on all levels
-        aux(1,:,:) = NEEDS_TO_BE_SET ! new system checks this val before setting
-        is_ghost = 0
-        nghost = mbc    !! won't be used, if is_ghost = 0
-        mint = 2*mbc    !! not used
-        CALL fc2d_geoclaw_setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux,is_ghost,nghost,mint)
-    endif
+    ! if (t_in_dtopo_interval) then
+    !     ! topo arrays might have been updated by dtopo more recently than
+    !     ! aux arrays were set unless at least 1 step taken on all levels
+    !     aux(1,:,:) = NEEDS_TO_BE_SET ! new system checks this val before setting
+    !     is_ghost = 0
+    !     nghost = mbc    !! won't be used, if is_ghost = 0
+    !     mint = 2*mbc    !! not used
+    !     CALL fc2d_geoclaw_setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux,is_ghost,nghost,mint)
+    ! endif
 
 END SUBROUTINE fc2d_geoclaw_b4step2
     

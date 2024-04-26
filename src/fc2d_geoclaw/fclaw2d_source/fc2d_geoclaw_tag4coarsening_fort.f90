@@ -105,7 +105,7 @@ SUBROUTINE fc2d_geoclaw_test_coarsen(blockno, mx,my,mbc,meqn,maux,xlower,ylower,
 
             flag_patch = fc2d_geoclaw_flag2refine( & 
                     blockno,mx,my, meqn, maux, qvec, auxvec, dx,dy,xc,yc,t,level, & 
-                    maxlevel, init_flag, is_coarsening)
+                    maxlevel, init_flag, is_coarsening,i,j)
 
 !!          # flag_patch : 
 !!          # -1 : Not conclusive (possibly ghost cell) (do not tag for coarsening)
@@ -187,7 +187,7 @@ use qinit_module
 implicit none
 
 ! Function arguments
-real(kind=8), intent(in) :: x,y,t
+double precision, intent(in) :: x,y,t
 integer, intent(in) :: level
 
 ! Locals

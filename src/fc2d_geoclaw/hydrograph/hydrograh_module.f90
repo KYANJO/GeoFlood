@@ -19,12 +19,12 @@ module hydrograph_module
     character(len=20) :: use_hydrograph
     character(len=20) :: hydrograph_type
     character(len=100), dimension(4) :: boundary_location
-    real(kind=8), dimension(4) :: q0         ! q0 = [h0,hu0,hv0,b0] ghost data
-    real(kind=8), dimension(4) :: q1         ! q1 = [h,hu,hv,b] first interior cell data (initial conditions) just inside the boundary
-    real(kind=8) :: u1            ! u1 = initial velocity (first cell data) just inside next to the boundary
-    real(kind=8) :: froude         ! froude number
-    real(kind=8) :: b,x0,y0        ! channel_width, channel center x and y coordinates
-    real(kind=8), allocatable :: time(:), eta(:), hu(:)
+    double precision, dimension(4) :: q0         ! q0 = [h0,hu0,hv0,b0] ghost data
+    double precision, dimension(4) :: q1         ! q1 = [h,hu,hv,b] first interior cell data (initial conditions) just inside the boundary
+    double precision :: u1            ! u1 = initial velocity (first cell data) just inside next to the boundary
+    double precision :: froude         ! froude number
+    double precision :: b,x0,y0        ! channel_width, channel center x and y coordinates
+    double precision, allocatable :: time(:), eta(:), hu(:)
     integer, parameter :: GEO_PARM_UNIT = 78
     integer :: num_rows
 
@@ -157,8 +157,8 @@ contains
         implicit none
 
         ! Arguments
-        real(kind=8), intent(in) :: t
-        real(kind=8), dimension(4) :: q0,q1
+        double precision, intent(in) :: t
+        double precision, dimension(4) :: q0,q1
 
         if (hydrograph_type == 'discharge') then
             call interpolation(t,hu,q0,q1)
@@ -178,10 +178,10 @@ contains
         implicit none
 
         ! Arguments
-        real(kind=8), intent(in) :: t
-        real(kind=8), dimension(:), intent(in) :: inflow
-        real(kind=8) :: interpolated_value
-        real(kind=8), dimension(4) :: q0,q1
+        double precision, intent(in) :: t
+        double precision, dimension(:), intent(in) :: inflow
+        double precision :: interpolated_value
+        double precision, dimension(4) :: q0,q1
 
         ! Local variables
         integer :: i
@@ -226,9 +226,9 @@ contains
         implicit none
 
         ! declare variables
-        real(kind=8) :: tol,u1
-        real(kind=8) :: func,fxn,dfxn,dfunc_hu0,dfunc_h0,Fr
-        real(kind=8), dimension(4) :: q0,q1
+        double precision :: tol,u1
+        double precision :: func,fxn,dfxn,dfunc_hu0,dfunc_h0,Fr
+        double precision, dimension(4) :: q0,q1
 
         integer :: i, max_iter
 
@@ -280,9 +280,9 @@ contains
         implicit none
 
         ! declare variables
-        real(kind=8) :: tol
-        real(kind=8) :: fxn,dfxn,num,deno,Fr
-        real(kind=8), dimension(4) :: q0,q1
+        double precision :: tol
+        double precision :: fxn,dfxn,num,deno,Fr
+        double precision, dimension(4) :: q0,q1
 
         integer :: i, max_iter
 

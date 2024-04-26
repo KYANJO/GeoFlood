@@ -73,7 +73,7 @@ LOGICAL FUNCTION fc2d_geoclaw_P_intersects_R(xlower,ylower,xupper,yupper,t,regio
     USE regions_module
     IMPLICIT NONE
 
-    REAL(kind=8) :: xlower, ylower, xupper, yupper, t
+    double precision :: xlower, ylower, xupper, yupper, t
     TYPE(region_type) :: region
 
     if (t < region%t_low .or. t > region%t_hi) then 

@@ -24,7 +24,7 @@ SUBROUTINE fc2d_geoclaw_set_modules(mwaves_in, mcapa_in, meqn_in, maux_in,  &
 
     INTEGER :: meqn, maux, mw
 
-    REAL(KIND=8), INTENT(IN) :: ax, bx, ay, by
+    DOUBLE PRECISION, INTENT(IN) :: ax, bx, ay, by
 
     logical :: restart !! This is read from claw.data;  set to .false. here
 
