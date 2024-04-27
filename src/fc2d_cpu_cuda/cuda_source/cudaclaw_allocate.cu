@@ -73,8 +73,8 @@ void cudaclaw_allocate_fluxes(fclaw2d_global_t *glob,
     CHECK(cudaMalloc((void**)&fluxes->waves_dev,  fluxes->num_bytes_waves));
     CHECK(cudaMalloc((void**)&fluxes->speeds_dev, fluxes->num_bytes_speeds));
 
-    CHECK(cudaMalloc((void**)&fluxes->dtdx1d_dev,   fluxes->num_bytes_aux));
-    CHECK(cudaMalloc((void**)&fluxes->dtdy1d_dev,   fluxes->num_bytes_aux));
+    CHECK(cudaMalloc((void**)&fluxes->dtdx1d_dev,   sizeof(double)*fluxes->num_bytes_aux));
+    CHECK(cudaMalloc((void**)&fluxes->dtdy1d_dev,   sizeof(double)*fluxes->num_bytes_aux));
 
     /* Set all values to 0 so max works, even if boundary edge values are not assigned 
        speeds in kernel */
