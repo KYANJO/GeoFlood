@@ -130,8 +130,7 @@ main (int argc, char **argv)
 
         fclaw2d_options_store           (bathymetry_glob, bathymetry_fclaw_opt);
         fclaw2d_clawpatch_options_store (bathymetry_glob, bathymetry_clawpatch_opt);
-        fc2d_clawpack46_options_store   (bathymetry_glob, bathymetry_claw46_opt);
-        fc2d_clawpack5_options_store    (bathymetry_glob, bathymetry_claw5_opt);
+        fc2d_geoclaw_options_store   (bathymetry_glob, bathymetry_geoclaw_opt);
         bathymetry_options_store        (bathymetry_glob, bathymetry_user_opt);
 
         run_program(glob);
