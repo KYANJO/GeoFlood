@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2022 Carsten Burstedde, Donna Calhoun, Scott Aiton
+Copyright (c) 2012 Carsten Burstedde, Donna Calhoun
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -23,19 +23,38 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "teton_user.h"
+#ifndef BATHYMETRY_USER_H
+#define BATHYMETRY_USER_H
 
 #include <fclaw2d_include_all.h>
 
-#include <fclaw2d_clawpatch.h>
-#include <fc2d_geoclaw.h>
-
-void teton_link_solvers(fclaw2d_global_t *glob)
+#ifdef __cplusplus
+extern "C"
 {
-
-    /* These are set by GeoClaw for convenience, but the user
-       can set these with customized functions, if desired. */
-    fc2d_geoclaw_vtable_t* geoclaw_vt = fc2d_geoclaw_vt(glob);
-
-    geoclaw_vt->qinit = &TETON_QINIT;
+#if 0
 }
+#endif
+#endif
+
+
+void bathymetry_link_solvers(fclaw2d_global_t *glob);
+
+#define BATHYMETRY_QINIT   FCLAW_F77_FUNC(bathymetry_qinit,BATHYMETRY_QINIT)
+void BATHYMETRY_QINIT(const int* meqn,const int* mbc,
+                 const int* mx, const int* my,
+                 const double* xlower, const double* ylower,
+                 const double* dx, const double* dy,
+                 double q[], const int* maux, double aux[]);
+
+
+/* Mappings */
+fclaw2d_map_context_t* fclaw2d_map_new_nomap();
+
+#ifdef __cplusplus
+#if 0
+{
+#endif
+}
+#endif
+
+#endif

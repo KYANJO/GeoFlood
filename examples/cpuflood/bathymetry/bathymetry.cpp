@@ -23,7 +23,7 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "teton_user.h"
+#include "bathymetry_user.h"
 
 #include <fclaw2d_include_all.h>
 
@@ -34,7 +34,7 @@
 #include <fc2d_geoclaw_options.h>
 
 static
-fclaw2d_domain_t* create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
+fclaw2d_domain_t* bathymetry_create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
 {
     /* Mapped, multi-block domain */
     p4est_connectivity_t     *conn = NULL;
@@ -77,7 +77,7 @@ void run_program(fclaw2d_global_t* glob)
 
     fc2d_geoclaw_solver_initialize(glob);
 
-    teton_link_solvers(glob);
+    bathymetry_link_solvers(glob);
 
     fc2d_geoclaw_module_setup(glob);
 
@@ -95,12 +95,6 @@ int
 main (int argc, char **argv)
 {
 
-    /* teton Options */
-    // sc_options_t                *options;
-    fclaw_options_t             *fclaw_opt;
-    fclaw2d_clawpatch_options_t *clawpatch_opt;
-    fc2d_geoclaw_options_t      *geoclaw_opt;
-
     /* bathymetry options*/
     fclaw_options_t             *bathymetry_fclaw_opt;
     fclaw2d_clawpatch_options_t *bathymetry_clawpatch_opt;
@@ -110,53 +104,35 @@ main (int argc, char **argv)
     fclaw_app_t *app = fclaw_app_new (&argc, &argv, NULL);
 
     /* Register packages */
-    fclaw_app_options_register_core(app, "fclaw_options.ini"); //Global options like verbosity, etc
-
-    fclaw_opt       =             fclaw_options_register(app,  NULL,       "fclaw_options.ini");
-    clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "clawpatch", "fclaw_options.ini");
-    geoclaw_opt     =      fc2d_geoclaw_options_register(app, "geoclaw",   "fclaw_options.ini");
+    fclaw_app_options_register_core(app, "bathymetry_options.ini"); //Global options like verbosity, etc
 
     bathymetry_fclaw_opt       =             fclaw_options_register(app,  "bathymetry", "bathymetry_options.ini");
-    bathymetry_clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "bathymetry-clawpatch", "bathymetry_options.ini");
-    bathymetry_geoclaw_opt     =      fc2d_geoclaw_options_register(app, "bathymetry-geoclaw",   "bathymetry_options.ini");
+    bathymetry_clawpatch_opt   = fclaw2d_clawpatch_options_register(app, "bathymetry_clawpatch", "bathymetry_options.ini");
+    bathymetry_geoclaw_opt     =      fc2d_geoclaw_options_register(app, "bathymetry_geoclaw",   "bathymetry_options.ini");
 
 
     /* Read configuration file(s) and command line, and process options */
-    // int retval;
     int first_arg;
     fclaw_exit_type_t vexit;
-    // options = fclaw_app_get_options (app);
-    // retval = fclaw_options_read_from_file(options);
-    vexit =  fclaw_app_options_parse (app, &first_arg,"fclaw_options.ini.used");
+    vexit =  fclaw_app_options_parse (app, &first_arg,"bathymetry_options.ini.used");
 
     /* Run the program */
     if (!vexit)
     {
-        sc_MPI_Comm mpicomm;
-        mpicomm = fclaw_app_get_mpi_size_rank (app, NULL, NULL);
 
-        /* Create domain for teton application*/
-        fclaw2d_domain_t *domain = create_domain(mpicomm, fclaw_opt);
-        
-        /* Create global structure which stores the domain, timers, etc */
-        fclaw2d_global_t   *glob = fclaw2d_global_new();
-        fclaw2d_global_store_domain(glob, domain);
-
-        /* Store option packages in glob */
-        fclaw2d_options_store           (glob, fclaw_opt);
-        fclaw2d_clawpatch_options_store (glob, clawpatch_opt);
-        fc2d_geoclaw_options_store      (glob, geoclaw_opt);
+        sc_MPI_Comm mpicomm = fclaw_app_get_mpi_size_rank (app, NULL, NULL);
 
         /* Create domain for bathymetry application*/
-        fclaw2d_global_t   *bethymetry_glob = fclaw2d_global_new();
+        fclaw2d_global_t   *bathymetry_glob = fclaw2d_global_new();
        
-        fclaw2d_domain_t *bethymetry_domain = create_bathymetry_domain(mpicomm, fclaw_opt);
-        fclaw2d_global_store_domain(bethymetry_glob, bathymetry_domain);
+        fclaw2d_domain_t *bathymetry_domain = create_bathymetry_domain(mpicomm, bathymetry_fclaw_opt);
+        fclaw2d_global_store_domain(bathymetry_glob, bathymetry_domain);
 
-         /* initialize */
-        filament_initialize(filament_glob);
-        swirl_initialize(swirl_glob);
-
+        fclaw2d_options_store           (bathymetry_glob, bathymetry_fclaw_opt);
+        fclaw2d_clawpatch_options_store (bathymetry_glob, bathymetry_clawpatch_opt);
+        fc2d_clawpack46_options_store   (bathymetry_glob, bathymetry_claw46_opt);
+        fc2d_clawpack5_options_store    (bathymetry_glob, bathymetry_claw5_opt);
+        bathymetry_options_store        (bathymetry_glob, bathymetry_user_opt);
 
         run_program(glob);
         
