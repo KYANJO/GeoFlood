@@ -34,7 +34,7 @@
 #include <fc2d_geoclaw_options.h>
 
 static
-fclaw2d_domain_t* bathymetry_create_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
+fclaw2d_domain_t* create_bathymetry_domain(sc_MPI_Comm mpicomm, fclaw_options_t* fclaw_opt)
 {
     /* Mapped, multi-block domain */
     p4est_connectivity_t     *conn = NULL;
@@ -131,11 +131,10 @@ main (int argc, char **argv)
         fclaw2d_options_store           (bathymetry_glob, bathymetry_fclaw_opt);
         fclaw2d_clawpatch_options_store (bathymetry_glob, bathymetry_clawpatch_opt);
         fc2d_geoclaw_options_store   (bathymetry_glob, bathymetry_geoclaw_opt);
-        bathymetry_options_store        (bathymetry_glob, bathymetry_user_opt);
 
-        run_program(glob);
+        run_program(bathymetry_glob);
         
-        fclaw2d_global_destroy(glob);
+        fclaw2d_global_destroy(bathymetry_glob);
     }
 
     fclaw_app_destroy (app);

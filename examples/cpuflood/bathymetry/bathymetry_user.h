@@ -39,12 +39,15 @@ extern "C"
 
 void bathymetry_link_solvers(fclaw2d_global_t *glob);
 
-#define BATHYMETRY_QINIT   FCLAW_F77_FUNC(bathymetry_qinit,BATHYMETRY_QINIT)
-void BATHYMETRY_QINIT(const int* meqn,const int* mbc,
-                 const int* mx, const int* my,
-                 const double* xlower, const double* ylower,
-                 const double* dx, const double* dy,
-                 double q[], const int* maux, double aux[]);
+
+#define FC2D_GEOCLAW_SETAUX  FCLAW_F77_FUNC(fc2d_geoclaw_setaux, FC2D_GEOCLAW_SETAUX)
+void FC2D_GEOCLAW_SETAUX(const int* mbc,
+                         const int* mx, const int* my,
+                         const double* xlower, const double* ylower,
+                         const double* dx, const double* dy,
+                         const int* maux, double aux[],
+                         const int* is_ghost, const int* nghost,
+                         const int* mint);
 
 
 /* Mappings */
